@@ -18,11 +18,11 @@ router.post('/validate-token', async (req, res) => {
     const { bot_token } = req.body;
 
     // Validate token format
-    const validation = validateInput({ bot_token }, { bot_token: telegramBotTokenSchema });
-    if (!validation.isValid) {
+    const validation = telegramBotTokenSchema.validate(bot_token);
+    if (validation.error) {
       return res.status(400).json({ 
         error: 'Invalid token format',
-        message: validation.error 
+        message: validation.error.details[0].message 
       });
     }
 
@@ -77,11 +77,11 @@ router.post('/setup', async (req, res) => {
     }
 
     // Validate bot token
-    const validation = validateInput({ bot_token }, { bot_token: telegramBotTokenSchema });
-    if (!validation.isValid) {
+    const validation = telegramBotTokenSchema.validate(bot_token);
+    if (validation.error) {
       return res.status(400).json({ 
         error: 'Invalid token format',
-        message: validation.error 
+        message: validation.error.details[0].message 
       });
     }
 

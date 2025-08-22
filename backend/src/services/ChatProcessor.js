@@ -26,9 +26,9 @@ class ChatProcessor {
       console.log(`💬 Processing chat query for user ${userId}: "${userQuery}"`);
 
       // Validate and sanitize input
-      const validation = validateInput({ query: userQuery, user_id: userId }, chatQuerySchema);
-      if (!validation.isValid) {
-        return `❌ Invalid query: ${validation.error}`;
+      const validation = chatQuerySchema.validate({ query: userQuery, user_id: userId });
+      if (validation.error) {
+        return `❌ Invalid query: ${validation.error.details[0].message}`;
       }
 
       const sanitizedQuery = sanitizeText(userQuery);

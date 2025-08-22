@@ -63,11 +63,11 @@ router.post('/gemini-api-key', async (req, res) => {
     }
 
     // Validate API key format
-    const validation = validateInput({ api_key }, { api_key: geminiApiKeySchema });
-    if (!validation.isValid) {
+    const validation = geminiApiKeySchema.validate(api_key);
+    if (validation.error) {
       return res.status(400).json({ 
         error: 'Invalid API key format',
-        message: validation.error 
+        message: validation.error.details[0].message 
       });
     }
 
