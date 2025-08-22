@@ -165,9 +165,19 @@ export default function DashboardPage() {
           totalExpenses: monthlyReceipts.length,
           monthlyTotal,
           recentExpenses: receipts?.slice(0, 5) || [],
-          botStatus: config.telegram_bot_token 
-            ? (botSession?.is_active ? 'active' : 'inactive')
-            : 'not_configured',
+          botStatus: (() => {
+            console.log('🎯 Bot Status Calculation:', {
+              hasBotToken: !!config.telegram_bot_token,
+              botSessionExists: !!botSession,
+              isActive: botSession?.is_active,
+              isActiveType: typeof botSession?.is_active
+            })
+            const status = config.telegram_bot_token 
+              ? (botSession?.is_active ? 'active' : 'inactive')
+              : 'not_configured'
+            console.log('🎯 Final bot status:', status)
+            return status
+          })(),
           sheetsConnected: !!config.google_sheet_id,
           aiProcessed: successfulReceipts
         })
