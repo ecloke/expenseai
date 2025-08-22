@@ -132,16 +132,14 @@ Rules:
       // Initialize sheets service with user's tokens
       await this.sheetsService.initializeForUser(userConfig);
 
-      // Prepare rows for insertion
+      const sheetName = 'AI Expense Tracker';
+      
+      // Ensure sheet exists and is properly set up
+      await this.sheetsService.ensureSheetSetup(userConfig.google_sheet_id, sheetName);
+
+      // Prepare rows for insertion (just the items, no headers or summary)
       const rows = [];
       
-      // Add header if this is the first entry
-      const isFirstEntry = await this.sheetsService.isSheetEmpty(userConfig.google_sheet_id, userConfig.sheet_name || 'Expenses');
-      
-      if (isFirstEntry) {
-        rows.push(['Date', 'Store', 'Item', 'Category', 'Quantity', 'Price', 'Total']);
-      }
-
       // Add each item as a row
       for (const item of receiptData.items) {
         rows.push([
@@ -155,23 +153,10 @@ Rules:
         ]);
       }
 
-      // Add summary row if multiple items
-      if (receiptData.items.length > 1) {
-        rows.push([
-          receiptData.date,
-          receiptData.store_name,
-          '--- RECEIPT TOTAL ---',
-          'summary',
-          '',
-          '',
-          receiptData.total
-        ]);
-      }
-
-      // Append to sheet
-      await this.sheetsService.appendRows(
+      // Append to sheet and update running total
+      await this.sheetsService.appendRowsAndUpdateTotal(
         userConfig.google_sheet_id,
-        userConfig.sheet_name || 'Expenses',
+        sheetName,
         rows
       );
 
