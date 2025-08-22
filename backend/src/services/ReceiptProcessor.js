@@ -166,10 +166,10 @@ Rules:
       // Ensure sheet exists and is properly set up
       await this.sheetsService.ensureSheetSetup(userConfig.google_sheet_id, sheetName);
 
-      // Prepare rows for insertion (just the items, no headers or summary)
+      // Prepare rows for insertion (items + service charge + tax as separate line items)
       const rows = [];
       
-      // Add each item as a row (with service charge and tax columns)
+      // Add each item as a row
       for (const item of receiptData.items) {
         rows.push([
           receiptData.date,
@@ -178,9 +178,33 @@ Rules:
           item.category,
           item.quantity,
           item.price,
-          item.price * item.quantity,
-          receiptData.service_charge || 0,
-          receiptData.tax || 0
+          item.price * item.quantity
+        ]);
+      }
+
+      // Add service charge as a separate line item if it exists
+      if (receiptData.service_charge && receiptData.service_charge > 0) {
+        rows.push([
+          receiptData.date,
+          receiptData.store_name,
+          'Service Charge',
+          'services',
+          1,
+          receiptData.service_charge,
+          receiptData.service_charge
+        ]);
+      }
+
+      // Add tax as a separate line item if it exists
+      if (receiptData.tax && receiptData.tax > 0) {
+        rows.push([
+          receiptData.date,
+          receiptData.store_name,
+          'Tax',
+          'services',
+          1,
+          receiptData.tax,
+          receiptData.tax
         ]);
       }
 

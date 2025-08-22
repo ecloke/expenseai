@@ -404,32 +404,31 @@ class SheetsService {
       try {
         const response = await this.sheets.spreadsheets.values.get({
           spreadsheetId: sheetId,
-          range: `${sheetName}!A1:G2`
+          range: `${sheetName}!A1:G1`
         });
         
         const values = response.data.values || [];
-        needsSetup = values.length === 0 || !values[0] || values[0][0] !== 'Running Total:';
+        needsSetup = values.length === 0 || !values[0] || values[0][0] !== 'Date';
       } catch (error) {
         needsSetup = true;
       }
       
       if (needsSetup) {
-        // Set up fresh sheet with running totals in row 1 and headers in row 2
+        // Set up simple sheet with just headers in row 1
         const setupRows = [
-          ['Running Total:', '=SUM(G3:G1000)', 'Service Charge:', '=SUM(H3:H1000)', 'Tax:', '=SUM(I3:I1000)', ''], // Row 1: Running totals
-          ['Date', 'Store', 'Item', 'Category', 'Quantity', 'Price', 'Total', 'Service Charge', 'Tax'] // Row 2: Headers with new columns
+          ['Date', 'Store', 'Item', 'Category', 'Quantity', 'Price', 'Total'] // Row 1: Simple headers
         ];
 
         await this.sheets.spreadsheets.values.update({
           spreadsheetId: sheetId,
-          range: `${sheetName}!A1:I2`,
+          range: `${sheetName}!A1:G1`,
           valueInputOption: 'USER_ENTERED',
           requestBody: {
             values: setupRows
           }
         });
 
-        // Format headers only (row 2)
+        // Format headers (row 1)
         await this.sheets.spreadsheets.batchUpdate({
           spreadsheetId: sheetId,
           requestBody: {
@@ -437,10 +436,10 @@ class SheetsService {
               repeatCell: {
                 range: {
                   sheetId: targetSheetId,
-                  startRowIndex: 1,
-                  endRowIndex: 2,
+                  startRowIndex: 0,
+                  endRowIndex: 1,
                   startColumnIndex: 0,
-                  endColumnIndex: 9
+                  endColumnIndex: 7
                 },
                 cell: {
                   userEnteredFormat: {
@@ -460,7 +459,7 @@ class SheetsService {
           }
         });
 
-        console.log(`✅ Set up sheet "${sheetName}" with running total and headers`);
+        console.log(`✅ Set up sheet "${sheetName}" with simple headers`);
       }
 
       return targetSheetId;
@@ -481,10 +480,10 @@ class SheetsService {
     try {
       console.log(`📝 Appending ${rows.length} rows to ${sheetName}`);
 
-      // Append rows starting from row 3 (after running total and headers)
+      // Append rows starting from row 2 (after headers)
       const response = await this.sheets.spreadsheets.values.append({
         spreadsheetId: sheetId,
-        range: `${sheetName}!A3:I`,
+        range: `${sheetName}!A2:G`,
         valueInputOption: 'USER_ENTERED',
         insertDataOption: 'INSERT_ROWS',
         requestBody: {
