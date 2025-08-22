@@ -1,0 +1,30 @@
+{
+  "name": "expenseai",
+  "version": "1.0.0",
+  "description": "AI-powered expense tracking with Telegram bots",
+  "scripts": {
+    "start": "cd backend && npm start",
+    "build": "cd backend && npm install",
+    "dev": "cd backend && npm run dev",
+    "install-backend": "cd backend && npm install",
+    "install-frontend": "cd frontend && npm install"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ecloke/expenseai.git"
+  },
+  "author": "ecloke",
+  "license": "MIT",
+  "keywords": [
+    "expense-tracker",
+    "telegram-bot",
+    "ai",
+    "gemini",
+    "google-sheets",
+    "supabase"
+  ]
+}
