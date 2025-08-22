@@ -37,7 +37,7 @@ export default function GoogleSheetsStep({ onNext, onBack }: GoogleSheetsStepPro
       // In a real app, you'd get the user ID from authentication
       const userId = 'temp-user-id'
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/google/test`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/google/test`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -67,7 +67,7 @@ export default function GoogleSheetsStep({ onNext, onBack }: GoogleSheetsStepPro
       // In a real app, you'd get the user ID from authentication
       const userId = 'temp-user-id'
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/google?user_id=${userId}`)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/google?user_id=${userId}`)
       const data = await response.json()
 
       if (!response.ok) {
@@ -97,7 +97,7 @@ export default function GoogleSheetsStep({ onNext, onBack }: GoogleSheetsStepPro
       // In a real app, you'd get the user ID from authentication
       const userId = 'temp-user-id'
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/google/create-sheet`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/google/create-sheet`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

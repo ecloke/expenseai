@@ -1,16 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Progress } from '@/components/ui/progress'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Bot, Brain, FileSpreadsheet, CheckCircle, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Bot, Brain, FileSpreadsheet, CheckCircle } from 'lucide-react'
+import { useToast } from '@/components/ui/use-toast'
+
+// Import the functional step components
+import TelegramBotStep from '@/components/setup/telegram-bot-step'
+import GeminiKeyStep from '@/components/setup/gemini-key-step'
+import GoogleSheetsStep from '@/components/setup/google-sheets-step'
 
 export default function SetupPage() {
   const [currentStep, setCurrentStep] = useState(1)
   const [completedSteps, setCompletedSteps] = useState<number[]>([])
+  const [botToken, setBotToken] = useState('')
+  const [botUsername, setBotUsername] = useState('')
+  const router = useRouter()
+  const { toast } = useToast()
 
   const SETUP_STEPS = [
     {
@@ -33,12 +43,42 @@ export default function SetupPage() {
     },
   ]
 
+  // Load progress from localStorage on mount
+  useEffect(() => {
+    const savedProgress = localStorage.getItem('setup-progress')
+    if (savedProgress) {
+      try {
+        const progress = JSON.parse(savedProgress)
+        setCurrentStep(progress.currentStep || 1)
+        setCompletedSteps(progress.completedSteps || [])
+        setBotToken(progress.botToken || '')
+        setBotUsername(progress.botUsername || '')
+      } catch (error) {
+        console.error('Error loading setup progress:', error)
+      }
+    }
+  }, [])
+
+  // Save progress to localStorage whenever it changes
+  useEffect(() => {
+    const progress = {
+      currentStep,
+      completedSteps,
+      botToken,
+      botUsername
+    }
+    localStorage.setItem('setup-progress', JSON.stringify(progress))
+  }, [currentStep, completedSteps, botToken, botUsername])
+
   const handleNext = () => {
     if (!completedSteps.includes(currentStep)) {
       setCompletedSteps(prev => [...prev, currentStep])
     }
     if (currentStep < SETUP_STEPS.length) {
       setCurrentStep(currentStep + 1)
+    } else {
+      // Setup complete
+      handleSetupComplete()
     }
   }
 
@@ -46,6 +86,29 @@ export default function SetupPage() {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1)
     }
+  }
+
+  const handleStepValidation = (stepNumber: number, isValid: boolean) => {
+    if (isValid && !completedSteps.includes(stepNumber)) {
+      setCompletedSteps(prev => [...prev, stepNumber])
+    } else if (!isValid && completedSteps.includes(stepNumber)) {
+      setCompletedSteps(prev => prev.filter(step => step !== stepNumber))
+    }
+  }
+
+  const handleSetupComplete = () => {
+    toast({
+      title: "Setup Complete! 🎉",
+      description: "Your AI expense tracker is ready to use!",
+    })
+    
+    // Clear setup progress
+    localStorage.removeItem('setup-progress')
+    
+    // Redirect to dashboard
+    setTimeout(() => {
+      router.push('/dashboard')
+    }, 2000)
   }
 
   const progressPercentage = (currentStep / SETUP_STEPS.length) * 100
@@ -124,101 +187,53 @@ export default function SetupPage() {
 
         {/* Current Step Content */}
         <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
-          <CardHeader className="border-b">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-500 text-white rounded-lg">
-                {SETUP_STEPS[currentStep - 1]?.icon}
-              </div>
-              <div>
-                <CardTitle className="text-xl">
-                  {SETUP_STEPS[currentStep - 1]?.title}
-                </CardTitle>
-                <CardDescription>
-                  {SETUP_STEPS[currentStep - 1]?.description}
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
           <CardContent className="pt-6">
-            {/* Step Content */}
+            {/* Render the appropriate functional step component */}
             {currentStep === 1 && (
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">🤖 Create Your Telegram Bot</h3>
-                  <div className="space-y-3 text-sm text-gray-600">
-                    <p><strong>1.</strong> Open Telegram and search for @BotFather</p>
-                    <p><strong>2.</strong> Send the command: <code className="bg-gray-100 px-2 py-1 rounded">/newbot</code></p>
-                    <p><strong>3.</strong> Follow the prompts to choose a name and username</p>
-                    <p><strong>4.</strong> Copy the bot token you receive</p>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Bot Token</label>
-                    <Input 
-                      type="password" 
-                      placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz" 
-                    />
-                  </div>
-                </div>
-              </div>
+              <TelegramBotStep
+                botToken={botToken}
+                setBotToken={setBotToken}
+                botUsername={botUsername}
+                setBotUsername={setBotUsername}
+                onValidationComplete={(isValid) => handleStepValidation(1, isValid)}
+              />
             )}
 
             {currentStep === 2 && (
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">🧠 Configure Gemini AI</h3>
-                  <div className="space-y-3 text-sm text-gray-600">
-                    <p><strong>1.</strong> Visit <a href="https://makersuite.google.com/app/apikey" target="_blank" className="text-blue-600 hover:underline">Google AI Studio</a></p>
-                    <p><strong>2.</strong> Create an API key</p>
-                    <p><strong>3.</strong> Copy your API key (starts with "AI")</p>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Gemini API Key</label>
-                    <Input 
-                      type="password" 
-                      placeholder="AIza..." 
-                    />
-                  </div>
-                </div>
-              </div>
+              <GeminiKeyStep
+                onNext={handleNext}
+                onBack={handleBack}
+              />
             )}
 
             {currentStep === 3 && (
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">📊 Connect Google Sheets</h3>
-                  <div className="space-y-3 text-sm text-gray-600">
-                    <p>We'll connect your Google account to automatically create and update your expense tracking sheet.</p>
-                  </div>
-                  <Button className="w-full" size="lg">
-                    <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                    </svg>
-                    Connect with Google
-                  </Button>
-                </div>
-              </div>
+              <GoogleSheetsStep
+                onNext={handleNext}
+                onBack={handleBack}
+              />
             )}
 
-            {/* Navigation */}
-            <div className="flex gap-3 pt-6 border-t">
-              <Button 
-                variant="outline" 
-                onClick={handleBack}
-                disabled={currentStep === 1}
-                className="flex-1"
-              >
-                Back
-              </Button>
-              <Button 
-                onClick={handleNext}
-                className="flex-1"
-              >
-                {currentStep === SETUP_STEPS.length ? 'Complete Setup' : 'Next'}
-              </Button>
-            </div>
+            {/* Navigation for Step 1 only (other steps have built-in navigation) */}
+            {currentStep === 1 && (
+              <div className="flex gap-3 pt-6 border-t mt-6">
+                <Button 
+                  variant="outline" 
+                  onClick={handleBack}
+                  disabled={currentStep === 1}
+                  className="flex-1"
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back
+                </Button>
+                <Button 
+                  onClick={handleNext}
+                  disabled={!completedSteps.includes(1)}
+                  className="flex-1"
+                >
+                  {currentStep === SETUP_STEPS.length ? 'Complete Setup' : 'Next'}
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -234,8 +249,18 @@ export default function SetupPage() {
                 <p className="text-green-700 mb-4">
                   Your AI expense tracker is ready to use!
                 </p>
-                <Button className="mr-4">Go to Dashboard</Button>
-                <Button variant="outline">Test Your Bot</Button>
+                <div className="space-y-2">
+                  <Button 
+                    onClick={handleSetupComplete}
+                    className="w-full"
+                    size="lg"
+                  >
+                    Go to Dashboard
+                  </Button>
+                  <p className="text-xs text-green-600">
+                    You'll be redirected automatically in a moment...
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>

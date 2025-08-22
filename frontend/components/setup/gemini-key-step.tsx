@@ -51,7 +51,7 @@ export default function GeminiKeyStep({ onNext, onBack }: GeminiKeyStepProps) {
       // In a real app, you'd get the user ID from authentication
       const userId = 'temp-user-id'
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/user/gemini-api-key`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/gemini-api-key`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
