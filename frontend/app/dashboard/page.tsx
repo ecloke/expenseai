@@ -79,36 +79,61 @@ export default function DashboardPage() {
     try {
       // Get current user
       const { data: { session } } = await supabase.auth.getSession()
+      console.log('🔍 Dashboard Debug - Session:', session?.user?.id)
       if (!session) {
+        console.log('❌ No session found, redirecting to login')
         router.push('/login')
         return
       }
       
+      console.log('✅ User authenticated:', session.user.id)
       setUser(session.user)
 
       // Load user configuration
+      console.log('🔍 Looking for user_config with user_id:', session.user.id)
       const { data: config, error: configError } = await supabase
         .from('user_configs')
         .select('*')
         .eq('user_id', session.user.id)
         .single()
 
+      console.log('📊 User config result:', { config, configError })
+      
       if (configError && configError.code !== 'PGRST116') {
+        console.log('❌ Config error (not PGRST116):', configError)
         throw configError
       }
 
+      console.log('✅ User config loaded:', {
+        hasConfig: !!config,
+        botToken: config?.telegram_bot_token ? '[ENCRYPTED]' : null,
+        botUsername: config?.telegram_bot_username,
+        geminiKey: config?.gemini_api_key ? '[ENCRYPTED]' : null,
+        googleToken: config?.google_access_token ? '[ENCRYPTED]' : null
+      })
+      
       setUserConfig(config)
 
       if (config) {
         // Load bot session if bot is configured
         if (config.telegram_bot_username) {
-          const { data: botData } = await supabase
+          console.log('🤖 Loading bot session for user:', session.user.id)
+          const { data: botData, error: botError } = await supabase
             .from('bot_sessions')
             .select('*')
             .eq('user_id', session.user.id)
             .single()
+
+          console.log('🤖 Bot session result:', { botData, botError })
+          console.log('🤖 Bot session status:', {
+            isActive: botData?.is_active,
+            botUsername: botData?.bot_username,
+            lastActivity: botData?.last_activity
+          })
           
           setBotSession(botData)
+        } else {
+          console.log('⚠️ No telegram bot username in config, skipping bot session load')
         }
 
         // Load receipt logs for stats
