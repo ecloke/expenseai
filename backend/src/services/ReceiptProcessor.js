@@ -63,6 +63,7 @@ class ReceiptProcessor {
   "total": number,
   "service_charge": number,
   "tax": number,
+  "discount": number,
   "items": [
     {
       "name": "string", 
@@ -83,7 +84,9 @@ Rules:
 - Use Malaysia Kuala Lumpur timezone context
 - Extract ALL items visible on the receipt
 - Look for service charge, service tax, GST, or similar fees (set to 0 if not found)
-- service_charge and tax should be numbers (0 if not present)
+- Look for discounts, vouchers, promotions (use negative number like -20.00, set to 0 if none)
+- service_charge, tax, and discount should be numbers (0 if not present)
+- discount should be negative for actual discounts (e.g., -20.00 for 20 dollar discount)
 - Return ONLY the JSON object, no additional text`;
 
       // Generate content with Gemini Vision
@@ -205,6 +208,19 @@ Rules:
           1,
           receiptData.tax,
           receiptData.tax
+        ]);
+      }
+
+      // Add discount as a separate line item if it exists (negative amount)
+      if (receiptData.discount && receiptData.discount !== 0) {
+        rows.push([
+          receiptData.date,
+          receiptData.store_name,
+          receiptData.discount < 0 ? 'Discount/Voucher' : 'Additional Charge',
+          'services',
+          1,
+          receiptData.discount,
+          receiptData.discount
         ]);
       }
 
