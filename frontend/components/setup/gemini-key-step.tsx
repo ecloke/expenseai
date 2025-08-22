@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createSupabaseClient } from '@/lib/supabase'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -30,7 +31,19 @@ export default function GeminiKeyStep({ onNext, onBack }: GeminiKeyStepProps) {
   const [isConfigured, setIsConfigured] = useState(false)
   const [showApiKey, setShowApiKey] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
   const { toast } = useToast()
+  const supabase = createSupabaseClient()
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user?.id) {
+        setUserId(session.user.id)
+      }
+    }
+    getUser()
+  }, [supabase])
 
   const {
     register,
@@ -48,8 +61,9 @@ export default function GeminiKeyStep({ onNext, onBack }: GeminiKeyStepProps) {
     setError(null)
 
     try {
-      // In a real app, you'd get the user ID from authentication
-      const userId = 'temp-user-id'
+      if (!userId) {
+        throw new Error('User not authenticated. Please sign in and try again.')
+      }
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/gemini-api-key`, {
         method: 'POST',

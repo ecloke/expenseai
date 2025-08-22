@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createSupabaseClient } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -25,17 +26,32 @@ export default function GoogleSheetsStep({ onNext, onBack }: GoogleSheetsStepPro
   const [isCreatingSheet, setIsCreatingSheet] = useState(false)
   const [sheetInfo, setSheetInfo] = useState<SheetInfo | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
   const { toast } = useToast()
+  const supabase = createSupabaseClient()
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user?.id) {
+        setUserId(session.user.id)
+      }
+    }
+    getUser()
+  }, [supabase])
 
   // Check if already connected on component mount
   useEffect(() => {
-    checkConnectionStatus()
-  }, [])
+    if (userId) {
+      checkConnectionStatus()
+    }
+  }, [userId])
 
   const checkConnectionStatus = async () => {
     try {
-      // In a real app, you'd get the user ID from authentication
-      const userId = 'temp-user-id'
+      if (!userId) {
+        return
+      }
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/google/test`, {
         method: 'POST',
@@ -65,7 +81,10 @@ export default function GoogleSheetsStep({ onNext, onBack }: GoogleSheetsStepPro
 
     try {
       // In a real app, you'd get the user ID from authentication
-      const userId = 'temp-user-id'
+      if (!userId) {
+        setError('User not authenticated. Please sign in and try again.')
+        return
+      }
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/google?user_id=${userId}`)
       const data = await response.json()
@@ -95,7 +114,10 @@ export default function GoogleSheetsStep({ onNext, onBack }: GoogleSheetsStepPro
 
     try {
       // In a real app, you'd get the user ID from authentication
-      const userId = 'temp-user-id'
+      if (!userId) {
+        setError('User not authenticated. Please sign in and try again.')
+        return
+      }
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/google/create-sheet`, {
         method: 'POST',

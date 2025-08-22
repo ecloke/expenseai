@@ -410,6 +410,52 @@ router.delete('/config/:user_id', async (req, res) => {
 });
 
 /**
+ * POST /api/bot/migrate-user
+ * Migrate temp-user-id to real user ID
+ */
+router.post('/migrate-user', async (req, res) => {
+  try {
+    const { old_user_id, new_user_id } = req.body;
+
+    if (!old_user_id || !new_user_id) {
+      return res.status(400).json({ error: 'Both old_user_id and new_user_id are required' });
+    }
+
+    // Update user_configs table
+    const { error: configError } = await req.supabase
+      .from('user_configs')
+      .update({ user_id: new_user_id })
+      .eq('user_id', old_user_id);
+
+    if (configError) {
+      throw new Error(`Failed to update user_configs: ${configError.message}`);
+    }
+
+    // Update bot_sessions table
+    const { error: sessionError } = await req.supabase
+      .from('bot_sessions')
+      .update({ user_id: new_user_id })
+      .eq('user_id', old_user_id);
+
+    if (sessionError) {
+      console.warn('Failed to update bot_sessions:', sessionError.message);
+    }
+
+    res.json({
+      success: true,
+      message: `Successfully migrated user ID from ${old_user_id} to ${new_user_id}`
+    });
+
+  } catch (error) {
+    console.error('User migration error:', error);
+    res.status(500).json({ 
+      error: 'User migration failed',
+      message: error.message 
+    });
+  }
+});
+
+/**
  * GET /api/bot/debug/:user_id
  * Debug endpoint to check user config in database
  */
