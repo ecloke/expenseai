@@ -61,3 +61,6 @@ secrets/
 *.pem
 *.key
 *.crt
+
+# Context engineering folder (not needed for production)
+context-engineering-intro/
