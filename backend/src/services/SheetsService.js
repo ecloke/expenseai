@@ -357,6 +357,140 @@ class SheetsService {
   }
 
   /**
+   * Ensure sheet is properly set up with headers and running total
+   * @param {string} sheetId - Google Sheet ID
+   * @param {string} sheetName - Name of the sheet tab
+   */
+  async ensureSheetSetup(sheetId, sheetName = 'AI Expense Tracker') {
+    try {
+      console.log(`🔧 Setting up sheet: ${sheetName}`);
+
+      // Check if sheet exists
+      const spreadsheet = await this.sheets.spreadsheets.get({
+        spreadsheetId: sheetId
+      });
+
+      const existingSheet = spreadsheet.data.sheets.find(
+        sheet => sheet.properties.title === sheetName
+      );
+
+      let targetSheetId;
+
+      if (!existingSheet) {
+        // Create new sheet
+        const addSheetResponse = await this.sheets.spreadsheets.batchUpdate({
+          spreadsheetId: sheetId,
+          requestBody: {
+            requests: [{
+              addSheet: {
+                properties: {
+                  title: sheetName,
+                  gridProperties: {
+                    rowCount: 1000,
+                    columnCount: 10
+                  }
+                }
+              }
+            }]
+          }
+        });
+        targetSheetId = addSheetResponse.data.replies[0].addSheet.properties.sheetId;
+      } else {
+        targetSheetId = existingSheet.properties.sheetId;
+      }
+
+      // Check if sheet is empty or needs setup
+      const currentData = await this.getSheetData(sheetId, sheetName);
+      
+      if (currentData.length === 0) {
+        // Set up fresh sheet with running total in row 1 and headers in row 2
+        const setupRows = [
+          ['Running Total:', '', '', '', '', '', '=SUM(G3:G1000)'], // Row 1: Running total
+          ['Date', 'Store', 'Item', 'Category', 'Quantity', 'Price', 'Total'] // Row 2: Headers
+        ];
+
+        await this.sheets.spreadsheets.values.update({
+          spreadsheetId: sheetId,
+          range: `${sheetName}!A1:G2`,
+          valueInputOption: 'USER_ENTERED',
+          requestBody: {
+            values: setupRows
+          }
+        });
+
+        // Format headers only (row 2)
+        await this.sheets.spreadsheets.batchUpdate({
+          spreadsheetId: sheetId,
+          requestBody: {
+            requests: [{
+              repeatCell: {
+                range: {
+                  sheetId: targetSheetId,
+                  startRowIndex: 1,
+                  endRowIndex: 2,
+                  startColumnIndex: 0,
+                  endColumnIndex: 7
+                },
+                cell: {
+                  userEnteredFormat: {
+                    textFormat: {
+                      bold: true
+                    },
+                    backgroundColor: {
+                      red: 0.9,
+                      green: 0.9,
+                      blue: 0.9
+                    }
+                  }
+                },
+                fields: 'userEnteredFormat(textFormat,backgroundColor)'
+              }
+            }]
+          }
+        });
+
+        console.log(`✅ Set up sheet "${sheetName}" with running total and headers`);
+      }
+
+      return targetSheetId;
+
+    } catch (error) {
+      console.error('Failed to ensure sheet setup:', error);
+      throw new Error('Failed to set up expense tracking sheet');
+    }
+  }
+
+  /**
+   * Append rows and update running total
+   * @param {string} sheetId - Google Sheet ID
+   * @param {string} sheetName - Name of the sheet tab
+   * @param {Array} rows - Array of row arrays to append
+   */
+  async appendRowsAndUpdateTotal(sheetId, sheetName, rows) {
+    try {
+      console.log(`📝 Appending ${rows.length} rows to ${sheetName}`);
+
+      // Append rows starting from row 3 (after running total and headers)
+      const response = await this.sheets.spreadsheets.values.append({
+        spreadsheetId: sheetId,
+        range: `${sheetName}!A3:G`,
+        valueInputOption: 'USER_ENTERED',
+        insertDataOption: 'INSERT_ROWS',
+        requestBody: {
+          values: rows
+        }
+      });
+
+      console.log(`✅ Appended ${rows.length} rows successfully`);
+      return response.data;
+
+    } catch (error) {
+      console.error('Failed to append rows and update total:', error);
+      throw new Error('Failed to add data to your expense sheet');
+    }
+  }
+
+  /**
    * Create a summary sheet with aggregated data
    * @param {string} sheetId - Google Sheet ID
    * @param {Array} expenseData - Raw expense data
