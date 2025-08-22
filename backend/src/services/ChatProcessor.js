@@ -112,8 +112,8 @@ User query: "${sanitizedQuery}"`;
       const result = await chat.sendMessage(systemPrompt);
       const response = await result.response;
 
-      // Check if function calling was used
-      const functionCall = response.functionCall();
+      // Skip function calling for now - just return text response
+      const functionCall = null; // response.functionCall() is not working
       
       if (functionCall) {
         // Process function call
@@ -432,8 +432,8 @@ User query: "${sanitizedQuery}"`;
           user_query: userQuery,
           sql_generated: sqlGenerated,
           // ai_response: aiResponse, // Column doesn't exist in chat_logs table
-          processing_status: status,
-          error_message: errorMessage
+          processing_status: status
+          // error_message: errorMessage // Column doesn't exist in chat_logs table
         });
 
       if (error) {
