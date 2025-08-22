@@ -162,18 +162,9 @@ router.post('/start', async (req, res) => {
       return res.status(400).json({ error: 'Bot token not configured' });
     }
 
-    // Check if all required configurations are present
-    const missingConfigs = [];
-    if (!userConfig.gemini_api_key) missingConfigs.push('Gemini API key');
-    if (!userConfig.google_access_token) missingConfigs.push('Google Sheets access');
-
-    if (missingConfigs.length > 0) {
-      return res.status(400).json({ 
-        error: 'Incomplete configuration',
-        missing: missingConfigs,
-        message: `Please complete setup: ${missingConfigs.join(', ')}`
-      });
-    }
+    // Bot can start with just telegram token - other components are optional
+    // Processing will gracefully handle missing Gemini/Sheets and show appropriate errors
+    console.log(`🚀 Starting bot for user ${user_id}...`);
 
     // Add bot to BotManager (this would require access to the global BotManager instance)
     // For now, we'll just update the session status
@@ -410,6 +401,47 @@ router.delete('/config/:user_id', async (req, res) => {
 });
 
 /**
+ * POST /api/bot/complete-test-config
+ * Complete a test configuration with dummy data for testing
+ */
+router.post('/complete-test-config', async (req, res) => {
+  try {
+    const { user_id } = req.body;
+
+    if (!user_id) {
+      return res.status(400).json({ error: 'user_id is required' });
+    }
+
+    // Update config with minimal required data
+    const { error } = await req.supabase
+      .from('user_configs')
+      .update({
+        gemini_api_key: 'test_encrypted_key',
+        google_access_token: 'test_encrypted_token',
+        google_sheet_id: '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms',
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', user_id);
+
+    if (error) {
+      throw new Error(`Failed to update config: ${error.message}`);
+    }
+
+    res.json({
+      success: true,
+      message: `Test configuration completed for ${user_id}`
+    });
+
+  } catch (error) {
+    console.error('Complete test config error:', error);
+    res.status(500).json({ 
+      error: 'Failed to complete test config',
+      message: error.message 
+    });
+  }
+});
+
+/**
  * POST /api/bot/migrate-user
  * Migrate temp-user-id to real user ID
  */
@@ -450,6 +482,44 @@ router.post('/migrate-user', async (req, res) => {
     console.error('User migration error:', error);
     res.status(500).json({ 
       error: 'User migration failed',
+      message: error.message 
+    });
+  }
+});
+
+/**
+ * GET /api/bot/debug-all
+ * Debug endpoint to check all user configs
+ */
+router.get('/debug-all', async (req, res) => {
+  try {
+    const { data, error } = await req.supabase
+      .from('user_configs')
+      .select('user_id, email, telegram_bot_username, telegram_bot_token, gemini_api_key, google_sheet_id, created_at')
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (error) {
+      throw new Error(`Database query failed: ${error.message}`);
+    }
+
+    // Don't expose full encrypted tokens, just show if they exist
+    const sanitizedData = data?.map(config => ({
+      ...config,
+      telegram_bot_token: config.telegram_bot_token ? '[ENCRYPTED]' : null,
+      gemini_api_key: config.gemini_api_key ? '[ENCRYPTED]' : null
+    }));
+
+    res.json({
+      success: true,
+      count: data?.length || 0,
+      configs: sanitizedData || []
+    });
+
+  } catch (error) {
+    console.error('Debug all query error:', error);
+    res.status(500).json({ 
+      error: 'Debug query failed',
       message: error.message 
     });
   }

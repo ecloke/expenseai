@@ -205,35 +205,72 @@ class BotManager {
       const bot = this.bots.get(userId)?.bot;
       if (!bot) return;
 
-      // Send processing message
-      const processingMsg = await bot.sendMessage(msg.chat.id, '📸 Processing your receipt...');
+      // Send step-by-step processing messages
+      const statusMsg = await bot.sendMessage(msg.chat.id, '📸 Receipt received! Starting analysis...');
 
       try {
-        // Get highest resolution photo
+        // Step 1: Download photo
+        await bot.editMessageText('📥 Downloading photo...', {
+          chat_id: msg.chat.id,
+          message_id: statusMsg.message_id
+        });
+
         const photos = msg.photo;
         const largestPhoto = photos[photos.length - 1];
-        
-        // Download photo
         const file = await bot.getFile(largestPhoto.file_id);
         const photoBuffer = await bot.downloadFile(file.file_id, './temp/');
 
-        // Process receipt with Gemini Vision
-        const receiptData = await this.receiptProcessor.processReceipt(photoBuffer, userId, config);
-        
-        if (receiptData) {
-          // Delete processing message
-          await bot.deleteMessage(msg.chat.id, processingMsg.message_id);
-          
-          // Send confirmation
-          const confirmationText = this.formatReceiptConfirmation(receiptData);
-          await bot.sendMessage(msg.chat.id, confirmationText, { parse_mode: 'Markdown' });
-        } else {
-          throw new Error('Failed to process receipt');
+        // Step 2: Check Gemini API
+        if (!config.gemini_api_key) {
+          await bot.editMessageText('⚠️ Gemini AI not configured. Please complete setup to process receipts.', {
+            chat_id: msg.chat.id,
+            message_id: statusMsg.message_id
+          });
+          return;
         }
 
+        // Step 3: Process with AI
+        await bot.editMessageText('🤖 Analyzing receipt with AI...', {
+          chat_id: msg.chat.id,
+          message_id: statusMsg.message_id
+        });
+
+        const receiptData = await this.receiptProcessor.processReceipt(photoBuffer, userId, config);
+        
+        if (!receiptData) {
+          throw new Error('AI failed to extract receipt data');
+        }
+
+        // Step 4: Check Google Sheets
+        if (!config.google_access_token) {
+          await bot.editMessageText('⚠️ Google Sheets not configured. Receipt processed but not saved to sheets.\n\n' + this.formatReceiptConfirmation(receiptData), {
+            chat_id: msg.chat.id,
+            message_id: statusMsg.message_id,
+            parse_mode: 'Markdown'
+          });
+          return;
+        }
+
+        // Step 5: Save to sheets
+        await bot.editMessageText('📊 Saving to Google Sheets...', {
+          chat_id: msg.chat.id,
+          message_id: statusMsg.message_id
+        });
+
+        // Complete success
+        const confirmationText = '✅ Receipt processed successfully!\n\n' + this.formatReceiptConfirmation(receiptData);
+        await bot.editMessageText(confirmationText, {
+          chat_id: msg.chat.id,
+          message_id: statusMsg.message_id,
+          parse_mode: 'Markdown'
+        });
+
       } catch (processingError) {
-        // Delete processing message
-        await bot.deleteMessage(msg.chat.id, processingMsg.message_id);
+        // Update message with error
+        await bot.editMessageText(`❌ Error: ${processingError.message}`, {
+          chat_id: msg.chat.id,
+          message_id: statusMsg.message_id
+        });
         throw processingError;
       }
 
