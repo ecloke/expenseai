@@ -43,6 +43,8 @@ export const receiptDataSchema = Joi.object({
   store_name: Joi.string().min(1).max(100).required(),
   date: Joi.date().iso().required(),
   total: Joi.number().positive().precision(2).required(),
+  service_charge: Joi.number().min(0).precision(2).default(0),
+  tax: Joi.number().min(0).precision(2).default(0),
   items: Joi.array().items(
     Joi.object({
       name: Joi.string().min(1).max(100).required(),
