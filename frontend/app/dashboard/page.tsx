@@ -320,6 +320,63 @@ export default function DashboardPage() {
           </p>
         </div>
 
+        {/* How to Use Section */}
+        {userConfig.telegram_bot_username && (
+          <Card className="mb-8 border-blue-200 bg-blue-50/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-blue-800">
+                <Zap className="h-5 w-5" />
+                How to Track Expenses
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Receipt className="h-4 w-4 text-blue-600" />
+                    <span className="font-medium text-sm">Send Receipt Photos</span>
+                  </div>
+                  <p className="text-xs text-gray-600 ml-6">
+                    Message @{userConfig.telegram_bot_username} with photos of your receipts. 
+                    The AI will extract items, prices, and store info automatically.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Brain className="h-4 w-4 text-blue-600" />
+                    <span className="font-medium text-sm">Ask Questions</span>
+                  </div>
+                  <p className="text-xs text-gray-600 ml-6">
+                    Type questions like "How much did I spend on groceries?" or 
+                    "Show my expenses from last week" to get instant insights.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="pt-2 border-t border-blue-200">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-blue-800">Start chatting with your bot:</span>
+                  <Button 
+                    size="sm" 
+                    asChild
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <a 
+                      href={`https://t.me/${userConfig.telegram_bot_username}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      Open @{userConfig.telegram_bot_username}
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
