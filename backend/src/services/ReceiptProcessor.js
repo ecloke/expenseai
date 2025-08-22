@@ -207,7 +207,7 @@ Rules:
       if (receiptData && status === 'success') {
         logData.store_name = receiptData.store_name;
         logData.total_amount = receiptData.total;
-        // Note: items_count column doesn't exist in receipt_logs table
+        logData.items_count = receiptData.items?.length || 0;
       }
 
       const { error } = await this.supabase
