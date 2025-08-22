@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createSupabaseClient } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -41,6 +42,18 @@ export default function TelegramBotStep({
     botInfo?: BotInfo
     error?: string
   } | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
+  const supabase = createSupabaseClient()
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user?.id) {
+        setUserId(session.user.id)
+      }
+    }
+    getUser()
+  }, [supabase])
 
   const validateBotToken = async (token: string) => {
     if (!token || token.trim().length === 0) {
@@ -85,15 +98,19 @@ export default function TelegramBotStep({
 
         // Success - save bot info to database
         try {
+          if (!userId) {
+            throw new Error('User not authenticated. Please sign in and try again.')
+          }
+
           console.log('API URL:', process.env.NEXT_PUBLIC_API_URL)
-          console.log('Saving bot config for user_id: temp-user-id')
+          console.log('Saving bot config for user_id:', userId)
           const saveResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/bot/setup`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              user_id: 'temp-user-id', // TODO: Replace with actual user ID
+              user_id: userId,
               bot_token: token.trim(),
               bot_username: botInfo.username
             }),

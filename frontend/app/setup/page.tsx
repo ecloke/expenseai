@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { createSupabaseClient } from '@/lib/supabase'
 import { Progress } from '@/components/ui/progress'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -19,8 +20,21 @@ export default function SetupPage() {
   const [completedSteps, setCompletedSteps] = useState<number[]>([])
   const [botToken, setBotToken] = useState('')
   const [botUsername, setBotUsername] = useState('')
+  const [userId, setUserId] = useState<string | null>(null)
   const router = useRouter()
   const { toast } = useToast()
+  const supabase = createSupabaseClient()
+
+  // Get authenticated user
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user?.id) {
+        setUserId(session.user.id)
+      }
+    }
+    getUser()
+  }, [supabase])
 
   const SETUP_STEPS = [
     {
@@ -98,6 +112,15 @@ export default function SetupPage() {
 
   const handleSetupComplete = async () => {
     try {
+      if (!userId) {
+        toast({
+          title: "Error",
+          description: "User not authenticated. Please sign in and try again.",
+          variant: "destructive"
+        })
+        return
+      }
+
       // Start the Telegram bot for this user
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/bot/start`, {
         method: 'POST',
@@ -105,7 +128,7 @@ export default function SetupPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          user_id: 'temp-user-id' // In production, this would be the actual user ID
+          user_id: userId
         }),
       })
 
