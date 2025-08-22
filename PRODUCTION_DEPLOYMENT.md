@@ -25,8 +25,8 @@
 
 #### **Netlify Environment Variables:**
 ```
-NEXT_PUBLIC_SUPABASE_URL=***REMOVED***
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 NEXT_PUBLIC_API_URL=https://expenseai-backend.railway.app
 ```
 
@@ -41,12 +41,12 @@ NEXT_PUBLIC_API_URL=https://expenseai-backend.railway.app
 ```
 NODE_ENV=production
 PORT=3000
-SUPABASE_URL=***REMOVED***
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-GEMINI_API_KEY=AIzaSyCh6bFPeUyzRfIbKYJ3LNt73U5zcRaaNb4
-GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=your-client-secret
+SUPABASE_URL=your-supabase-project-url
+SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+GEMINI_API_KEY=your-new-gemini-api-key
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
 GOOGLE_REDIRECT_URI=https://expenseai.netlify.app/api/auth/google/callback
 ENCRYPTION_KEY=your-256-bit-encryption-key
 FRONTEND_URL=https://expenseai.netlify.app
