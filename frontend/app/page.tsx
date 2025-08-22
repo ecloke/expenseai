@@ -1,9 +1,41 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { createSupabaseClient } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Bot, Receipt, MessageSquare, Smartphone, Zap, Shield } from 'lucide-react'
+import { Bot, Receipt, MessageSquare, Smartphone, Zap, Shield, LogIn, LogOut } from 'lucide-react'
 
 export default function HomePage() {
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
+  const supabase = createSupabaseClient()
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      setUser(session?.user ?? null)
+      setLoading(false)
+    }
+    
+    getUser()
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null)
+      }
+    )
+
+    return () => subscription.unsubscribe()
+  }, [supabase])
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.refresh()
+  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
@@ -14,15 +46,31 @@ export default function HomePage() {
             <span className="text-2xl font-bold text-gray-900">ExpenseAI</span>
           </div>
           <div className="flex items-center space-x-4">
-            <Link href="/dashboard">
-              <Button variant="ghost">Dashboard</Button>
-            </Link>
-            <Link href="/logs">
-              <Button variant="ghost">Logs</Button>
-            </Link>
-            <Link href="/setup">
-              <Button>Get Started</Button>
-            </Link>
+            {loading ? (
+              <div className="w-20 h-9 bg-gray-200 animate-pulse rounded"></div>
+            ) : user ? (
+              <>
+                <Link href="/dashboard">
+                  <Button variant="ghost">Dashboard</Button>
+                </Link>
+                <Button variant="ghost" onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="ghost">
+                    <LogIn className="mr-2 h-4 w-4" />
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/login">
+                  <Button>Get Started</Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -39,18 +87,31 @@ export default function HomePage() {
             AI extracts data, updates Google Sheets, and answers expense questions naturally.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/setup">
-              <Button size="lg" className="text-lg px-8 py-3">
-                <Bot className="mr-2 h-5 w-5" />
-                Create Your Bot
-              </Button>
-            </Link>
-            <Link href="/dashboard">
-              <Button size="lg" variant="outline" className="text-lg px-8 py-3">
-                <MessageSquare className="mr-2 h-5 w-5" />
-                View Dashboard
-              </Button>
-            </Link>
+            {user ? (
+              <>
+                <Link href="/dashboard">
+                  <Button size="lg" className="text-lg px-8 py-3">
+                    <MessageSquare className="mr-2 h-5 w-5" />
+                    Go to Dashboard
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button size="lg" className="text-lg px-8 py-3">
+                    <Bot className="mr-2 h-5 w-5" />
+                    Get Started Free
+                  </Button>
+                </Link>
+                <Link href="/login">
+                  <Button size="lg" variant="outline" className="text-lg px-8 py-3">
+                    <LogIn className="mr-2 h-5 w-5" />
+                    Sign In
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -115,20 +176,19 @@ export default function HomePage() {
                 </div>
                 <div className="flex justify-start">
                   <div className="bg-gray-100 text-gray-900 rounded-lg py-2 px-4 max-w-md">
-                    You spent $347.82 on groceries this month across 12 trips. 
-                    That's up 15% from last month. Your biggest grocery expense was 
-                    $89.45 at Whole Foods on March 15th.
+                    <Bot className="inline-block h-4 w-4 mr-2" />
+                    I'll analyze your receipt data and provide detailed spending insights with category breakdowns and trends.
                   </div>
                 </div>
                 <div className="flex justify-end">
                   <div className="bg-blue-500 text-white rounded-lg py-2 px-4 max-w-xs">
-                    "What about dining out?"
+                    "Show me my biggest expenses"
                   </div>
                 </div>
                 <div className="flex justify-start">
                   <div className="bg-gray-100 text-gray-900 rounded-lg py-2 px-4 max-w-md">
-                    You spent $189.32 on dining this month. Top restaurants: 
-                    Chipotle ($45.67), Local Bistro ($38.90), Pizza Palace ($28.75).
+                    <Bot className="inline-block h-4 w-4 mr-2" />
+                    I can identify your largest purchases and spending patterns from your uploaded receipts.
                   </div>
                 </div>
               </div>
@@ -175,12 +235,21 @@ export default function HomePage() {
           <p className="text-xl mb-8 text-blue-100">
             Set up your AI expense tracker in under 10 minutes
           </p>
-          <Link href="/setup">
-            <Button size="lg" variant="secondary" className="text-lg px-8 py-3">
-              <Bot className="mr-2 h-5 w-5" />
-              Start Free Setup
-            </Button>
-          </Link>
+          {user ? (
+            <Link href="/dashboard">
+              <Button size="lg" variant="secondary" className="text-lg px-8 py-3">
+                <MessageSquare className="mr-2 h-5 w-5" />
+                Go to Dashboard
+              </Button>
+            </Link>
+          ) : (
+            <Link href="/login">
+              <Button size="lg" variant="secondary" className="text-lg px-8 py-3">
+                <Bot className="mr-2 h-5 w-5" />
+                Start Free Setup
+              </Button>
+            </Link>
+          )}
         </div>
       </section>
 
