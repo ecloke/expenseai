@@ -180,14 +180,10 @@ User query: "${sanitizedQuery}"`;
       // Parse and structure the data
       const expenses = [];
       
-      // Skip header rows (row 1 has running totals, row 2 has headers, data starts from row 3)
-      for (let i = 2; i < sheetData.length; i++) {
+      // Skip header row (row 1), data starts from row 2
+      for (let i = 1; i < sheetData.length; i++) {
         const row = sheetData[i];
         if (row.length >= 6 && row[0] && row[5]) { // Date and Price required
-          const itemTotal = parseFloat(row[6]) || 0;
-          const serviceCharge = parseFloat(row[7]) || 0;
-          const tax = parseFloat(row[8]) || 0;
-          
           expenses.push({
             date: row[0],
             store: row[1] || '',
@@ -195,7 +191,7 @@ User query: "${sanitizedQuery}"`;
             category: row[3] || 'other',
             quantity: parseFloat(row[4]) || 1,
             price: parseFloat(row[5]) || 0,
-            total: itemTotal + serviceCharge + tax // Include service charge and tax in total
+            total: parseFloat(row[6]) || parseFloat(row[5]) || 0 // Use total column or fallback to price
           });
         }
       }
