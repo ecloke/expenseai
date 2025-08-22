@@ -30,9 +30,32 @@ class BotManager {
     console.log('🤖 Initializing Bot Manager...');
     
     try {
-      // In development/test mode, skip database initialization
+      // Test Supabase connection first
+      console.log('🔍 Testing Supabase connection...');
+      console.log(`📡 Supabase URL: ${process.env.SUPABASE_URL}`);
+      
+      // Try a simple query to test connection
+      const { data: testData, error: testError } = await this.supabase
+        .from('user_configs')
+        .select('count')
+        .limit(1);
+
+      if (testError) {
+        console.error(`❌ Supabase connection failed: ${testError.message}`);
+        console.error('🔧 This usually means:');
+        console.error('   1. Database schema not set up');
+        console.error('   2. Wrong Supabase URL/keys');
+        console.error('   3. RLS policies blocking access');
+        console.log('📝 Running in fallback mode without database');
+        console.log(`✅ Bot Manager initialized in fallback mode`);
+        return;
+      }
+
+      console.log('✅ Supabase connection successful');
+
+      // In development/test mode, skip bot initialization
       if (process.env.NODE_ENV === 'development' || !process.env.SUPABASE_URL?.includes('supabase.co')) {
-        console.log('📝 Running in development mode - skipping database initialization');
+        console.log('📝 Running in development mode - skipping bot initialization');
         console.log(`✅ Bot Manager initialized in development mode`);
         return;
       }
