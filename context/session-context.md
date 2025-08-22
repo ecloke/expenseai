@@ -15,8 +15,9 @@
 - **AI**: Google Gemini Vision (OCR) + Gemini Pro (NLP)
 - **Integrations**: Telegram Bot API + Google Sheets OAuth
 - **Security**: Row Level Security + Token encryption + OAuth 2.0
+- **Deployment**: Netlify (frontend) + Railway (backend) + Supabase (database)
 
-## Implementation Status (90% Complete)
+## Implementation Status - PRODUCTION DEPLOYED
 
 ### ✅ COMPLETED PHASES
 
@@ -24,7 +25,7 @@
 - ✅ Complete project structure (frontend/backend/docs)
 - ✅ Database schema with RLS policies for multi-tenant isolation
 - ✅ Environment configuration templates
-- ✅ SQL schema file: `database-schema.sql`
+- ✅ SQL schema file: `database-schema.sql` (deployed to production)
 
 #### Phase 2: Backend Services (100%)
 - ✅ **BotManager** (`backend/src/services/BotManager.js`): Multi-bot orchestration with error recovery
@@ -36,188 +37,189 @@
   - `bot.js` - Bot management endpoints
   - `user.js` - User configuration endpoints
 - ✅ **Utilities**: Encryption, validation, rate limiting (`backend/src/utils/`)
+- ✅ **Railway Deployment**: Backend deployed at `https://expenseai-production.up.railway.app`
 
-#### Phase 3: Frontend Setup Wizard (100%)
-- ✅ **Complete 3-step setup wizard** (`frontend/app/setup/page.tsx`)
-- ✅ **Telegram Bot Step** (`frontend/components/setup/telegram-bot-step.tsx`): Token validation with @BotFather integration
-- ✅ **Gemini API Step** (`frontend/components/setup/gemini-key-step.tsx`): Key validation and secure storage
-- ✅ **Google Sheets Step** (`frontend/components/setup/google-sheets-step.tsx`): OAuth flow with automatic sheet creation
-- ✅ **shadcn/ui Components**: Professional UI with responsive design
-- ✅ **Landing Page** (`frontend/app/page.tsx`): Marketing page with feature showcase
+#### Phase 3: Authentication & Security (100%)
+- ✅ **Supabase Authentication**: Complete email/password auth system
+- ✅ **Protected Routes**: Middleware prevents unauthorized access
+- ✅ **Login/Signup Pages**: Full authentication flow with validation
+- ✅ **Route Protection**: Dashboard and setup require authentication
+- ✅ **Session Management**: Proper auth state handling throughout app
+- ✅ **Security Best Practices**: No secrets in code, proper environment variables
 
-#### Phase 4: AI Intelligence (Backend 100%)
-- ✅ Receipt photo processing pipeline (Telegram → Gemini Vision → Sheets)
-- ✅ Natural language chat processing (User queries → Gemini Pro → Analytics)
-- ✅ Multi-user bot management with isolated data
+#### Phase 4: Frontend Core (100%)
+- ✅ **Landing Page** (`frontend/app/page.tsx`): Authentication-aware marketing page
+- ✅ **Dashboard** (`frontend/app/dashboard/page.tsx`): Real user data, no fake content
+- ✅ **Responsive Design**: Mobile-first with Tailwind CSS
+- ✅ **Real Data Integration**: Dashboard shows actual Supabase data
+- ✅ **User Experience**: Proper loading states, error handling, empty states
+- ✅ **Netlify Deployment**: Frontend deployed at `https://wodebi.netlify.app`
 
-### 🔄 CURRENT STATUS
+#### Phase 5: Production Deployment (100%)
+- ✅ **GitHub Repository**: Clean history, no exposed secrets
+- ✅ **Netlify Frontend**: Static export with environment variables
+- ✅ **Railway Backend**: Node.js deployment with database connection
+- ✅ **Supabase Database**: Production schema, RLS policies, authentication
+- ✅ **Environment Variables**: All services properly configured
+- ✅ **CORS Configuration**: Frontend-backend communication working
+- ✅ **Build Pipeline**: TypeScript compilation, import validation
 
-#### What's Working Now:
-1. **User Setup**: Complete 3-step wizard to configure bots
-2. **Receipt Processing**: AI-powered OCR with Google Sheets sync (backend ready)
-3. **Natural Language Chat**: Conversational expense analytics (backend ready)
-4. **Multi-tenant Security**: Encrypted storage, RLS policies
-5. **Production Architecture**: Scalable, secure, well-documented
+### 🚨 CRITICAL ISSUES DISCOVERED
 
-#### Recent Issues Resolved:
-- ✅ Fixed npm dependency issues in frontend package.json
-- ✅ Fixed Next.js client/server component errors
-- ✅ Removed problematic toast components temporarily
-- ✅ Created simplified landing page for testing
+#### Setup Wizard (BROKEN - 0% Functional)
+**Status**: UI mockup only, completely non-functional
 
-#### Current Frontend Status:
-- Landing page: ✅ Working
-- Setup wizard: ✅ UI complete, needs backend integration testing
-- Demo page: ✅ Available at `/demo`
+**Critical Problems**:
+- ❌ **No Form Validation**: Can click "Next" without entering any data
+- ❌ **No API Integration**: Inputs don't connect to backend or database
+- ❌ **No State Management**: Data isn't saved between steps
+- ❌ **No Telegram Validation**: Bot token not validated via Telegram API
+- ❌ **No Gemini Validation**: API key not tested against Gemini API
+- ❌ **No Google OAuth**: "Connect with Google" button does nothing
+- ❌ **No Database Persistence**: User config not saved to Supabase
+- ❌ **No Error Handling**: No feedback for invalid inputs or API failures
 
-### 🎯 REMAINING WORK (10%)
+**Required Implementation** (Per PRP):
+- Real-time form validation with loading states
+- Telegram bot token validation via getMe endpoint
+- Gemini API key validation with test requests
+- Google OAuth flow with callback handling
+- Database persistence to user_configs table
+- Error handling with user-friendly messages
+- Progress persistence in localStorage
+- Component separation: telegram-bot-step.tsx, gemini-key-step.tsx, google-sheets-step.tsx
 
-#### Phase 5: Dashboard & Monitoring (Pending)
-- User dashboard with expense analytics
-- Bot status monitoring
-- Activity logs and insights
+### 🔄 CURRENT PRODUCTION STATUS
 
-#### Phase 6: Testing & Validation (Pending)
-- Integration testing
-- Error scenario validation
-- Performance optimization
+#### What's Working in Production:
+1. **Authentication**: Users can signup/login at https://wodebi.netlify.app
+2. **Dashboard**: Shows real user data (empty state for new users)
+3. **Backend API**: All routes accessible at https://expenseai-production.up.railway.app
+4. **Database**: Supabase schema deployed and RLS working
+5. **Protected Routes**: Proper authentication enforcement
+6. **Responsive Design**: Works on desktop and mobile
 
-## File Structure
+#### What's Broken in Production:
+1. **Setup Wizard**: Completely non-functional (UI mockup only)
+2. **User Onboarding**: New users can't configure their bots
+3. **Integration Testing**: Can't test end-to-end flows without working setup
+
+#### Deployment Architecture (WORKING):
+- **Frontend**: https://wodebi.netlify.app (Netlify)
+- **Backend**: https://expenseai-production.up.railway.app (Railway)
+- **Database**: ***REMOVED*** (Supabase)
+- **Authentication**: Supabase Auth with email confirmation disabled
+- **Environment Variables**: Properly configured on all platforms
+
+## File Structure - PRODUCTION READY
 ```
 expense-tracker/
-├── frontend/ (Next.js 14)
+├── frontend/ (Next.js 14) - DEPLOYED ✅
 │   ├── app/
 │   │   ├── page.tsx                    # Landing page ✅
-│   │   ├── setup/page.tsx              # 3-step setup wizard ✅
-│   │   ├── demo/page.tsx               # Component showcase ✅
+│   │   ├── login/page.tsx              # Authentication ✅
+│   │   ├── dashboard/page.tsx          # Real user dashboard ✅
+│   │   ├── setup/page.tsx              # BROKEN - UI mockup only ❌
 │   │   └── layout.tsx                  # Root layout ✅
-│   ├── components/
-│   │   ├── setup/                      # Setup wizard steps ✅
-│   │   │   ├── telegram-bot-step.tsx   
-│   │   │   ├── gemini-key-step.tsx     
-│   │   │   └── google-sheets-step.tsx  
-│   │   └── ui/                         # shadcn/ui components ✅
-│   └── lib/
-│       ├── supabase.ts                 # Supabase client ✅
-│       └── utils.ts                    # Utility functions ✅
-├── backend/ (Express.js)
+│   ├── components/ui/                  # shadcn/ui components ✅
+│   ├── lib/
+│   │   ├── supabase.ts                 # Supabase client ✅
+│   │   └── utils.ts                    # Utility functions ✅
+│   └── middleware.ts                   # Route protection ✅
+├── backend/ (Express.js) - DEPLOYED ✅
 │   ├── src/
 │   │   ├── index.js                    # Main server ✅
 │   │   ├── services/                   # Core AI services ✅
-│   │   │   ├── BotManager.js          
-│   │   │   ├── ReceiptProcessor.js    
-│   │   │   ├── ChatProcessor.js       
-│   │   │   └── SheetsService.js       
 │   │   ├── routes/                     # API endpoints ✅
-│   │   │   ├── auth.js                
-│   │   │   ├── bot.js                 
-│   │   │   └── user.js                
 │   │   └── utils/                      # Utilities ✅
-│   │       ├── encryption.js          
-│   │       └── validation.js          
 │   ├── package.json                    # Dependencies ✅
 │   └── .env.example                    # Environment template ✅
-├── database-schema.sql                 # Complete DB schema ✅
-├── README.md                          # Comprehensive docs ✅
-├── QUICK-TEST.md                      # Testing guide ✅
-└── context/                           # Session context ✅
-    └── session-context.md             # This file
+├── database-schema.sql                 # DEPLOYED to Supabase ✅
+├── DEPLOYMENT_BEST_PRACTICES.md       # Lessons learned ✅
+└── context/session-context.md         # This file ✅
 ```
 
-## Key Architecture Decisions
+## Production Environment Configuration
 
-### Database Design
-- **Multi-tenant**: RLS policies isolate user data completely
-- **Encryption**: All sensitive data (API keys, tokens) encrypted at rest
-- **Audit Logs**: Receipt and chat processing logged for analytics
-
-### Security Implementation
-- **OAuth 2.0**: Google Sheets integration with refresh tokens
-- **Rate Limiting**: Per-user API call limits
-- **Input Validation**: Joi schemas for all endpoints
-- **Token Management**: Encrypted storage with automatic refresh
-
-### AI Processing Pipeline
-```
-Receipt Photo → Telegram Bot → Base64 Encoding → Gemini Vision → 
-Structured JSON → Validation → Google Sheets → User Confirmation
-```
-
-### Natural Language Processing
-```
-User Query → Gemini Pro Function Calling → Safe Sheet Queries → 
-Data Analysis → Conversational Response
-```
-
-## Environment Setup Required
-
-### Backend (.env)
+### Backend Environment (Railway) ✅
 ```env
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_ROLE_KEY=eyJ...
-GOOGLE_CLIENT_ID=123...apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=GOCSPX-...
-GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/google/callback
-FRONTEND_URL=http://localhost:3001
-ENCRYPTION_KEY=32-char-random-string
-NODE_ENV=development
+NODE_ENV=production
 PORT=3000
+FRONTEND_URL=https://wodebi.netlify.app
+SUPABASE_URL=***REMOVED***
+SUPABASE_ANON_KEY=[configured]
+SUPABASE_SERVICE_ROLE_KEY=[configured]
+GOOGLE_CLIENT_ID=[configured]
+GOOGLE_CLIENT_SECRET=[configured]
+GOOGLE_REDIRECT_URI=https://expenseai-production.up.railway.app/api/auth/google/callback
+GEMINI_API_KEY=[configured]
+ENCRYPTION_KEY=[configured]
+LOG_LEVEL=info
 ```
 
-### Frontend (.env.local)
+### Frontend Environment (Netlify) ✅
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-NEXT_PUBLIC_BACKEND_URL=http://localhost:3000
+NEXT_PUBLIC_SUPABASE_URL=***REMOVED***
+NEXT_PUBLIC_SUPABASE_ANON_KEY=[configured]
+NEXT_PUBLIC_API_URL=https://expenseai-production.up.railway.app
 ```
 
-## Testing Status
+### Database (Supabase) ✅
+- **Schema**: All tables created with RLS policies
+- **Authentication**: Email/password enabled, confirmation disabled
+- **Site URL**: https://wodebi.netlify.app configured
+- **Redirect URLs**: Netlify domain whitelisted
 
-### What Works Now:
-- ✅ Frontend UI/UX: http://localhost:3000 (landing page)
-- ✅ Setup wizard: http://localhost:3000/setup
-- ✅ Component demo: http://localhost:3000/demo
-- ✅ Backend API structure (needs environment setup for full testing)
+## Critical Next Steps
 
-### Testing Commands:
-```bash
-# Frontend
-cd frontend && npm install && npm run dev
+### Immediate Priority: Fix Setup Wizard
+**Status**: URGENT - Blocking all user onboarding
 
-# Backend (with environment setup)
-cd backend && npm install && npm run dev
+**Required Implementation**:
+1. **Form Validation**: Real-time validation for all inputs
+2. **API Integration**: Connect to backend endpoints
+3. **Telegram Validation**: Test bot token via Telegram API
+4. **Gemini Validation**: Test API key with Gemini API
+5. **Google OAuth**: Complete OAuth flow implementation
+6. **Database Persistence**: Save user config to Supabase
+7. **Error Handling**: User-friendly error messages
+8. **Component Separation**: Break into individual step components
 
-# API testing
-node backend/test-api.js
-```
+### Testing Priority
+Once setup wizard is functional:
+1. **End-to-End Testing**: Complete user flow from signup to bot usage
+2. **Integration Testing**: Telegram bot + Gemini AI + Google Sheets
+3. **Error Scenario Testing**: Invalid keys, API failures, network issues
+4. **Performance Testing**: Multi-user load testing
 
-## Next Steps Priority
+## Key Lessons Learned
 
-1. **Immediate**: Complete dashboard implementation
-2. **Integration**: Full end-to-end testing with real services
-3. **Polish**: Error handling and user experience improvements
-4. **Documentation**: API documentation and deployment guides
+### Deployment Best Practices
+- ✅ Always test builds locally before pushing
+- ✅ Fix all TypeScript errors before deployment
+- ✅ Verify all imports and dependencies
+- ✅ Use proper optional chaining and null checking
+- ✅ Document multiple build failure patterns to avoid repetition
 
-## Implementation Notes
+### Authentication Implementation
+- ✅ Supabase auth requires proper site URL configuration
+- ✅ Environment variables must use NEXT_PUBLIC_ prefix for frontend
+- ✅ RLS policies need careful design for multi-tenant security
+- ✅ Protected routes require middleware for proper enforcement
 
-### Known Working Patterns
-- Multi-step form with progress tracking
-- Real-time validation with user feedback
-- Responsive design with mobile-first approach
-- Server/client component separation in Next.js 14
+### Critical Oversights
+- ❌ Setup wizard was implemented as UI mockup without functionality
+- ❌ Failed to follow PRP specifications for component separation
+- ❌ No validation or API integration implemented
+- ❌ Assumed UI completion meant functional completion
 
-### Recent Solutions
-- Fixed Radix UI dependency issues by using minimal package set
-- Resolved Next.js useState server component errors with "use client" directive
-- Created fallback simple components for reliable testing
-
-## Context Commands
-
-- `/update-context` - Updates this context file with current session state
-- `/load-context` - Reads this file to restore full project understanding
+## Current Production URLs
+- **Frontend**: https://wodebi.netlify.app
+- **Backend**: https://expenseai-production.up.railway.app
+- **Database**: https://supabase.com/dashboard/project/***REMOVED***
 
 ---
-**Last Updated**: Current session
-**Completion**: ~90% (Core functionality complete, dashboard and testing remaining)
-**Status**: Ready for dashboard implementation or full integration testing
+**Last Updated**: Current session (Post-deployment)
+**Completion**: ~85% (Production deployed, but setup wizard completely broken)
+**Status**: URGENT - Setup wizard needs complete rebuild for functional user onboarding
+**Priority**: Fix setup wizard implementation to enable end-to-end testing
