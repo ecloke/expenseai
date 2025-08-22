@@ -14,6 +14,8 @@ import { Bot, Brain, FileSpreadsheet, Zap, Shield, MessageSquare } from 'lucide-
 export default function DemoPage() {
   const [currentStep, setCurrentStep] = useState(1)
   const [progress, setProgress] = useState(33)
+  const [botToken, setBotToken] = useState('')
+  const [botUsername, setBotUsername] = useState('')
 
   const handleNext = () => {
     if (currentStep < 3) {
@@ -27,6 +29,11 @@ export default function DemoPage() {
       setCurrentStep(currentStep - 1)
       setProgress((currentStep - 1) * 33.33)
     }
+  }
+
+  const handleValidationComplete = (isValid: boolean) => {
+    // Demo mode - just enable next step
+    console.log('Validation complete:', isValid)
   }
 
   return (
@@ -136,9 +143,36 @@ export default function DemoPage() {
 
             <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
               <CardContent className="pt-6">
-                {currentStep === 1 && <TelegramBotStep onNext={handleNext} onBack={handleBack} />}
+                {currentStep === 1 && (
+                  <TelegramBotStep 
+                    botToken={botToken}
+                    setBotToken={setBotToken}
+                    botUsername={botUsername}
+                    setBotUsername={setBotUsername}
+                    onValidationComplete={handleValidationComplete}
+                  />
+                )}
                 {currentStep === 2 && <GeminiKeyStep onNext={handleNext} onBack={handleBack} />}
                 {currentStep === 3 && <GoogleSheetsStep onNext={handleNext} onBack={handleBack} />}
+                
+                {/* Demo Navigation */}
+                <div className="flex gap-3 pt-6 border-t mt-6">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleBack}
+                    disabled={currentStep === 1}
+                    className="flex-1"
+                  >
+                    Back
+                  </Button>
+                  <Button 
+                    onClick={handleNext}
+                    disabled={currentStep === 3}
+                    className="flex-1"
+                  >
+                    Next
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
