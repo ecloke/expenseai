@@ -382,7 +382,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent Expenses or Setup Reminder */}
-        {stats?.recentExpenses.length > 0 ? (
+        {(stats?.recentExpenses?.length ?? 0) > 0 ? (
           <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm mb-8">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -393,7 +393,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {stats.recentExpenses.map((expense, index) => (
+                {stats?.recentExpenses?.map((expense, index) => (
                   <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center space-x-4">
                       <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
@@ -429,7 +429,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </div>
-                ))}
+                )) || []}
               </div>
             </CardContent>
           </Card>
