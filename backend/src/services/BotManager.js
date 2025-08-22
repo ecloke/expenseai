@@ -3,6 +3,7 @@ import { decrypt } from '../utils/encryption.js';
 import { checkRateLimit } from '../utils/validation.js';
 import ReceiptProcessor from './ReceiptProcessor.js';
 import ChatProcessor from './ChatProcessor.js';
+import https from 'https';
 
 /**
  * Multi-bot manager that maintains separate bot instances for each user
@@ -221,13 +222,20 @@ class BotManager {
         
         // Download file as buffer instead of saving to disk
         const fileUrl = `https://api.telegram.org/file/bot${bot.token}/${file.file_path}`;
-        const response = await fetch(fileUrl);
         
-        if (!response.ok) {
-          throw new Error(`Failed to download photo: ${response.statusText}`);
-        }
-        
-        const photoBuffer = Buffer.from(await response.arrayBuffer());
+        const photoBuffer = await new Promise((resolve, reject) => {
+          https.get(fileUrl, (response) => {
+            if (response.statusCode !== 200) {
+              reject(new Error(`Failed to download photo: ${response.statusCode}`));
+              return;
+            }
+            
+            const chunks = [];
+            response.on('data', (chunk) => chunks.push(chunk));
+            response.on('end', () => resolve(Buffer.concat(chunks)));
+            response.on('error', reject);
+          }).on('error', reject);
+        });
 
         // Step 2: Check Gemini API
         if (!config.gemini_api_key) {
