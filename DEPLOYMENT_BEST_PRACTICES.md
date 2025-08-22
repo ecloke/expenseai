@@ -52,6 +52,10 @@
 2. **Set frontend environment variables** with backend URLs
 3. **Test static generation** works with your framework configuration
 4. **Update CORS settings** on backend with real frontend domain
+5. **CRITICAL: Test build locally FIRST** - run `npm run build` before pushing
+6. **Check ALL imports and dependencies** - verify no missing packages
+7. **Fix TypeScript errors locally** - don't rely on Netlify to catch them
+8. **Validate component imports** - ensure all UI components exist
 
 ## 🔧 Environment Variable Management
 
@@ -130,16 +134,161 @@ NEXT_PUBLIC_API_URL=https://[actual-backend-domain]
 
 ## 🌐 Netlify-Specific Best Practices
 
-### Next.js Configuration
-- **Use `output: 'export'`** for static hosting
-- **Set `trailingSlash: true`** for proper routing
-- **Disable image optimization** with `unoptimized: true`
-- **Test build locally** before deploying
+### CRITICAL Pre-Deployment Checklist
+**ALWAYS complete this checklist BEFORE pushing to GitHub:**
 
-### Environment Variables
-- **Prefix with NEXT_PUBLIC_** for client-side access
-- **Never expose secret keys** to frontend
+1. **Local Build Test** - MANDATORY
+   ```bash
+   cd frontend && npm run build
+   ```
+   - Must pass without errors
+   - Fix ALL TypeScript errors locally first
+   - Address all import/dependency issues
+
+2. **Import Validation**
+   - Verify ALL icon imports from lucide-react are complete
+   - Check every component import path is correct
+   - Ensure all shadcn/ui components exist or create simple alternatives
+   - Never assume icons/components exist - explicitly check
+
+3. **TypeScript Strict Mode**
+   - Fix all optional chaining issues: `obj?.prop?.length ?? 0`
+   - Handle undefined arrays properly: `array?.map(...) || []`
+   - Use nullish coalescing for safe defaults
+   - Test with TypeScript strict mode enabled
+
+4. **Dependency Management**
+   - Avoid Radix UI components unless package.json includes them
+   - Create simple HTML alternatives for missing UI components
+   - Don't rely on external dependencies that aren't installed
+   - Use native HTML elements when possible (label, input, button)
+
+### Next.js Configuration for Netlify
+```javascript
+// next.config.js - EXACT configuration needed
+const nextConfig = {
+  output: 'export',           // Static export for Netlify
+  trailingSlash: true,        // Proper routing
+  images: {
+    unoptimized: true,        // Required for static export
+  },
+  env: {
+    // Only public environment variables
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  },
+}
+```
+
+### Common Netlify Build Failures & Solutions
+
+#### 1. Missing Icon Imports
+**Error**: `Cannot find name 'Receipt'`
+**Solution**: Add ALL used icons to import statement
+```javascript
+import { 
+  Bot, Brain, FileSpreadsheet, Receipt, // Add Receipt!
+  // ... all other icons used in component
+} from 'lucide-react'
+```
+
+#### 2. TypeScript Optional Chaining
+**Error**: `'stats.recentExpenses.length' is possibly 'undefined'`
+**Solution**: Proper null checking
+```javascript
+// Wrong
+{stats?.recentExpenses.length > 0 ? (
+
+// Correct  
+{(stats?.recentExpenses?.length ?? 0) > 0 ? (
+```
+
+#### 3. Missing UI Components
+**Error**: `Module not found: Can't resolve '@radix-ui/react-label'`
+**Solution**: Create simple HTML alternative
+```javascript
+// Instead of complex Radix UI component
+const Label = ({ className, ...props }) => (
+  <label className={cn("text-sm font-medium", className)} {...props} />
+)
+```
+
+#### 4. Environment Variable Access
+**Error**: `Missing Supabase environment variables`
+**Solution**: Only access env vars in client components with NEXT_PUBLIC_ prefix
+```javascript
+// Server-side - will fail in static export
+const url = process.env.SUPABASE_URL
+
+// Client-side - works in static export
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+```
+
+### Build Debugging Process
+When Netlify build fails:
+
+1. **Read the EXACT error message** - don't guess
+2. **Reproduce locally first**:
+   ```bash
+   cd frontend
+   rm -rf .next
+   npm run build
+   ```
+3. **Fix locally until build passes**
+4. **Test the specific error**:
+   - Missing imports: Check import statements
+   - TypeScript errors: Add proper type guards
+   - Missing files: Verify all referenced files exist
+5. **Only push after local build succeeds**
+
+### Environment Variables Management
+- **Set in Netlify Dashboard**: Site settings → Environment variables
+- **Use NEXT_PUBLIC_ prefix** for client-side variables
 - **Update after backend deployment** with real URLs
+- **Test variable injection** by checking build logs
+
+### Deployment Validation
+After successful Netlify build:
+1. **Test authentication flow** - signup/login
+2. **Verify protected routes** work correctly  
+3. **Check database connections** from frontend
+4. **Test responsive design** on mobile
+5. **Validate all navigation links**
+
+### Emergency Rollback Plan
+If deployment fails in production:
+1. **Use Netlify's deploy history** to rollback
+2. **Fix issues in separate branch** 
+3. **Test branch deploy** before merging to main
+4. **Never push fixes directly to main** without testing
+
+### The "Multiple Build Failures" Anti-Pattern
+**LESSON LEARNED**: Our deployment experienced 4+ consecutive build failures due to:
+1. Missing @radix-ui/react-label dependency
+2. TypeScript optional chaining error
+3. Missing Receipt icon import  
+4. Each fix pushed individually without comprehensive testing
+
+**PREVENTION STRATEGY**:
+```bash
+# ALWAYS run this complete check before ANY push
+cd frontend
+rm -rf .next node_modules/.cache
+npm install
+npm run build
+npm run lint
+npm run type-check  # if available
+```
+
+**Rule**: If build fails on Netlify more than ONCE, stop pushing individual fixes:
+1. Pull down the problematic code locally
+2. Run complete build pipeline locally
+3. Fix ALL errors in one comprehensive commit
+4. Test locally until 100% successful
+5. Then push single fix commit
+
+**Never push "quick fixes" hoping they'll work - always verify locally first.**
 
 ## 🔌 Google APIs Setup
 
