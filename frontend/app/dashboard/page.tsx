@@ -25,7 +25,8 @@ import {
   Settings,
   LogOut,
   Plus,
-  ExternalLink
+  ExternalLink,
+  Receipt
 } from 'lucide-react'
 
 interface UserConfig {
