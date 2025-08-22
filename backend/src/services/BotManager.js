@@ -218,7 +218,16 @@ class BotManager {
         const photos = msg.photo;
         const largestPhoto = photos[photos.length - 1];
         const file = await bot.getFile(largestPhoto.file_id);
-        const photoBuffer = await bot.downloadFile(file.file_id, './temp/');
+        
+        // Download file as buffer instead of saving to disk
+        const fileUrl = `https://api.telegram.org/file/bot${bot.token}/${file.file_path}`;
+        const response = await fetch(fileUrl);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to download photo: ${response.statusText}`);
+        }
+        
+        const photoBuffer = Buffer.from(await response.arrayBuffer());
 
         // Step 2: Check Gemini API
         if (!config.gemini_api_key) {
