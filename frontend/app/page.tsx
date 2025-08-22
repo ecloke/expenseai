@@ -1,0 +1,201 @@
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Bot, Receipt, MessageSquare, Smartphone, Zap, Shield } from 'lucide-react'
+
+export default function HomePage() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Header */}
+      <header className="border-b bg-white/80 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Receipt className="h-8 w-8 text-blue-600" />
+            <span className="text-2xl font-bold text-gray-900">ExpenseAI</span>
+          </div>
+          <div className="flex items-center space-x-4">
+            <Link href="/dashboard">
+              <Button variant="ghost">Dashboard</Button>
+            </Link>
+            <Link href="/logs">
+              <Button variant="ghost">Logs</Button>
+            </Link>
+            <Link href="/setup">
+              <Button>Get Started</Button>
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="container mx-auto px-4 py-16 text-center">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-5xl font-bold text-gray-900 mb-6">
+            Automate Your Expense Tracking with
+            <span className="text-blue-600 block">AI-Powered Telegram Bots</span>
+          </h1>
+          <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+            Simply photograph your receipts and chat with your personal bot. 
+            AI extracts data, updates Google Sheets, and answers expense questions naturally.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/setup">
+              <Button size="lg" className="text-lg px-8 py-3">
+                <Bot className="mr-2 h-5 w-5" />
+                Create Your Bot
+              </Button>
+            </Link>
+            <Link href="/dashboard">
+              <Button size="lg" variant="outline" className="text-lg px-8 py-3">
+                <MessageSquare className="mr-2 h-5 w-5" />
+                View Dashboard
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Grid */}
+      <section className="container mx-auto px-4 py-16">
+        <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
+          How It Works
+        </h2>
+        <div className="grid md:grid-cols-3 gap-8">
+          <Card className="text-center border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+            <CardHeader>
+              <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                <Smartphone className="h-8 w-8 text-blue-600" />
+              </div>
+              <CardTitle>📸 Snap & Send</CardTitle>
+              <CardDescription>
+                Take a photo of any receipt and send it to your personal Telegram bot
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card className="text-center border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+            <CardHeader>
+              <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <Zap className="h-8 w-8 text-green-600" />
+              </div>
+              <CardTitle>🤖 AI Processing</CardTitle>
+              <CardDescription>
+                Gemini Vision AI extracts store, items, prices, and categories automatically
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card className="text-center border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+            <CardHeader>
+              <div className="mx-auto w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
+                <Receipt className="h-8 w-8 text-purple-600" />
+              </div>
+              <CardTitle>📊 Auto-Update</CardTitle>
+              <CardDescription>
+                Data populates your Google Sheet instantly with perfect formatting
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
+      </section>
+
+      {/* Chat Example */}
+      <section className="container mx-auto px-4 py-16">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
+            Ask Questions Naturally
+          </h2>
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+            <CardContent className="p-8">
+              <div className="space-y-4">
+                <div className="flex justify-end">
+                  <div className="bg-blue-500 text-white rounded-lg py-2 px-4 max-w-xs">
+                    "How much did I spend on groceries this month?"
+                  </div>
+                </div>
+                <div className="flex justify-start">
+                  <div className="bg-gray-100 text-gray-900 rounded-lg py-2 px-4 max-w-md">
+                    You spent $347.82 on groceries this month across 12 trips. 
+                    That's up 15% from last month. Your biggest grocery expense was 
+                    $89.45 at Whole Foods on March 15th.
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <div className="bg-blue-500 text-white rounded-lg py-2 px-4 max-w-xs">
+                    "What about dining out?"
+                  </div>
+                </div>
+                <div className="flex justify-start">
+                  <div className="bg-gray-100 text-gray-900 rounded-lg py-2 px-4 max-w-md">
+                    You spent $189.32 on dining this month. Top restaurants: 
+                    Chipotle ($45.67), Local Bistro ($38.90), Pizza Palace ($28.75).
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* Benefits */}
+      <section className="container mx-auto px-4 py-16">
+        <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
+          Why Choose ExpenseAI?
+        </h2>
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="text-center">
+            <Shield className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+            <h3 className="font-semibold text-gray-900 mb-2">Secure & Private</h3>
+            <p className="text-gray-600 text-sm">Your data stays in your Google Sheets. End-to-end encryption.</p>
+          </div>
+          <div className="text-center">
+            <Zap className="h-12 w-12 text-green-600 mx-auto mb-4" />
+            <h3 className="font-semibold text-gray-900 mb-2">Lightning Fast</h3>
+            <p className="text-gray-600 text-sm">Process receipts in seconds. Get insights instantly.</p>
+          </div>
+          <div className="text-center">
+            <Bot className="h-12 w-12 text-purple-600 mx-auto mb-4" />
+            <h3 className="font-semibold text-gray-900 mb-2">Personal Bot</h3>
+            <p className="text-gray-600 text-sm">Your own Telegram bot that learns your spending patterns.</p>
+          </div>
+          <div className="text-center">
+            <MessageSquare className="h-12 w-12 text-orange-600 mx-auto mb-4" />
+            <h3 className="font-semibold text-gray-900 mb-2">Natural Language</h3>
+            <p className="text-gray-600 text-sm">Ask questions like you're talking to a friend.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="bg-blue-600 text-white py-16">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold mb-4">
+            Ready to Automate Your Expenses?
+          </h2>
+          <p className="text-xl mb-8 text-blue-100">
+            Set up your AI expense tracker in under 10 minutes
+          </p>
+          <Link href="/setup">
+            <Button size="lg" variant="secondary" className="text-lg px-8 py-3">
+              <Bot className="mr-2 h-5 w-5" />
+              Start Free Setup
+            </Button>
+          </Link>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-8">
+        <div className="container mx-auto px-4 text-center">
+          <div className="flex items-center justify-center space-x-2 mb-4">
+            <Receipt className="h-6 w-6 text-blue-400" />
+            <span className="text-xl font-bold">ExpenseAI</span>
+          </div>
+          <p className="text-gray-400">
+            Automate your expense tracking with AI-powered Telegram bots
+          </p>
+        </div>
+      </footer>
+    </div>
+  )
+}
