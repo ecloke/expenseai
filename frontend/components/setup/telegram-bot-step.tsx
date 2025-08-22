@@ -83,13 +83,46 @@ export default function TelegramBotStep({
           return
         }
 
-        // Success - save bot info
-        setBotUsername(botInfo.username)
-        setValidationResult({
-          isValid: true,
-          botInfo: botInfo
-        })
-        onValidationComplete(true)
+        // Success - save bot info to database
+        try {
+          console.log('API URL:', process.env.NEXT_PUBLIC_API_URL)
+          console.log('Saving bot config for user_id: temp-user-id')
+          const saveResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/bot/setup`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              user_id: 'temp-user-id', // TODO: Replace with actual user ID
+              bot_token: token.trim(),
+              bot_username: botInfo.username
+            }),
+          })
+
+          const saveData = await saveResponse.json()
+          console.log('Save response:', saveResponse.status, saveData)
+          
+          if (!saveResponse.ok) {
+            throw new Error(saveData.message || 'Failed to save bot configuration')
+          }
+
+          // Update local state only after successful database save
+          setBotUsername(botInfo.username)
+          setValidationResult({
+            isValid: true,
+            botInfo: botInfo
+          })
+          onValidationComplete(true)
+          
+        } catch (saveError) {
+          console.error('Error saving bot config:', saveError)
+          const errorMessage = saveError instanceof Error ? saveError.message : 'Unknown error'
+          setValidationResult({
+            isValid: false,
+            error: `Validation successful but failed to save: ${errorMessage}`
+          })
+          onValidationComplete(false)
+        }
 
       } else {
         setValidationResult({

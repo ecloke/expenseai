@@ -409,4 +409,38 @@ router.delete('/config/:user_id', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/bot/debug/:user_id
+ * Debug endpoint to check user config in database
+ */
+router.get('/debug/:user_id', async (req, res) => {
+  try {
+    const { user_id } = req.params;
+
+    const { data, error } = await req.supabase
+      .from('user_configs')
+      .select('*')
+      .eq('user_id', user_id)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      throw new Error(`Database query failed: ${error.message}`);
+    }
+
+    res.json({
+      success: true,
+      user_id,
+      config: data || null,
+      exists: !!data
+    });
+
+  } catch (error) {
+    console.error('Debug query error:', error);
+    res.status(500).json({ 
+      error: 'Debug query failed',
+      message: error.message 
+    });
+  }
+});
+
 export default router;
