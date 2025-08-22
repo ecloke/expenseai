@@ -414,15 +414,15 @@ class SheetsService {
       }
       
       if (needsSetup) {
-        // Set up fresh sheet with running total in row 1 and headers in row 2
+        // Set up fresh sheet with running totals in row 1 and headers in row 2
         const setupRows = [
-          ['Running Total:', '', '', '', '', '', '=SUM(G3:G1000)'], // Row 1: Running total
-          ['Date', 'Store', 'Item', 'Category', 'Quantity', 'Price', 'Total'] // Row 2: Headers
+          ['Running Total:', '=SUM(G3:G1000)', 'Service Charge:', '=SUM(H3:H1000)', 'Tax:', '=SUM(I3:I1000)', ''], // Row 1: Running totals
+          ['Date', 'Store', 'Item', 'Category', 'Quantity', 'Price', 'Total', 'Service Charge', 'Tax'] // Row 2: Headers with new columns
         ];
 
         await this.sheets.spreadsheets.values.update({
           spreadsheetId: sheetId,
-          range: `${sheetName}!A1:G2`,
+          range: `${sheetName}!A1:I2`,
           valueInputOption: 'USER_ENTERED',
           requestBody: {
             values: setupRows
@@ -440,7 +440,7 @@ class SheetsService {
                   startRowIndex: 1,
                   endRowIndex: 2,
                   startColumnIndex: 0,
-                  endColumnIndex: 7
+                  endColumnIndex: 9
                 },
                 cell: {
                   userEnteredFormat: {
@@ -484,7 +484,7 @@ class SheetsService {
       // Append rows starting from row 3 (after running total and headers)
       const response = await this.sheets.spreadsheets.values.append({
         spreadsheetId: sheetId,
-        range: `${sheetName}!A3:G`,
+        range: `${sheetName}!A3:I`,
         valueInputOption: 'USER_ENTERED',
         insertDataOption: 'INSERT_ROWS',
         requestBody: {

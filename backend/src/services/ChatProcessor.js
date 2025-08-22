@@ -95,16 +95,22 @@ class ChatProcessor {
         toolConfig: { functionCallingConfig: { mode: "ANY" } }
       });
 
+      // Get current Malaysia time for context
+      const malaysiaToday = new Date().toLocaleDateString("en-CA", {
+        timeZone: "Asia/Kuala_Lumpur"
+      });
+
       // System prompt with expense data context
       const systemPrompt = `You are an AI assistant that helps users analyze their expense data. 
 
-Current expense data summary:
+Current context:
+- Today's date (Malaysia time): ${malaysiaToday}
 - Total expenses: $${this.calculateTotal(expenseData)}
 - Number of transactions: ${expenseData.length}
 - Date range: ${this.getDateRange(expenseData)}
 - Categories: ${this.getCategories(expenseData).join(', ')}
 
-When users ask about their expenses, use the get_expense_data function to analyze the data and provide helpful insights. Always be conversational and include specific numbers and insights.
+When users ask about "today" or "this week", use Malaysia timezone (${malaysiaToday}). Always provide helpful insights with specific numbers.
 
 User query: "${sanitizedQuery}"`;
 
@@ -409,9 +415,21 @@ User query: "${sanitizedQuery}"`;
   getDateRange(expenses) {
     if (expenses.length === 0) return 'No expenses';
     
-    const dates = expenses.map(e => new Date(e.date)).sort();
-    const earliest = dates[0].toLocaleDateString();
-    const latest = dates[dates.length - 1].toLocaleDateString();
+    const validDates = expenses
+      .map(e => {
+        // Handle different date formats
+        if (e.date && e.date !== 'Invalid Date') {
+          return new Date(e.date);
+        }
+        return null;
+      })
+      .filter(date => date && !isNaN(date.getTime()))
+      .sort();
+    
+    if (validDates.length === 0) return 'No valid dates';
+    
+    const earliest = validDates[0].toLocaleDateString();
+    const latest = validDates[validDates.length - 1].toLocaleDateString();
     
     return `${earliest} to ${latest}`;
   }
