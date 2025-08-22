@@ -41,7 +41,7 @@ class ChatProcessor {
 
       this.genAI = new GoogleGenerativeAI(geminiApiKey);
       const model = this.genAI.getGenerativeModel({ 
-        model: "gemini-pro",
+        model: "gemini-1.5-flash",
         generationConfig: {
           temperature: 0.1,
           topP: 1,
