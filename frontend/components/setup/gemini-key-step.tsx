@@ -243,7 +243,8 @@ export default function GeminiKeyStep({ onNext, onBack }: GeminiKeyStepProps) {
                 Back
               </Button>
               <Button 
-                type="submit" 
+                type={isConfigured ? "button" : "submit"}
+                onClick={isConfigured ? handleContinue : undefined}
                 disabled={isValidating || (!apiKey && !isConfigured)}
                 className="flex-1"
               >
