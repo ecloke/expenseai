@@ -438,20 +438,26 @@ class BotManager {
    * Format receipt confirmation message
    */
   formatReceiptConfirmation(receiptData) {
+    // Escape special markdown characters
+    const escapeMarkdown = (text) => {
+      if (!text) return 'N/A';
+      return text.toString().replace(/[_*[\]()~`>#+=|{}.!-]/g, '\\$&');
+    };
+
     const itemsList = receiptData.items
-      .map(item => `• ${item.name}: $${item.price.toFixed(2)}`)
+      .map(item => `• ${escapeMarkdown(item.name)}: $${item.price.toFixed(2)}`)
       .join('\n');
 
-    return `✅ *Receipt processed successfully!*
+    return `✅ *Receipt processed successfully\\!*
 
-🏪 **Store:** ${receiptData.store_name}
-📅 **Date:** ${receiptData.date}
-💰 **Total:** $${receiptData.total.toFixed(2)}
+🏪 *Store:* ${escapeMarkdown(receiptData.store_name)}
+📅 *Date:* ${escapeMarkdown(receiptData.date)}
+💰 *Total:* $${receiptData.total.toFixed(2)}
 
-**Items:**
+*Items:*
 ${itemsList}
 
-Your expense has been added to your Google Sheet! 📊`;
+Your expense has been added to your Google Sheet\\! 📊`;
   }
 
   /**
