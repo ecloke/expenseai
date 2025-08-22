@@ -354,7 +354,7 @@ export default function GoogleSheetsStep({ onNext, onBack }: GoogleSheetsStepPro
         </Button>
         <Button 
           onClick={handleContinue}
-          disabled={!isConnected || (!sheetInfo && isConnected)}
+          disabled={!isConnected || !sheetInfo}
           className="flex-1"
         >
           {isConnected && sheetInfo ? 'Complete Setup' : 'Complete Connection'}

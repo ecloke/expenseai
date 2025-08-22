@@ -96,11 +96,39 @@ export default function SetupPage() {
     }
   }
 
-  const handleSetupComplete = () => {
-    toast({
-      title: "Setup Complete! 🎉",
-      description: "Your AI expense tracker is ready to use!",
-    })
+  const handleSetupComplete = async () => {
+    try {
+      // Start the Telegram bot for this user
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/bot/start`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: 'temp-user-id' // In production, this would be the actual user ID
+        }),
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Setup Complete! 🎉",
+          description: "Your AI expense tracker is ready! Your Telegram bot is now active.",
+        })
+      } else {
+        toast({
+          title: "Setup Complete! ⚠️",
+          description: "Setup finished but bot startup had issues. Check dashboard for details.",
+          variant: "destructive"
+        })
+      }
+    } catch (error) {
+      console.error('Error starting bot:', error)
+      toast({
+        title: "Setup Complete! ⚠️", 
+        description: "Setup finished but bot startup failed. You can start it manually from dashboard.",
+        variant: "destructive"
+      })
+    }
     
     // Clear setup progress
     localStorage.removeItem('setup-progress')
@@ -108,7 +136,7 @@ export default function SetupPage() {
     // Redirect to dashboard
     setTimeout(() => {
       router.push('/dashboard')
-    }, 2000)
+    }, 3000)
   }
 
   const progressPercentage = (currentStep / SETUP_STEPS.length) * 100
