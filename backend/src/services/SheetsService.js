@@ -399,10 +399,21 @@ class SheetsService {
         targetSheetId = existingSheet.properties.sheetId;
       }
 
-      // Check if sheet is empty or needs setup
-      const currentData = await this.getSheetData(sheetId, sheetName);
+      // Check if sheet needs setup (avoid the getSheetData fallback issue)
+      let needsSetup = false;
+      try {
+        const response = await this.sheets.spreadsheets.values.get({
+          spreadsheetId: sheetId,
+          range: `${sheetName}!A1:G2`
+        });
+        
+        const values = response.data.values || [];
+        needsSetup = values.length === 0 || !values[0] || values[0][0] !== 'Running Total:';
+      } catch (error) {
+        needsSetup = true;
+      }
       
-      if (currentData.length === 0) {
+      if (needsSetup) {
         // Set up fresh sheet with running total in row 1 and headers in row 2
         const setupRows = [
           ['Running Total:', '', '', '', '', '', '=SUM(G3:G1000)'], // Row 1: Running total

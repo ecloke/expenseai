@@ -47,6 +47,14 @@ class ReceiptProcessor {
         }
       };
 
+      // Get Malaysia time for proper date handling
+      const malaysiaTime = new Date().toLocaleString("en-CA", {
+        timeZone: "Asia/Kuala_Lumpur",
+        year: "numeric",
+        month: "2-digit", 
+        day: "2-digit"
+      });
+
       // Structured prompt for receipt extraction
       const prompt = `Analyze this receipt image and return ONLY valid JSON with the following structure:
 {
@@ -67,8 +75,10 @@ Rules:
 - Use logical categorization for items
 - If unclear, use reasonable defaults
 - Ensure all prices are numbers (not strings)
-- Date should be in YYYY-MM-DD format
-- If date is unclear, use today's date
+- Date should be in YYYY-MM-DD format, extracted exactly from the receipt
+- Look carefully for dates in format DD/MM/YYYY or DD-MM-YYYY and convert to YYYY-MM-DD
+- If date is unclear, use ${malaysiaTime}
+- Use Malaysia Kuala Lumpur timezone context
 - Extract ALL items visible on the receipt
 - Return ONLY the JSON object, no additional text`;
 
@@ -105,7 +115,22 @@ Rules:
       console.log(`✅ Receipt data validated: ${validatedData.items.length} items, total $${validatedData.total}`);
 
       // Save to Google Sheets
-      await this.saveToSheets(validatedData, userId, userConfig);
+      try {
+        console.log('🔄 Attempting to save to Google Sheets...');
+        await this.saveToSheets(validatedData, userId, userConfig);
+        console.log('✅ Successfully saved to Google Sheets');
+      } catch (sheetsError) {
+        console.error('❌ CRITICAL: Failed to save to Google Sheets:', sheetsError);
+        console.error('❌ Sheets error details:', {
+          message: sheetsError.message,
+          stack: sheetsError.stack,
+          userId,
+          hasAccessToken: !!userConfig.google_access_token,
+          hasSheetId: !!userConfig.google_sheet_id
+        });
+        // Don't throw - continue with processing but log the error
+        await this.logReceiptProcessing(userId, validatedData, 'partial_success', `Sheets save failed: ${sheetsError.message}`);
+      }
 
       // Log successful processing
       await this.logReceiptProcessing(userId, validatedData, 'success');

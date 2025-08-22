@@ -275,7 +275,7 @@ class BotManager {
         });
 
         // Complete success
-        const confirmationText = '✅ Receipt processed successfully!\n\n' + this.formatReceiptConfirmation(receiptData);
+        const confirmationText = this.formatReceiptConfirmation(receiptData);
         await bot.editMessageText(confirmationText, {
           chat_id: msg.chat.id,
           message_id: statusMsg.message_id,
