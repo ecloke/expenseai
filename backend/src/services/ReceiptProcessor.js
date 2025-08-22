@@ -36,7 +36,7 @@ class ReceiptProcessor {
       }
 
       this.genAI = new GoogleGenerativeAI(geminiApiKey);
-      const model = this.genAI.getGenerativeModel({ model: "gemini-pro-vision" });
+      const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
       // Convert image to base64
       const base64Image = imageBuffer.toString('base64');
@@ -95,13 +95,13 @@ Rules:
       }
 
       // Validate extracted data
-      const validation = validateInput(receiptData, receiptDataSchema);
-      if (!validation.isValid) {
-        console.error('Receipt data validation failed:', validation.error);
-        throw new Error(`Invalid receipt data: ${validation.error}`);
+      const validation = receiptDataSchema.validate(receiptData);
+      if (validation.error) {
+        console.error('Receipt data validation failed:', validation.error.details[0].message);
+        throw new Error(`Invalid receipt data: ${validation.error.details[0].message}`);
       }
 
-      const validatedData = validation.data;
+      const validatedData = validation.value;
       console.log(`✅ Receipt data validated: ${validatedData.items.length} items, total $${validatedData.total}`);
 
       // Save to Google Sheets

@@ -75,7 +75,7 @@ router.post('/gemini-api-key', async (req, res) => {
     try {
       const { GoogleGenerativeAI } = await import('@google/generative-ai');
       const genAI = new GoogleGenerativeAI(api_key);
-      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
       // Test with a simple prompt
       const result = await model.generateContent("Say 'API key is working' and nothing else.");
@@ -163,7 +163,7 @@ router.post('/test-gemini', async (req, res) => {
 
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     
     const result = await model.generateContent("Respond with exactly: 'Gemini API test successful'");
     const response = await result.response;
