@@ -114,27 +114,31 @@ export default function DashboardPage() {
       
       setUserConfig(config)
 
-      if (config) {
-        // Load bot session if bot is configured
-        if (config.telegram_bot_username) {
-          console.log('🤖 Loading bot session for user:', session.user.id)
-          const { data: botData, error: botError } = await supabase
-            .from('bot_sessions')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .single()
+      // Load bot session data
+      let botData = null
+      if (config?.telegram_bot_username) {
+        console.log('🤖 Loading bot session for user:', session.user.id)
+        const { data: sessionData, error: botError } = await supabase
+          .from('bot_sessions')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single()
 
-          console.log('🤖 Bot session result:', { botData, botError })
-          console.log('🤖 Bot session status:', {
-            isActive: botData?.is_active,
-            botUsername: botData?.bot_username,
-            lastActivity: botData?.last_activity
-          })
-          
-          setBotSession(botData)
-        } else {
-          console.log('⚠️ No telegram bot username in config, skipping bot session load')
-        }
+        console.log('🤖 Bot session result:', { sessionData, botError })
+        console.log('🤖 Bot session status:', {
+          isActive: sessionData?.is_active,
+          botUsername: sessionData?.bot_username,
+          lastActivity: sessionData?.last_activity
+        })
+        
+        botData = sessionData
+        setBotSession(sessionData)
+        console.log('🔧 Set botSession state to:', sessionData)
+      } else {
+        console.log('⚠️ No telegram bot username in config, skipping bot session load')
+      }
+
+      if (config) {
 
         // Load receipt logs for stats
         const { data: receipts } = await supabase
@@ -168,12 +172,13 @@ export default function DashboardPage() {
           botStatus: (() => {
             console.log('🎯 Bot Status Calculation:', {
               hasBotToken: !!config.telegram_bot_token,
-              botSessionExists: !!botSession,
-              isActive: botSession?.is_active,
-              isActiveType: typeof botSession?.is_active
+              botSessionExists: !!botData,
+              isActive: botData?.is_active,
+              isActiveType: typeof botData?.is_active,
+              botData: botData
             })
             const status = config.telegram_bot_token 
-              ? (botSession?.is_active ? 'active' : 'inactive')
+              ? (botData?.is_active ? 'active' : 'inactive')
               : 'not_configured'
             console.log('🎯 Final bot status:', status)
             return status
