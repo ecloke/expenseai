@@ -61,6 +61,8 @@ class ReceiptProcessor {
   "store_name": "string",
   "date": "YYYY-MM-DD",
   "total": number,
+  "service_charge": number,
+  "tax": number,
   "items": [
     {
       "name": "string", 
@@ -80,6 +82,8 @@ Rules:
 - If date is unclear, use ${malaysiaTime}
 - Use Malaysia Kuala Lumpur timezone context
 - Extract ALL items visible on the receipt
+- Look for service charge, service tax, GST, or similar fees (set to 0 if not found)
+- service_charge and tax should be numbers (0 if not present)
 - Return ONLY the JSON object, no additional text`;
 
       // Generate content with Gemini Vision
@@ -165,7 +169,7 @@ Rules:
       // Prepare rows for insertion (just the items, no headers or summary)
       const rows = [];
       
-      // Add each item as a row
+      // Add each item as a row (with service charge and tax columns)
       for (const item of receiptData.items) {
         rows.push([
           receiptData.date,
@@ -174,7 +178,9 @@ Rules:
           item.category,
           item.quantity,
           item.price,
-          item.price * item.quantity
+          item.price * item.quantity,
+          receiptData.service_charge || 0,
+          receiptData.tax || 0
         ]);
       }
 
