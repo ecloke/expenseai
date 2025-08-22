@@ -113,11 +113,10 @@ User query: "${sanitizedQuery}"`;
       const response = await result.response;
 
       // Check if function calling was used
-      const functionCalls = response.functionCalls();
+      const functionCall = response.functionCall();
       
-      if (functionCalls && functionCalls.length > 0) {
+      if (functionCall) {
         // Process function call
-        const functionCall = functionCalls[0];
         const queryResult = await this.executeExpenseQuery(functionCall.args, expenseData);
         
         // Send function result back to model
@@ -432,7 +431,7 @@ User query: "${sanitizedQuery}"`;
           user_id: userId,
           user_query: userQuery,
           sql_generated: sqlGenerated,
-          ai_response: aiResponse,
+          // ai_response: aiResponse, // Column doesn't exist in chat_logs table
           processing_status: status,
           error_message: errorMessage
         });
