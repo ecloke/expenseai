@@ -6,14 +6,14 @@ import { createSupabaseClient } from '@/lib/supabase'
 import { Progress } from '@/components/ui/progress'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Bot, Brain, FileSpreadsheet, CheckCircle, ArrowLeft } from 'lucide-react'
+import { Bot, Brain, CheckCircle, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
 
-// Import the functional step components
+// Import the functional step components (Google Sheets removed per enhancement)
 import TelegramBotStep from '@/components/setup/telegram-bot-step'
 import GeminiKeyStep from '@/components/setup/gemini-key-step'
-import GoogleSheetsStep from '@/components/setup/google-sheets-step'
+// GoogleSheetsStep removed - now using database storage
 
 export default function SetupPage() {
   const [currentStep, setCurrentStep] = useState(1)
@@ -45,16 +45,11 @@ export default function SetupPage() {
     },
     {
       id: 2,
-      title: 'AI Configuration',
+      title: 'AI Configuration', 
       description: 'Connect Gemini AI for receipt processing',
       icon: <Brain className="h-6 w-6" />,
     },
-    {
-      id: 3,
-      title: 'Google Sheets',
-      description: 'Connect your Google account for data storage',
-      icon: <FileSpreadsheet className="h-6 w-6" />,
-    },
+    // Google Sheets step removed - now using direct database storage
   ]
 
   // Load progress from localStorage on mount
@@ -134,8 +129,8 @@ export default function SetupPage() {
 
       if (response.ok) {
         toast({
-          title: "Setup Complete! 🎉",
-          description: "Your AI expense tracker is ready! Your Telegram bot is now active.",
+          title: "Setup Complete! 🎉", 
+          description: "Your enhanced expense tracker is ready! Now using database storage with instant commands.",
         })
       } else {
         toast({
@@ -182,9 +177,9 @@ export default function SetupPage() {
           <CardHeader>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <CardTitle className="text-2xl">Setup Your Expense Tracker</CardTitle>
+                <CardTitle className="text-2xl">Setup Your Enhanced Expense Tracker</CardTitle>
                 <CardDescription>
-                  Follow these steps to automate your expense tracking
+                  Simplified setup - now with database storage and instant commands (no Google Sheets needed!)
                 </CardDescription>
               </div>
               <Badge variant="secondary" className="text-sm">
@@ -196,7 +191,7 @@ export default function SetupPage() {
         </Card>
 
         {/* Steps Overview */}
-        <div className="grid md:grid-cols-3 gap-4 mb-8">
+        <div className="grid md:grid-cols-2 gap-4 mb-8">
           {SETUP_STEPS.map((step) => (
             <Card 
               key={step.id}
@@ -252,17 +247,12 @@ export default function SetupPage() {
 
             {currentStep === 2 && (
               <GeminiKeyStep
-                onNext={handleNext}
+                onNext={handleSetupComplete}
                 onBack={handleBack}
               />
             )}
 
-            {currentStep === 3 && (
-              <GoogleSheetsStep
-                onNext={handleNext}
-                onBack={handleBack}
-              />
-            )}
+            {/* Google Sheets step removed - now using database storage */}
 
             {/* Navigation for Step 1 only (other steps have built-in navigation) */}
             {currentStep === 1 && (

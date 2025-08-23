@@ -169,8 +169,8 @@ export default function GeminiKeyStep({ onNext, onBack }: GeminiKeyStepProps) {
             <ul className="text-sm text-gray-600 space-y-1">
               <li>📸 <strong>Receipt OCR:</strong> Extract store names, items, and prices from photos</li>
               <li>🏷️ <strong>Smart Categorization:</strong> Automatically categorize expenses (groceries, dining, etc.)</li>
-              <li>💬 <strong>Natural Language:</strong> Understand your expense questions and provide insights</li>
-              <li>📊 <strong>Data Formatting:</strong> Structure data perfectly for Google Sheets</li>
+              <li>💬 <strong>Command Responses:</strong> Only processes receipt images to save costs</li>
+              <li>📊 <strong>Data Storage:</strong> Structure data perfectly for database storage</li>
             </ul>
           </div>
         </CardContent>
