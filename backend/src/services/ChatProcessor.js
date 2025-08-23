@@ -181,17 +181,17 @@ User query: "${sanitizedQuery}"`;
       const expenses = [];
       
       // Skip header row (row 1), data starts from row 2
+      // New structure: Date | Store | Item | Category | Quantity | Total (6 columns)
       for (let i = 1; i < sheetData.length; i++) {
         const row = sheetData[i];
-        if (row.length >= 6 && row[0] && row[5]) { // Date and Price required
+        if (row.length >= 6 && row[0] && row[5]) { // Date and Total required
           expenses.push({
             date: row[0],
             store: row[1] || '',
             item: row[2] || '',
             category: row[3] || 'other',
             quantity: parseFloat(row[4]) || 1,
-            price: parseFloat(row[5]) || 0,
-            total: parseFloat(row[6]) || parseFloat(row[5]) || 0 // Use total column or fallback to price
+            total: parseFloat(row[5]) || 0  // Column 5 (F) is now Total
           });
         }
       }

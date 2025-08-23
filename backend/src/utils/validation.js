@@ -49,7 +49,7 @@ export const receiptDataSchema = Joi.object({
   items: Joi.array().items(
     Joi.object({
       name: Joi.string().min(1).max(100).required(),
-      price: Joi.number().positive().precision(2).required(),
+      total: Joi.number().positive().precision(2).required(),  // Changed from price to total
       quantity: Joi.number().integer().positive().default(1),
       category: Joi.string().valid(
         'groceries', 'dining', 'gas', 'pharmacy', 

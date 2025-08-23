@@ -67,7 +67,7 @@ class ReceiptProcessor {
   "items": [
     {
       "name": "string", 
-      "price": number,
+      "total": number,
       "quantity": number,
       "category": "groceries|dining|gas|pharmacy|retail|services|other"
     }
@@ -77,7 +77,9 @@ class ReceiptProcessor {
 Rules:
 - Use logical categorization for items
 - If unclear, use reasonable defaults
-- Ensure all prices are numbers (not strings)
+- For items, use "total" not "price" - this is the total amount for that line item (not unit price)
+- If quantity is 3 and total shown is 7.8, then total should be 7.8 (not 7.8/3 per unit)
+- Ensure all amounts are numbers (not strings)
 - Date should be in YYYY-MM-DD format, extracted exactly from the receipt
 - Look carefully for dates in format DD/MM/YYYY or DD-MM-YYYY and convert to YYYY-MM-DD
 - If date is unclear, use ${malaysiaTime}
@@ -172,16 +174,15 @@ Rules:
       // Prepare rows for insertion (items + service charge + tax as separate line items)
       const rows = [];
       
-      // Add each item as a row
+      // Add each item as a row (6 columns: Date, Store, Item, Category, Quantity, Total)
       for (const item of receiptData.items) {
         rows.push([
           receiptData.date,
           receiptData.store_name,
           item.name,
           item.category,
-          item.quantity,
-          item.price,
-          item.price * item.quantity
+          item.quantity || 1,
+          item.total || item.price || 0  // Use total from receipt (not calculated)
         ]);
       }
 
@@ -193,7 +194,6 @@ Rules:
           'Service Charge',
           'services',
           1,
-          receiptData.service_charge,
           receiptData.service_charge
         ]);
       }
@@ -206,7 +206,6 @@ Rules:
           'Tax',
           'services',
           1,
-          receiptData.tax,
           receiptData.tax
         ]);
       }
@@ -219,7 +218,6 @@ Rules:
           receiptData.discount < 0 ? 'Discount/Voucher' : 'Additional Charge',
           'services',
           1,
-          receiptData.discount,
           receiptData.discount
         ]);
       }
