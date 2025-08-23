@@ -189,7 +189,7 @@ class SheetsService {
    * @param {string} sheetName - Name of the sheet tab
    * @returns {boolean} - True if sheet is empty
    */
-  async isSheetEmpty(sheetId, sheetName = 'Expenses') {
+  async isSheetEmpty(sheetId, sheetName = 'AI Expense Tracker') {
     try {
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: sheetId,
@@ -215,7 +215,7 @@ class SheetsService {
    * @param {string} sheetName - Name of the sheet tab
    * @param {Array} rows - Array of row arrays to append
    */
-  async appendRows(sheetId, sheetName = 'Expenses', rows) {
+  async appendRows(sheetId, sheetName = 'AI Expense Tracker', rows) {
     try {
       console.log(`📝 Appending ${rows.length} rows to ${sheetName}`);
 
@@ -244,7 +244,7 @@ class SheetsService {
    * @param {string} sheetName - Name of the sheet tab
    * @returns {Array} - Array of row arrays
    */
-  async getSheetData(sheetId, sheetName = 'Expenses') {
+  async getSheetData(sheetId, sheetName = 'AI Expense Tracker') {
     try {
       console.log(`📖 Reading data from ${sheetName}`);
 
@@ -338,7 +338,7 @@ class SheetsService {
       const info = await this.getSheetInfo(sheetId);
       
       // Try to read a small range
-      await this.getSheetData(sheetId, 'Expenses');
+      await this.getSheetData(sheetId, 'AI Expense Tracker');
 
       return {
         success: true,
@@ -476,8 +476,15 @@ class SheetsService {
       return targetSheetId;
 
     } catch (error) {
-      console.error('Failed to ensure sheet setup:', error);
-      throw new Error('Failed to set up expense tracking sheet');
+      console.error('❌ DETAILED ERROR in ensureSheetSetup:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        code: error.code,
+        sheetId,
+        sheetName,
+        stack: error.stack
+      });
+      throw new Error(`Failed to set up expense tracking sheet: ${error.message}`);
     }
   }
 

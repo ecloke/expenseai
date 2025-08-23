@@ -215,8 +215,8 @@ router.post('/google/create-sheet', async (req, res) => {
 
     const sheetId = response.data.id;
 
-    // Set up expense sheet with headers
-    await sheetsService.createExpenseSheet(sheetId, 'Expenses');
+    // Set up expense sheet with headers (rename Sheet1 to AI Expense Tracker)
+    await sheetsService.ensureSheetSetup(sheetId, 'AI Expense Tracker');
 
     // Update user config with sheet ID
     const { error: updateError } = await req.supabase
