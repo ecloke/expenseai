@@ -49,11 +49,12 @@ class ChatProcessor {
         }
       });
 
+      // COMMENTED OUT - Google Sheets Integration
       // Initialize sheets service
-      await this.sheetsService.initializeForUser(userConfig);
+      // await this.sheetsService.initializeForUser(userConfig);
 
-      // Get expense data from Google Sheets
-      const expenseData = await this.getExpenseData(userConfig);
+      // Get expense data from database (replaces Google Sheets)
+      const expenseData = await this.getExpenseDataFromDatabase(userId);
 
       // Define function tools for query understanding
       const tools = [{
@@ -168,40 +169,70 @@ User query: "${sanitizedQuery}"`;
   }
 
   /**
-   * Get all expense data from user's Google Sheet
+   * Get all expense data from database (replaces Google Sheets)
    */
-  async getExpenseData(userConfig) {
+  async getExpenseDataFromDatabase(userId) {
     try {
-      const sheetData = await this.sheetsService.getSheetData(
-        userConfig.google_sheet_id,
-        'AI Expense Tracker'  // Use the correct sheet name
-      );
+      const { data, error } = await this.supabase
+        .from('expenses')
+        .select('*')
+        .eq('user_id', userId)
+        .order('receipt_date', { ascending: false });
 
-      // Parse and structure the data
-      const expenses = [];
-      
-      // Skip header row (row 1), data starts from row 2
-      // New structure: Date | Store | Item | Category | Quantity | Total (6 columns)
-      for (let i = 1; i < sheetData.length; i++) {
-        const row = sheetData[i];
-        if (row.length >= 6 && row[0] && row[5]) { // Date and Total required
-          expenses.push({
-            date: row[0],
-            store: row[1] || '',
-            item: row[2] || '',
-            category: row[3] || 'other',
-            quantity: parseFloat(row[4]) || 1,
-            total: parseFloat(row[5]) || 0  // Column 5 (F) is now Total
-          });
-        }
+      if (error) {
+        throw error;
       }
 
-      return expenses;
+      // Convert to format expected by existing analysis functions
+      return (data || []).map(expense => ({
+        date: expense.receipt_date,
+        store: expense.store_name,
+        category: expense.category,
+        total: parseFloat(expense.total_amount)
+      }));
+
     } catch (error) {
-      console.error('Failed to get expense data:', error);
+      console.error('Failed to get expense data from database:', error);
       return [];
     }
   }
+
+  /**
+   * COMMENTED OUT - Google Sheets Integration (preserved for future use)
+   * Get all expense data from user's Google Sheet
+   */
+  // async getExpenseData_DISABLED(userConfig) {
+  //   try {
+  //     const sheetData = await this.sheetsService.getSheetData(
+  //       userConfig.google_sheet_id,
+  //       'AI Expense Tracker'  // Use the correct sheet name
+  //     );
+
+  //     // Parse and structure the data
+  //     const expenses = [];
+      
+  //     // Skip header row (row 1), data starts from row 2
+  //     // New structure: Date | Store | Item | Category | Quantity | Total (6 columns)
+  //     for (let i = 1; i < sheetData.length; i++) {
+  //       const row = sheetData[i];
+  //       if (row.length >= 6 && row[0] && row[5]) { // Date and Total required
+  //         expenses.push({
+  //           date: row[0],
+  //           store: row[1] || '',
+  //           item: row[2] || '',
+  //           category: row[3] || 'other',
+  //           quantity: parseFloat(row[4]) || 1,
+  //           total: parseFloat(row[5]) || 0  // Column 5 (F) is now Total
+  //         });
+  //       }
+  //     }
+
+  //     return expenses;
+  //   } catch (error) {
+  //     console.error('Failed to get expense data:', error);
+  //     return [];
+  //   }
+  // }
 
   /**
    * Execute expense query based on function call parameters
