@@ -131,12 +131,12 @@ class SheetsService {
 
       const newSheetId = addSheetResponse.data.replies[0].addSheet.properties.sheetId;
 
-      // Add headers
-      const headers = ['Date', 'Store', 'Item', 'Category', 'Quantity', 'Price', 'Total'];
+      // Add headers  
+      const headers = ['Date', 'Store', 'Item', 'Category', 'Quantity', 'Total'];
       
       await this.sheets.spreadsheets.values.update({
         spreadsheetId: sheetId,
-        range: `${sheetName}!A1:G1`,
+        range: `${sheetName}!A1:F1`,
         valueInputOption: 'RAW',
         requestBody: {
           values: [headers]
@@ -154,7 +154,7 @@ class SheetsService {
                 startRowIndex: 0,
                 endRowIndex: 1,
                 startColumnIndex: 0,
-                endColumnIndex: 7
+                endColumnIndex: 6
               },
               cell: {
                 userEnteredFormat: {
@@ -221,7 +221,7 @@ class SheetsService {
 
       const response = await this.sheets.spreadsheets.values.append({
         spreadsheetId: sheetId,
-        range: `${sheetName}!A:G`,
+        range: `${sheetName}!A:F`,
         valueInputOption: 'USER_ENTERED',
         insertDataOption: 'INSERT_ROWS',
         requestBody: {
@@ -250,7 +250,7 @@ class SheetsService {
 
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: sheetId,
-        range: `${sheetName}!A:G`
+        range: `${sheetName}!A:F`
       });
 
       const values = response.data.values || [];
@@ -264,8 +264,8 @@ class SheetsService {
       // If sheet doesn't exist, try to create it
       if (error.code === 400) {
         console.log('Sheet not found, creating new expense sheet...');
-        await this.createExpenseSheet(sheetId, sheetName);
-        return [['Date', 'Store', 'Item', 'Category', 'Quantity', 'Price', 'Total']];
+        await this.ensureSheetSetup(sheetId, sheetName);
+        return [['Date', 'Store', 'Item', 'Category', 'Quantity', 'Total']];
       }
       
       throw new Error('Failed to read expense data from your sheet');

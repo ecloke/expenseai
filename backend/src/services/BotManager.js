@@ -445,7 +445,7 @@ class BotManager {
     };
 
     const itemsList = receiptData.items
-      .map(item => `• ${escapeMarkdown(item.name)}: $${item.price.toFixed(2)}`)
+      .map(item => `• ${escapeMarkdown(item.name)}: $${(item.total || item.price || 0).toFixed(2)}`)
       .join('\n');
 
     return `✅ *Receipt processed successfully\\!*
