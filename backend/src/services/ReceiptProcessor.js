@@ -81,9 +81,12 @@ Rules:
 - If quantity is 3 and total shown is 7.8, then total should be 7.8 (not 7.8/3 per unit)
 - Ensure all amounts are numbers (not strings)
 - Date should be in YYYY-MM-DD format, extracted exactly from the receipt
-- Look carefully for dates in format DD/MM/YYYY or DD-MM-YYYY and convert to YYYY-MM-DD
-- If date is unclear, use ${malaysiaTime}
+- Look carefully for dates in format DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY and convert to YYYY-MM-DD
+- Common Malaysian date formats: DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY
+- If multiple dates present, use the transaction/purchase date (not printed date)
+- If date is unclear or missing, use ${malaysiaTime}
 - Use Malaysia Kuala Lumpur timezone context
+- Date must be reasonable (not future dates, not older than 1 year)
 - Extract ALL items visible on the receipt
 - Look for service charge, service tax, GST, or similar fees (set to 0 if not found)
 - Look for discounts, vouchers, promotions (use negative number like -20.00, set to 0 if none)
@@ -113,6 +116,9 @@ Rules:
         throw new Error('Invalid response format from AI vision model');
       }
 
+      // Validate and fix date
+      receiptData = this.validateAndFixDate(receiptData, malaysiaTime.split('T')[0]);
+
       // Validate extracted data
       const validation = receiptDataSchema.validate(receiptData);
       if (validation.error) {
@@ -123,22 +129,34 @@ Rules:
       const validatedData = validation.value;
       console.log(`✅ Receipt data validated: ${validatedData.items.length} items, total $${validatedData.total}`);
 
+      // COMMENTED OUT - Google Sheets Integration (preserved for future use)
       // Save to Google Sheets
+      // try {
+      //   console.log('🔄 Attempting to save to Google Sheets...');
+      //   await this.saveToSheets(validatedData, userId, userConfig);
+      //   console.log('✅ Successfully saved to Google Sheets');
+      // } catch (sheetsError) {
+      //   console.error('❌ CRITICAL: Failed to save to Google Sheets:', sheetsError);
+      //   console.error('❌ Sheets error details:', {
+      //     message: sheetsError.message,
+      //     stack: sheetsError.stack,
+      //     userId,
+      //     hasAccessToken: !!userConfig.google_access_token,
+      //     hasSheetId: !!userConfig.google_sheet_id
+      //   });
+      //   // Don't throw - continue with processing but log the error
+      //   await this.logReceiptProcessing(userId, validatedData, 'partial_success', `Sheets save failed: ${sheetsError.message}`);
+      // }
+
+      // Save to database (replaces Google Sheets)
       try {
-        console.log('🔄 Attempting to save to Google Sheets...');
-        await this.saveToSheets(validatedData, userId, userConfig);
-        console.log('✅ Successfully saved to Google Sheets');
-      } catch (sheetsError) {
-        console.error('❌ CRITICAL: Failed to save to Google Sheets:', sheetsError);
-        console.error('❌ Sheets error details:', {
-          message: sheetsError.message,
-          stack: sheetsError.stack,
-          userId,
-          hasAccessToken: !!userConfig.google_access_token,
-          hasSheetId: !!userConfig.google_sheet_id
-        });
-        // Don't throw - continue with processing but log the error
-        await this.logReceiptProcessing(userId, validatedData, 'partial_success', `Sheets save failed: ${sheetsError.message}`);
+        console.log('💾 Saving to database...');
+        await this.saveToDatabase(validatedData, userId);
+        console.log('✅ Successfully saved to database');
+      } catch (dbError) {
+        console.error('❌ CRITICAL: Failed to save to database:', dbError);
+        await this.logReceiptProcessing(userId, validatedData, 'partial_success', `Database save failed: ${dbError.message}`);
+        throw new Error('Failed to save receipt data to database');
       }
 
       // Log successful processing
@@ -157,85 +175,218 @@ Rules:
   }
 
   /**
-   * Save receipt data to user's Google Sheet
+   * Save receipt data to database (replaces Google Sheets)
    */
-  async saveToSheets(receiptData, userId, userConfig) {
+  async saveToDatabase(receiptData, userId) {
     try {
-      console.log(`📊 Saving receipt data to Google Sheets for user ${userId}`);
+      console.log(`💾 Saving receipt data to database for user ${userId}`);
 
-      // Initialize sheets service with user's tokens
-      await this.sheetsService.initializeForUser(userConfig);
+      // Create expense record with actual receipt date
+      const expenseData = {
+        user_id: userId,
+        receipt_date: receiptData.date, // Use actual receipt date, not today's date
+        store_name: receiptData.store_name,
+        category: this.categorizeReceipt(receiptData), // Determine overall receipt category
+        total_amount: receiptData.total
+      };
 
-      const sheetName = 'AI Expense Tracker';
-      
-      // Ensure sheet exists and is properly set up
-      await this.sheetsService.ensureSheetSetup(userConfig.google_sheet_id, sheetName);
+      const { data, error } = await this.supabase
+        .from('expenses')
+        .insert(expenseData)
+        .select()
+        .single();
 
-      // Prepare rows for insertion (items + service charge + tax as separate line items)
-      const rows = [];
-      
-      // Add each item as a row (6 columns: Date, Store, Item, Category, Quantity, Total)
-      for (const item of receiptData.items) {
-        rows.push([
-          receiptData.date,
-          receiptData.store_name,
-          item.name,
-          item.category,
-          item.quantity || 1,
-          item.total || item.price || 0  // Use total from receipt (not calculated)
-        ]);
+      if (error) {
+        throw error;
       }
 
-      // Add service charge as a separate line item if it exists
-      if (receiptData.service_charge && receiptData.service_charge > 0) {
-        rows.push([
-          receiptData.date,
-          receiptData.store_name,
-          'Service Charge',
-          'services',
-          1,
-          receiptData.service_charge
-        ]);
-      }
-
-      // Add tax as a separate line item if it exists
-      if (receiptData.tax && receiptData.tax > 0) {
-        rows.push([
-          receiptData.date,
-          receiptData.store_name,
-          'Tax',
-          'services',
-          1,
-          receiptData.tax
-        ]);
-      }
-
-      // Add discount as a separate line item if it exists (negative amount)
-      if (receiptData.discount && receiptData.discount !== 0) {
-        rows.push([
-          receiptData.date,
-          receiptData.store_name,
-          receiptData.discount < 0 ? 'Discount/Voucher' : 'Additional Charge',
-          'services',
-          1,
-          receiptData.discount
-        ]);
-      }
-
-      // Append to sheet and update running total
-      await this.sheetsService.appendRowsAndUpdateTotal(
-        userConfig.google_sheet_id,
-        sheetName,
-        rows
-      );
-
-      console.log(`✅ Saved ${rows.length} rows to Google Sheets`);
+      console.log(`✅ Saved expense record: $${receiptData.total} at ${receiptData.store_name} on ${receiptData.date}`);
+      return data;
 
     } catch (error) {
-      console.error('Failed to save to Google Sheets:', error);
-      throw new Error('Failed to save receipt data to your Google Sheet');
+      console.error('Failed to save to database:', error);
+      throw new Error('Failed to save receipt data to database');
     }
   }
+
+  /**
+   * Categorize receipt based on items and store name
+   */
+  categorizeReceipt(receiptData) {
+    const items = receiptData.items || [];
+    const storeName = (receiptData.store_name || '').toLowerCase();
+    
+    // Count items by category
+    const categoryCount = {};
+    items.forEach(item => {
+      const category = item.category || 'other';
+      categoryCount[category] = (categoryCount[category] || 0) + 1;
+    });
+
+    // If we have items, use the most common category
+    if (Object.keys(categoryCount).length > 0) {
+      return Object.keys(categoryCount).reduce((a, b) => 
+        categoryCount[a] > categoryCount[b] ? a : b
+      );
+    }
+
+    // Fallback: categorize by store name
+    if (storeName.includes('restaurant') || storeName.includes('cafe') || 
+        storeName.includes('food') || storeName.includes('mcd') || 
+        storeName.includes('kfc') || storeName.includes('pizza')) {
+      return 'dining';
+    } else if (storeName.includes('grocery') || storeName.includes('mart') || 
+               storeName.includes('supermarket') || storeName.includes('tesco') || 
+               storeName.includes('giant')) {
+      return 'groceries';
+    } else if (storeName.includes('petrol') || storeName.includes('shell') || 
+               storeName.includes('petronas') || storeName.includes('gas')) {
+      return 'gas';
+    } else if (storeName.includes('pharmacy') || storeName.includes('guardian') || 
+               storeName.includes('watsons')) {
+      return 'pharmacy';
+    }
+
+    return 'other';
+  }
+
+  /**
+   * Validate and fix receipt date to ensure it's reasonable and properly formatted
+   */
+  validateAndFixDate(receiptData, fallbackDate) {
+    const originalDate = receiptData.date;
+    
+    try {
+      // If no date provided, use fallback
+      if (!originalDate) {
+        console.log('⚠️ No date found in receipt, using current date');
+        receiptData.date = fallbackDate;
+        return receiptData;
+      }
+
+      // Try to parse the date
+      const parsedDate = new Date(originalDate);
+      
+      // Check if date is valid
+      if (isNaN(parsedDate.getTime())) {
+        console.log(`⚠️ Invalid date format: ${originalDate}, using current date`);
+        receiptData.date = fallbackDate;
+        return receiptData;
+      }
+
+      // Check if date is reasonable (not future, not older than 2 years)
+      const today = new Date();
+      const twoYearsAgo = new Date();
+      twoYearsAgo.setFullYear(today.getFullYear() - 2);
+
+      if (parsedDate > today) {
+        console.log(`⚠️ Future date detected: ${originalDate}, using current date`);
+        receiptData.date = fallbackDate;
+        return receiptData;
+      }
+
+      if (parsedDate < twoYearsAgo) {
+        console.log(`⚠️ Date too old: ${originalDate}, using current date`);
+        receiptData.date = fallbackDate;
+        return receiptData;
+      }
+
+      // Ensure date is in YYYY-MM-DD format
+      const formattedDate = parsedDate.toISOString().split('T')[0];
+      receiptData.date = formattedDate;
+      
+      console.log(`📅 Receipt date validated: ${formattedDate}`);
+      return receiptData;
+
+    } catch (error) {
+      console.log(`⚠️ Error validating date ${originalDate}:`, error.message);
+      receiptData.date = fallbackDate;
+      return receiptData;
+    }
+  }
+
+  /**
+   * COMMENTED OUT - Google Sheets Integration (preserved for future use)
+   * Save receipt data to user's Google Sheet
+   */
+  // COMMENTED OUT - Google Sheets Integration (preserved for future use)
+  // async saveToSheets_DISABLED(receiptData, userId, userConfig) {
+  //   try {
+  //     console.log(`📊 Saving receipt data to Google Sheets for user ${userId}`);
+
+  //     // Initialize sheets service with user's tokens
+  //     await this.sheetsService.initializeForUser(userConfig);
+
+  //     const sheetName = 'AI Expense Tracker';
+      
+  //     // Ensure sheet exists and is properly set up
+  //     await this.sheetsService.ensureSheetSetup(userConfig.google_sheet_id, sheetName);
+
+  //     // Prepare rows for insertion (items + service charge + tax as separate line items)
+  //     const rows = [];
+      
+  //     // Add each item as a row (6 columns: Date, Store, Item, Category, Quantity, Total)
+  //     for (const item of receiptData.items) {
+  //       rows.push([
+  //         receiptData.date,
+  //         receiptData.store_name,
+  //         item.name,
+  //         item.category,
+  //         item.quantity || 1,
+  //         item.total || item.price || 0  // Use total from receipt (not calculated)
+  //       ]);
+  //     }
+
+  //     // Add service charge as a separate line item if it exists
+  //     if (receiptData.service_charge && receiptData.service_charge > 0) {
+  //       rows.push([
+  //         receiptData.date,
+  //         receiptData.store_name,
+  //         'Service Charge',
+  //         'services',
+  //         1,
+  //         receiptData.service_charge
+  //       ]);
+  //     }
+
+  //     // Add tax as a separate line item if it exists
+  //     if (receiptData.tax && receiptData.tax > 0) {
+  //       rows.push([
+  //         receiptData.date,
+  //         receiptData.store_name,
+  //         'Tax',
+  //         'services',
+  //         1,
+  //         receiptData.tax
+  //       ]);
+  //     }
+
+  //     // Add discount as a separate line item if it exists (negative amount)
+  //     if (receiptData.discount && receiptData.discount !== 0) {
+  //       rows.push([
+  //         receiptData.date,
+  //         receiptData.store_name,
+  //         receiptData.discount < 0 ? 'Discount/Voucher' : 'Additional Charge',
+  //         'services',
+  //         1,
+  //         receiptData.discount
+  //       ]);
+  //     }
+
+  //     // Append to sheet and update running total
+  //     await this.sheetsService.appendRowsAndUpdateTotal(
+  //       userConfig.google_sheet_id,
+  //       sheetName,
+  //       rows
+  //     );
+
+  //     console.log(`✅ Saved ${rows.length} rows to Google Sheets`);
+
+  //   } catch (error) {
+  //     console.error('Failed to save to Google Sheets:', error);
+  //     throw new Error('Failed to save receipt data to your Google Sheet');
+  //   }
+  // }
 
   /**
    * Log receipt processing for analytics and debugging

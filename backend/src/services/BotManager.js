@@ -3,6 +3,7 @@ import { decrypt } from '../utils/encryption.js';
 import { checkRateLimit } from '../utils/validation.js';
 import ReceiptProcessor from './ReceiptProcessor.js';
 import ChatProcessor from './ChatProcessor.js';
+import ExpenseService from './ExpenseService.js';
 import https from 'https';
 
 /**
@@ -15,6 +16,7 @@ class BotManager {
     this.bots = new Map(); // userId -> { bot, config, lastActivity }
     this.receiptProcessor = new ReceiptProcessor(supabase);
     this.chatProcessor = new ChatProcessor(supabase);
+    this.expenseService = new ExpenseService(supabase);
     this.rateLimitMap = new Map(); // For rate limiting per user
     this.isShuttingDown = false;
     
@@ -161,8 +163,8 @@ class BotManager {
       // Skip photo messages (handled separately)
       if (msg.photo) return;
 
-      // Process text message as chat query
-      const response = await this.chatProcessor.processQuery(msg.text, userId, config);
+      // Process text message as command (replaces AI chat processing)
+      const response = await this.handleTextCommand(msg.text, userId);
       
       const bot = this.bots.get(userId)?.bot;
       if (bot && response) {
@@ -300,6 +302,112 @@ class BotManager {
         await bot.sendMessage(msg.chat.id, '❌ Sorry, I couldn\'t process this receipt. Please try again with a clearer photo.');
       }
     }
+  }
+
+  /**
+   * Handle text commands (replaces AI chat processing to save tokens)
+   */
+  async handleTextCommand(text, userId) {
+    const command = text.trim().toLowerCase();
+
+    try {
+      switch (command) {
+        case '/start':
+          return this.getStartMessage();
+        
+        case '/help':
+          return this.getHelpMessage();
+        
+        case '/stats':
+          const stats = await this.expenseService.getMonthlyStats(userId);
+          return this.expenseService.formatMonthlyStats(stats);
+        
+        case '/today':
+          const todayExpenses = await this.expenseService.getTodayExpenses(userId);
+          return this.expenseService.formatExpenseSummary(todayExpenses, "Today's Expenses");
+        
+        case '/yesterday':
+          const yesterdayExpenses = await this.expenseService.getYesterdayExpenses(userId);
+          return this.expenseService.formatExpenseSummary(yesterdayExpenses, "Yesterday's Expenses");
+        
+        case '/week':
+          const weekExpenses = await this.expenseService.getWeekExpenses(userId);
+          return this.expenseService.formatExpenseSummary(weekExpenses, "This Week's Expenses");
+        
+        case '/month':
+          const monthExpenses = await this.expenseService.getMonthExpenses(userId);
+          return this.expenseService.formatExpenseSummary(monthExpenses, "This Month's Expenses");
+        
+        default:
+          return this.getUnknownCommandMessage();
+      }
+    } catch (error) {
+      console.error('Error handling command:', error);
+      return '❌ Sorry, I encountered an error processing your request. Please try again.';
+    }
+  }
+
+  /**
+   * Get start message with welcome and command list
+   */
+  getStartMessage() {
+    return `🎉 *Welcome to AI Expense Tracker!*
+
+I help you track expenses by processing receipt photos and answering questions about your spending.
+
+📸 *Send me a photo* of your receipt to get started!
+
+📋 *Available Commands:*
+• /help - Show this help message
+• /stats - Monthly spending overview
+• /today - Today's expenses
+• /yesterday - Yesterday's expenses
+• /week - This week's expenses
+• /month - This month's expenses
+
+💡 *Tip:* Upload receipt photos for automatic expense tracking!`;
+  }
+
+  /**
+   * Get help message
+   */
+  getHelpMessage() {
+    return `🤖 *AI Expense Tracker Commands*
+
+📸 *Photo Processing:*
+• Send receipt photos for automatic expense tracking
+• I'll extract store name, date, amount, and category
+
+📊 *Expense Queries:*
+• /stats - Quick monthly overview
+• /today - Today's total expenses
+• /yesterday - Yesterday's total expenses
+• /week - This week's total expenses
+• /month - This month's total expenses
+
+⚠️ *Important:* Only send photos of receipts or use the commands above. Other messages won't be processed to save AI costs.
+
+Need help? Contact your system administrator.`;
+  }
+
+  /**
+   * Get message for unknown commands
+   */
+  getUnknownCommandMessage() {
+    return `❓ *Unknown Command*
+
+I only understand specific commands to save AI processing costs.
+
+📋 *Available Commands:*
+• /start - Welcome message
+• /help - Show available commands
+• /stats - Monthly overview
+• /today - Today's expenses
+• /yesterday - Yesterday's expenses
+• /week - This week's expenses
+• /month - This month's expenses
+
+📸 Or send me a *receipt photo* for expense tracking!`;
   }
 
   /**
