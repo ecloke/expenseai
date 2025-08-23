@@ -68,3 +68,9 @@ context-engineering-intro/
 # API keys are stored in Railway environment variables
 # Never commit actual keys to repository
 
+telegram bot key: ***REMOVED***
+gemini api key: ***REMOVED***
+SUPABASE_URL="***REMOVED***"
+SUPABASE_ANON_KEY="***REMOVED***"
+SUPABASE_SERVICE_ROLE_KEY="***REMOVED***"
+

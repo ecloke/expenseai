@@ -152,28 +152,22 @@ export default function EnhancedDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
+    <div className="min-h-screen bg-gray-900">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Expense Dashboard</h1>
-            <p className="text-gray-600">Track and analyze your spending patterns</p>
+            <h1 className="text-3xl font-bold text-white">Expense Dashboard</h1>
+            <p className="text-gray-300">Track and analyze your spending patterns</p>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="outline" asChild>
-              <Link href="/dashboard">
-                <BarChart3 className="h-4 w-4 mr-2" />
-                Classic View
-              </Link>
-            </Button>
-            <Button variant="outline" asChild>
+            <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800" asChild>
               <Link href="/setup">
                 <Settings className="h-4 w-4 mr-2" />
                 Settings
               </Link>
             </Button>
-            <Button variant="outline" onClick={handleSignOut}>
+            <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800" onClick={handleSignOut}>
               <LogOut className="h-4 w-4 mr-2" />
               Sign Out
             </Button>
@@ -181,10 +175,10 @@ export default function EnhancedDashboard() {
         </div>
 
         {/* Bot Status */}
-        <Card className="mb-8">
+        <Card className="mb-8 bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bot className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Bot className="h-5 w-5 text-blue-400" />
               Bot Status
             </CardTitle>
           </CardHeader>
@@ -193,21 +187,23 @@ export default function EnhancedDashboard() {
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
                   {botSession?.is_active ? (
-                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <CheckCircle className="h-5 w-5 text-green-400" />
                   ) : (
-                    <AlertCircle className="h-5 w-5 text-orange-600" />
+                    <AlertCircle className="h-5 w-5 text-yellow-400" />
                   )}
-                  <span className="font-medium">
+                  <span className="font-medium text-gray-200">
                     @{userConfig.telegram_bot_username}
                   </span>
                 </div>
-                <Badge variant={botSession?.is_active ? "default" : "secondary"}>
+                <Badge variant={botSession?.is_active ? "default" : "secondary"} 
+                       className={botSession?.is_active ? "bg-green-600 hover:bg-green-700" : "bg-gray-600"}>
                   {botSession?.is_active ? "Online" : "Offline"}
                 </Badge>
               </div>
               <Button
                 variant="outline"
                 size="sm"
+                className="border-gray-600 text-gray-300 hover:bg-gray-700"
                 asChild
               >
                 <a 
@@ -224,53 +220,28 @@ export default function EnhancedDashboard() {
           </CardContent>
         </Card>
 
-        {/* Enhanced Features Alert */}
-        <Alert className="mb-8">
-          <Zap className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Enhanced Dashboard Features:</strong> This dashboard now uses database storage instead of Google Sheets 
-            for better performance. Your bot supports commands like /today, /week, /month for instant expense queries!
-          </AlertDescription>
-        </Alert>
 
         {/* Main Content */}
-        <Tabs defaultValue="analytics" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="analytics" className="flex items-center gap-2">
-              <PieChart className="h-4 w-4" />
-              Analytics
-            </TabsTrigger>
-            <TabsTrigger value="expenses" className="flex items-center gap-2">
-              <Receipt className="h-4 w-4" />
-              All Expenses
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="analytics" className="space-y-6">
+        <div className="space-y-8">
+          {/* Analytics Section */}
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+              <BarChart3 className="h-6 w-6 text-blue-400" />
+              Analytics Overview
+            </h2>
             <ExpenseCharts userId={user?.id} />
-          </TabsContent>
+          </div>
 
-          <TabsContent value="expenses" className="space-y-6">
+          {/* Expenses Table Section */}
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+              <Receipt className="h-6 w-6 text-green-400" />
+              Recent Transactions
+            </h2>
             <ExpenseList userId={user?.id} />
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
 
-        {/* Database Migration Notice */}
-        <Card className="mt-8 border-yellow-200 bg-yellow-50">
-          <CardHeader>
-            <CardTitle className="text-yellow-800">Database Migration Required</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                <strong>Manual Step Required:</strong> To see your expense data, run the SQL migration in your Supabase dashboard:
-                <br />
-                <code className="bg-gray-100 px-2 py-1 rounded text-sm">backend/migrations/add_expenses_table.sql</code>
-              </AlertDescription>
-            </Alert>
-          </CardContent>
-        </Card>
       </div>
     </div>
   )

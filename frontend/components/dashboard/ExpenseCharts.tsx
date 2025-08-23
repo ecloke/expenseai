@@ -181,9 +181,12 @@ export default function ExpenseCharts({ userId }: ExpenseChartsProps) {
 
   if (loading) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center">Loading expense data...</div>
+      <Card className="bg-gray-800 border-gray-700">
+        <CardContent className="p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-4"></div>
+            <div className="text-gray-300">Loading expense data...</div>
+          </div>
         </CardContent>
       </Card>
     )
@@ -191,9 +194,9 @@ export default function ExpenseCharts({ userId }: ExpenseChartsProps) {
 
   if (error) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center text-red-600">{error}</div>
+      <Card className="bg-gray-800 border-gray-700">
+        <CardContent className="p-8">
+          <div className="text-center text-red-400">{error}</div>
         </CardContent>
       </Card>
     )
@@ -213,45 +216,48 @@ export default function ExpenseCharts({ userId }: ExpenseChartsProps) {
     <div className="space-y-6">
       {/* Time Range Selector */}
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Expense Analytics</h2>
+        <h2 className="text-2xl font-bold text-white">Expense Analytics</h2>
         <Tabs value={timeRange} onValueChange={(value) => setTimeRange(value as any)}>
-          <TabsList>
-            <TabsTrigger value="week">This Week</TabsTrigger>
-            <TabsTrigger value="month">This Month</TabsTrigger>
-            <TabsTrigger value="all">All Time</TabsTrigger>
+          <TabsList className="bg-gray-800 border-gray-600">
+            <TabsTrigger value="week" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white">This Week</TabsTrigger>
+            <TabsTrigger value="month" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white">This Month</TabsTrigger>
+            <TabsTrigger value="all" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white">All Time</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="bg-gray-800 border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-gray-300">Total Spent</CardTitle>
+            <DollarSign className="h-4 w-4 text-green-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.total}</div>
+            <div className="text-3xl font-bold text-white">${stats.total}</div>
+            <p className="text-xs text-gray-400 mt-1">This {timeRange === 'week' ? 'week' : timeRange === 'month' ? 'month' : 'period'}</p>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Transactions</CardTitle>
-            <Receipt className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-gray-300">Transactions</CardTitle>
+            <Receipt className="h-4 w-4 text-blue-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.count}</div>
+            <div className="text-3xl font-bold text-white">{stats.count}</div>
+            <p className="text-xs text-gray-400 mt-1">Total receipts</p>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg per Transaction</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-gray-300">Avg per Transaction</CardTitle>
+            <TrendingUp className="h-4 w-4 text-purple-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.avgPerTransaction}</div>
+            <div className="text-3xl font-bold text-white">${stats.avgPerTransaction}</div>
+            <p className="text-xs text-gray-400 mt-1">Average spend</p>
           </CardContent>
         </Card>
       </div>
@@ -259,38 +265,39 @@ export default function ExpenseCharts({ userId }: ExpenseChartsProps) {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Daily Spending Bar Chart */}
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-white">
+              <BarChart3 className="h-5 w-5 text-blue-400" />
               Daily Spending
             </CardTitle>
-            <CardDescription>Your daily expense pattern</CardDescription>
+            <CardDescription className="text-gray-400">Your daily expense pattern</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={dailySpending}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="formatted_date" />
-                <YAxis />
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="formatted_date" stroke="#9CA3AF" />
+                <YAxis stroke="#9CA3AF" />
                 <Tooltip 
                   formatter={(value) => [`$${value}`, 'Amount']}
                   labelFormatter={(label) => `Date: ${label}`}
+                  contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px', color: '#F3F4F6' }}
                 />
-                <Bar dataKey="amount" fill="#8884d8" />
+                <Bar dataKey="amount" fill="#3B82F6" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
         {/* Category Pie Chart */}
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PieChartIcon className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-white">
+              <PieChartIcon className="h-5 w-5 text-green-400" />
               Category Breakdown
             </CardTitle>
-            <CardDescription>Spending by category</CardDescription>
+            <CardDescription className="text-gray-400">Spending by category</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -311,6 +318,7 @@ export default function ExpenseCharts({ userId }: ExpenseChartsProps) {
                 </Pie>
                 <Tooltip 
                   formatter={(value) => [`$${value}`, 'Amount']}
+                  contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px', color: '#F3F4F6' }}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -321,27 +329,27 @@ export default function ExpenseCharts({ userId }: ExpenseChartsProps) {
       {/* Category Details and Top Stores */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Category Details */}
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle>Category Details</CardTitle>
-            <CardDescription>Breakdown by category</CardDescription>
+            <CardTitle className="text-white">Category Details</CardTitle>
+            <CardDescription className="text-gray-400">Breakdown by category</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {categoryBreakdown.map((category, index) => (
-                <div key={category.category} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                <div key={category.category} className="flex items-center justify-between p-3 rounded-lg bg-gray-700/50">
+                  <div className="flex items-center gap-3">
                     <div 
-                      className="w-3 h-3 rounded-full" 
+                      className="w-4 h-4 rounded-full" 
                       style={{ backgroundColor: COLORS[index % COLORS.length] }}
                     />
-                    <span className="font-medium">
+                    <span className="font-medium text-gray-200">
                       {CATEGORY_EMOJIS[category.category]} {category.category}
                     </span>
                   </div>
                   <div className="text-right">
-                    <div className="font-semibold">${category.amount}</div>
-                    <div className="text-sm text-muted-foreground">{category.percentage}%</div>
+                    <div className="font-semibold text-white">${category.amount}</div>
+                    <div className="text-sm text-gray-400">{category.percentage}%</div>
                   </div>
                 </div>
               ))}
@@ -350,20 +358,20 @@ export default function ExpenseCharts({ userId }: ExpenseChartsProps) {
         </Card>
 
         {/* Top Stores */}
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle>Top Stores</CardTitle>
-            <CardDescription>Your most visited stores</CardDescription>
+            <CardTitle className="text-white">Top Stores</CardTitle>
+            <CardDescription className="text-gray-400">Your most visited stores</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {topStores.map((store, index) => (
-                <div key={store.store} className="flex items-center justify-between">
+                <div key={store.store} className="flex items-center justify-between p-3 rounded-lg bg-gray-700/50">
                   <div>
-                    <div className="font-medium">{store.store}</div>
-                    <div className="text-sm text-muted-foreground">{store.count} transactions</div>
+                    <div className="font-medium text-gray-200">{store.store}</div>
+                    <div className="text-sm text-gray-400">{store.count} transactions</div>
                   </div>
-                  <div className="font-semibold">${store.amount}</div>
+                  <div className="font-semibold text-white">${store.amount}</div>
                 </div>
               ))}
             </div>
