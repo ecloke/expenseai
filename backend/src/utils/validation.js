@@ -29,7 +29,7 @@ export const userConfigSchema = Joi.object({
   telegram_bot_token: telegramBotTokenSchema,
   gemini_api_key: geminiApiKeySchema,
   google_sheet_id: googleSheetIdSchema.optional(),
-  sheet_name: Joi.string().min(1).max(100).default('Expenses')
+  sheet_name: Joi.string().min(1).max(100).default('AI Expense Tracker')
 });
 
 // Chat query validation
