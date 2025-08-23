@@ -36,7 +36,7 @@ class ReceiptProcessor {
       }
 
       this.genAI = new GoogleGenerativeAI(geminiApiKey);
-      const model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+      const model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
 
       // Convert image to base64
       const base64Image = imageBuffer.toString('base64');
