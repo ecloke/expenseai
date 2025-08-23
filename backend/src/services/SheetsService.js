@@ -365,38 +365,49 @@ class SheetsService {
     try {
       console.log(`🔧 Setting up sheet: ${sheetName}`);
 
-      // Check if sheet exists
+      // Get spreadsheet info
       const spreadsheet = await this.sheets.spreadsheets.get({
         spreadsheetId: sheetId
       });
 
-      const existingSheet = spreadsheet.data.sheets.find(
-        sheet => sheet.properties.title === sheetName
+      // Find Sheet1 (default sheet) and rename it
+      const sheet1 = spreadsheet.data.sheets.find(
+        sheet => sheet.properties.title === 'Sheet1'
       );
 
       let targetSheetId;
 
-      if (!existingSheet) {
-        // Create new sheet
-        const addSheetResponse = await this.sheets.spreadsheets.batchUpdate({
+      if (sheet1) {
+        // Rename Sheet1 to AI Expense Tracker
+        targetSheetId = sheet1.properties.sheetId;
+        
+        await this.sheets.spreadsheets.batchUpdate({
           spreadsheetId: sheetId,
           requestBody: {
             requests: [{
-              addSheet: {
+              updateSheetProperties: {
                 properties: {
-                  title: sheetName,
-                  gridProperties: {
-                    rowCount: 1000,
-                    columnCount: 10
-                  }
-                }
+                  sheetId: targetSheetId,
+                  title: sheetName
+                },
+                fields: 'title'
               }
             }]
           }
         });
-        targetSheetId = addSheetResponse.data.replies[0].addSheet.properties.sheetId;
+        
+        console.log(`✅ Renamed Sheet1 to "${sheetName}"`);
       } else {
-        targetSheetId = existingSheet.properties.sheetId;
+        // Look for existing AI Expense Tracker sheet
+        const existingSheet = spreadsheet.data.sheets.find(
+          sheet => sheet.properties.title === sheetName
+        );
+        
+        if (existingSheet) {
+          targetSheetId = existingSheet.properties.sheetId;
+        } else {
+          throw new Error('No Sheet1 or AI Expense Tracker sheet found');
+        }
       }
 
       // Check if sheet needs setup (avoid the getSheetData fallback issue)
@@ -404,7 +415,7 @@ class SheetsService {
       try {
         const response = await this.sheets.spreadsheets.values.get({
           spreadsheetId: sheetId,
-          range: `${sheetName}!A1:G1`
+          range: `${sheetName}!A1:F1`
         });
         
         const values = response.data.values || [];
@@ -414,14 +425,14 @@ class SheetsService {
       }
       
       if (needsSetup) {
-        // Set up simple sheet with just headers in row 1
+        // Set up simple sheet with 6 columns (no Price column)
         const setupRows = [
-          ['Date', 'Store', 'Item', 'Category', 'Quantity', 'Price', 'Total'] // Row 1: Simple headers
+          ['Date', 'Store', 'Item', 'Category', 'Quantity', 'Total'] // Row 1: Simplified headers
         ];
 
         await this.sheets.spreadsheets.values.update({
           spreadsheetId: sheetId,
-          range: `${sheetName}!A1:G1`,
+          range: `${sheetName}!A1:F1`,
           valueInputOption: 'USER_ENTERED',
           requestBody: {
             values: setupRows
@@ -439,7 +450,7 @@ class SheetsService {
                   startRowIndex: 0,
                   endRowIndex: 1,
                   startColumnIndex: 0,
-                  endColumnIndex: 7
+                  endColumnIndex: 6
                 },
                 cell: {
                   userEnteredFormat: {
@@ -483,7 +494,7 @@ class SheetsService {
       // Append rows starting from row 2 (after headers)
       const response = await this.sheets.spreadsheets.values.append({
         spreadsheetId: sheetId,
-        range: `${sheetName}!A2:G`,
+        range: `${sheetName}!A2:F`,
         valueInputOption: 'USER_ENTERED',
         insertDataOption: 'INSERT_ROWS',
         requestBody: {
