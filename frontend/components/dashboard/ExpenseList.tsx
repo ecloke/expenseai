@@ -113,13 +113,13 @@ export default function ExpenseList({ userId }: ExpenseListProps) {
   }
 
   return (
-    <Card>
+    <Card className="bg-gray-800 border-gray-700">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Calendar className="h-5 w-5" />
+        <CardTitle className="flex items-center gap-2 text-white">
+          <Calendar className="h-5 w-5 text-blue-400" />
           Recent Expenses
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-gray-400">
           All your expense transactions {totalCount > 0 && `(${totalCount} total)`}
         </CardDescription>
       </CardHeader>
@@ -132,59 +132,59 @@ export default function ExpenseList({ userId }: ExpenseListProps) {
               placeholder="Search by store name or category..."
               value={searchTerm}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="pl-10"
+              className="pl-10 bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:bg-gray-600"
             />
           </div>
         </div>
 
         {loading ? (
-          <div className="text-center py-8">Loading expenses...</div>
+          <div className="text-center py-8 text-gray-300">Loading expenses...</div>
         ) : error ? (
-          <div className="text-center py-8 text-red-600">{error}</div>
+          <div className="text-center py-8 text-red-400">{error}</div>
         ) : expenses.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-400">
             {searchTerm ? 'No expenses found matching your search.' : 'No expenses found.'}
           </div>
         ) : (
           <>
             {/* Expenses Table */}
-            <div className="rounded-md border">
+            <div className="rounded-md border border-gray-700 bg-gray-700/50">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Store</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
+                  <TableRow className="border-gray-600 hover:bg-gray-700/50">
+                    <TableHead className="text-gray-300">Date</TableHead>
+                    <TableHead className="text-gray-300">Store</TableHead>
+                    <TableHead className="text-gray-300">Category</TableHead>
+                    <TableHead className="text-right text-gray-300">Amount</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {expenses.map((expense) => (
-                    <TableRow key={expense.id}>
+                    <TableRow key={expense.id} className="border-gray-600 hover:bg-gray-600/50">
                       <TableCell>
-                        <div className="font-medium">
+                        <div className="font-medium text-gray-200">
                           {format(new Date(expense.receipt_date), 'MMM dd, yyyy')}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-gray-400">
                           {format(new Date(expense.created_at), 'h:mm a')}
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Store className="h-4 w-4 text-gray-400" />
-                          <span className="font-medium">{expense.store_name}</span>
+                          <span className="font-medium text-gray-200">{expense.store_name}</span>
                         </div>
                       </TableCell>
                       <TableCell>
                         <Badge 
                           variant="secondary" 
-                          className={CATEGORY_COLORS[expense.category] || CATEGORY_COLORS.other}
+                          className="bg-gray-600 text-gray-200 border-gray-500"
                         >
                           {CATEGORY_EMOJIS[expense.category]} {expense.category}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <span className="font-semibold text-lg">
+                        <span className="font-semibold text-lg text-green-400">
                           ${parseFloat(expense.total_amount.toString()).toFixed(2)}
                         </span>
                       </TableCell>
@@ -197,7 +197,7 @@ export default function ExpenseList({ userId }: ExpenseListProps) {
             {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-4">
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-gray-400">
                   Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} expenses
                 </div>
                 <div className="flex items-center space-x-2">
@@ -206,6 +206,7 @@ export default function ExpenseList({ userId }: ExpenseListProps) {
                     size="sm"
                     onClick={() => goToPage(currentPage - 1)}
                     disabled={currentPage === 1}
+                    className="border-gray-600 text-gray-300 hover:bg-gray-700"
                   >
                     <ChevronLeft className="h-4 w-4" />
                     Previous
@@ -222,7 +223,9 @@ export default function ExpenseList({ userId }: ExpenseListProps) {
                           variant={pageNum === currentPage ? "default" : "outline"}
                           size="sm"
                           onClick={() => goToPage(pageNum)}
-                          className="w-8 h-8 p-0"
+                          className={pageNum === currentPage ? 
+                            "w-8 h-8 p-0 bg-blue-600 hover:bg-blue-700" : 
+                            "w-8 h-8 p-0 border-gray-600 text-gray-300 hover:bg-gray-700"}
                         >
                           {pageNum}
                         </Button>
@@ -235,6 +238,7 @@ export default function ExpenseList({ userId }: ExpenseListProps) {
                     size="sm"
                     onClick={() => goToPage(currentPage + 1)}
                     disabled={currentPage === totalPages}
+                    className="border-gray-600 text-gray-300 hover:bg-gray-700"
                   >
                     Next
                     <ChevronRight className="h-4 w-4" />
