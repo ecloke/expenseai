@@ -583,7 +583,7 @@ The expense has been saved to your account.`;
       });
     }
 
-    return { text: message, chartUrl: null };
+    return message;
   }
 
   /**
