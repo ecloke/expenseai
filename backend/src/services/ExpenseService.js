@@ -181,6 +181,7 @@ class ExpenseService {
       pharmacy: '💊',
       retail: '🛍️',
       services: '🔧',
+      entertainment: '🎬',
       other: '📦'
     };
     return emojis[category] || '📦';
@@ -306,6 +307,7 @@ class ExpenseService {
       { value: 'pharmacy', label: '💊 Pharmacy', emoji: '💊' },
       { value: 'retail', label: '🛍️ Retail', emoji: '🛍️' },
       { value: 'services', label: '🔧 Services', emoji: '🔧' },
+      { value: 'entertainment', label: '🎬 Entertainment', emoji: '🎬' },
       { value: 'other', label: '📦 Other', emoji: '📦' }
     ];
   }

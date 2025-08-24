@@ -27,7 +27,7 @@ export default function LoginPage() {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -35,7 +35,14 @@ export default function LoginPage() {
           }
         })
         if (error) throw error
-        setError('Check your email for verification link!')
+        
+        // Check if email confirmation is disabled (user is immediately confirmed)
+        if (data.user && data.user.email_confirmed_at) {
+          router.push('/dashboard')
+        } else if (data.user) {
+          // User created but needs email confirmation
+          router.push('/dashboard') // Redirect anyway - they can use the app
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -52,18 +59,18 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <Receipt className="h-8 w-8 text-blue-600" />
-            <span className="text-2xl font-bold text-gray-900">ExpenseAI</span>
+            <Receipt className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+            <span className="text-2xl font-bold text-gray-900 dark:text-white">ExpenseAI</span>
           </div>
-          <p className="text-gray-600">AI-powered expense tracking with Telegram bots</p>
+          <p className="text-gray-600 dark:text-gray-300">AI-powered expense tracking with Telegram bots</p>
         </div>
 
-        <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+        <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">
               {isSignUp ? 'Create Account' : 'Welcome Back'}
@@ -133,7 +140,7 @@ export default function LoginPage() {
                   setIsSignUp(!isSignUp)
                   setError('')
                 }}
-                className="text-blue-600 hover:text-blue-800 font-medium"
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
               >
                 {isSignUp 
                   ? 'Already have an account? Sign in' 
