@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { ChevronLeft, ChevronRight, Search, Calendar, Store, Filter, Download } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Search, Calendar, Store, Filter, Download, Receipt } from 'lucide-react'
 import { format, subDays, startOfMonth, endOfMonth } from 'date-fns'
 
 interface Expense {
