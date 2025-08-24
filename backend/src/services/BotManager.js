@@ -835,6 +835,8 @@ I only understand specific commands to save AI processing costs.
    * Add a new bot for a user (called when user completes setup)
    */
   async addUserBot(userId) {
+    console.log(`🔄 Adding/restarting bot for user ${userId}`);
+    
     const { data: config } = await this.supabase
       .from('user_configs')
       .select('*')
@@ -842,7 +844,16 @@ I only understand specific commands to save AI processing costs.
       .single();
 
     if (config && config.telegram_bot_token) {
+      // Force remove any existing bot first
+      await this.removeUserBot(userId);
+      
+      // Wait a moment before creating new bot
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       await this.createUserBot(config);
+      console.log(`✅ Bot restarted successfully for user ${userId}`);
+    } else {
+      console.log(`❌ No valid config found for user ${userId}`);
     }
   }
 
