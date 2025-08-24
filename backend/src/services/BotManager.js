@@ -4,6 +4,9 @@ import { checkRateLimit } from '../utils/validation.js';
 import ReceiptProcessor from './ReceiptProcessor.js';
 import ChatProcessor from './ChatProcessor.js';
 import ExpenseService from './ExpenseService.js';
+import ConversationStateManager from '../utils/conversationState.js';
+import { parseMonthRange, isValidDateFormat, isValidAmount, formatDateRange } from '../utils/dateUtils.js';
+import { generateCategoryPieChart } from '../utils/chartGenerator.js';
 import https from 'https';
 
 /**
@@ -17,6 +20,7 @@ class BotManager {
     this.receiptProcessor = new ReceiptProcessor(supabase);
     this.chatProcessor = new ChatProcessor(supabase);
     this.expenseService = new ExpenseService(supabase);
+    this.conversationManager = new ConversationStateManager();
     this.rateLimitMap = new Map(); // For rate limiting per user
     this.isShuttingDown = false;
     
@@ -308,9 +312,19 @@ class BotManager {
    * Handle text commands (replaces AI chat processing to save tokens)
    */
   async handleTextCommand(text, userId) {
-    const command = text.trim().toLowerCase();
+    const trimmedText = text.trim();
+    const parts = trimmedText.split(' ');
+    const command = parts[0].toLowerCase();
+    const params = parts.slice(1);
 
     try {
+      // Check if user is in conversation
+      const conversation = this.conversationManager.getConversation(userId);
+      if (conversation) {
+        return this.handleConversationInput(userId, trimmedText, conversation);
+      }
+
+      // Handle regular commands
       switch (command) {
         case '/start':
           return this.getStartMessage();
@@ -338,6 +352,12 @@ class BotManager {
           const monthExpenses = await this.expenseService.getMonthExpenses(userId);
           return this.expenseService.formatExpenseSummary(monthExpenses, "This Month's Expenses");
         
+        case '/summary':
+          return this.handleSummaryCommand(userId, params);
+        
+        case '/create':
+          return this.handleCreateCommand(userId);
+        
         default:
           return this.getUnknownCommandMessage();
       }
@@ -348,6 +368,248 @@ class BotManager {
   }
 
   /**
+   * Handle /summary command with parameters
+   */
+  async handleSummaryCommand(userId, params) {
+    if (params.length === 0) {
+      return this.getSummaryUsageMessage();
+    }
+
+    const period = params.join(' ').toLowerCase();
+    let expenses = [];
+    let title = '';
+
+    try {
+      switch (period) {
+        case 'day':
+          expenses = await this.expenseService.getTodayExpenses(userId);
+          title = "Today's Summary";
+          break;
+        
+        case 'week':
+          expenses = await this.expenseService.getWeekExpenses(userId);
+          title = "This Week's Summary";
+          break;
+        
+        case 'month':
+          expenses = await this.expenseService.getMonthExpenses(userId);
+          title = "This Month's Summary";
+          break;
+        
+        default:
+          // Try to parse as month range
+          const range = parseMonthRange(period);
+          if (range) {
+            expenses = await this.expenseService.getCustomRangeExpenses(userId, range.startDate, range.endDate);
+            title = `${formatDateRange(range)} Summary`;
+          } else {
+            return this.getSummaryUsageMessage();
+          }
+      }
+
+      return this.formatEnhancedSummary(expenses, title, userId);
+    } catch (error) {
+      console.error('Error in summary command:', error);
+      return '❌ Sorry, I encountered an error generating your summary. Please try again.';
+    }
+  }
+
+  /**
+   * Handle /create command - start expense creation flow
+   */
+  async handleCreateCommand(userId) {
+    this.conversationManager.startConversation(userId, 'create_expense');
+    return `💰 *Create New Expense*
+
+Please enter the receipt date in YYYY-MM-DD format.
+
+📅 *Examples:*
+• 2025-01-15
+• 2025-08-24
+
+Type the date or /cancel to stop:`;
+  }
+
+  /**
+   * Handle conversation input for multi-step commands
+   */
+  async handleConversationInput(userId, input, conversation) {
+    if (input.toLowerCase() === '/cancel') {
+      this.conversationManager.endConversation(userId);
+      return '❌ Operation cancelled.';
+    }
+
+    switch (conversation.type) {
+      case 'create_expense':
+        return this.handleCreateExpenseFlow(userId, input, conversation);
+      default:
+        this.conversationManager.endConversation(userId);
+        return '❌ Unknown conversation type. Please try again.';
+    }
+  }
+
+  /**
+   * Handle create expense conversation flow
+   */
+  async handleCreateExpenseFlow(userId, input, conversation) {
+    switch (conversation.step) {
+      case 0: // Waiting for receipt date
+        if (!isValidDateFormat(input)) {
+          return `❌ Invalid date format. Please use YYYY-MM-DD format.
+
+📅 *Examples:*
+• 2025-01-15
+• 2025-08-24
+
+Please enter the receipt date or /cancel to stop:`;
+        }
+        
+        this.conversationManager.updateStep(userId, 1, { receiptDate: input });
+        return `✅ Date set: ${input}
+
+🏪 Please enter the store name:
+
+*Examples:* Walmart, Target, Starbucks, etc.`;
+
+      case 1: // Waiting for store name
+        if (!input || input.trim().length < 1) {
+          return `❌ Store name cannot be empty.
+
+🏪 Please enter the store name:`;
+        }
+
+        this.conversationManager.updateStep(userId, 2, { storeName: input.trim() });
+        const categories = this.expenseService.getAvailableCategories();
+        let categoryMessage = `✅ Store: ${input.trim()}
+
+📋 Please select a category by typing the number:
+
+`;
+        categories.forEach((cat, index) => {
+          categoryMessage += `${index + 1}. ${cat.label}\n`;
+        });
+
+        return categoryMessage;
+
+      case 2: // Waiting for category selection
+        const categoryIndex = parseInt(input) - 1;
+        const availableCategories = this.expenseService.getAvailableCategories();
+        
+        if (isNaN(categoryIndex) || categoryIndex < 0 || categoryIndex >= availableCategories.length) {
+          return `❌ Invalid selection. Please choose a number from 1 to ${availableCategories.length}:
+
+${availableCategories.map((cat, index) => `${index + 1}. ${cat.label}`).join('\n')}`;
+        }
+
+        const selectedCategory = availableCategories[categoryIndex];
+        this.conversationManager.updateStep(userId, 3, { category: selectedCategory.value });
+        return `✅ Category: ${selectedCategory.label}
+
+💵 Please enter the total amount (numbers only):
+
+*Examples:* 25.99, 100, 15.50`;
+
+      case 3: // Waiting for amount
+        if (!isValidAmount(input)) {
+          return `❌ Invalid amount. Please enter a positive number.
+
+💵 *Examples:* 25.99, 100, 15.50
+
+Please enter the total amount:`;
+        }
+
+        const amount = parseFloat(input).toFixed(2);
+        const expenseData = {
+          receiptDate: conversation.data.receiptDate,
+          storeName: conversation.data.storeName,
+          category: conversation.data.category,
+          totalAmount: amount
+        };
+
+        try {
+          const createdExpense = await this.expenseService.createExpense(userId, expenseData);
+          this.conversationManager.endConversation(userId);
+          
+          const categoryEmoji = this.expenseService.getCategoryEmoji(expenseData.category);
+          return `✅ *Expense Created Successfully!*
+
+📊 *Summary:*
+📅 Date: ${expenseData.receiptDate}
+🏪 Store: ${expenseData.storeName}
+📋 Category: ${categoryEmoji} ${this.expenseService.capitalizeFirst(expenseData.category)}
+💰 Amount: $${amount}
+
+The expense has been saved to your account.`;
+
+        } catch (error) {
+          console.error('Error creating expense:', error);
+          this.conversationManager.endConversation(userId);
+          return '❌ Sorry, there was an error saving your expense. Please try again with /create command.';
+        }
+    }
+  }
+
+  /**
+   * Format enhanced summary with chart and top stores
+   */
+  async formatEnhancedSummary(expenses, title, userId) {
+    if (!expenses || expenses.length === 0) {
+      return `📊 *${title}*\n💰 Total: $0.00\n📋 No expenses found`;
+    }
+
+    const total = expenses.reduce((sum, expense) => sum + parseFloat(expense.total_amount), 0);
+    const categories = this.expenseService.getCategoryBreakdown(expenses);
+    const topStores = this.expenseService.getTopStores(expenses);
+
+    let message = `📊 *${title}*\n`;
+    message += `💰 Total: $${total.toFixed(2)}\n`;
+    message += `📋 Transactions: ${expenses.length}\n\n`;
+
+    // Category breakdown
+    if (categories.length > 0) {
+      message += `🥧 *Category Breakdown:*\n`;
+      categories.forEach(cat => {
+        const emoji = this.expenseService.getCategoryEmoji(cat.category);
+        message += `${emoji} ${this.expenseService.capitalizeFirst(cat.category)}: $${cat.amount} (${cat.percentage}%)\n`;
+      });
+      message += '\n';
+    }
+
+    // Top stores
+    if (topStores.length > 0) {
+      message += `🏪 *Top 5 Stores:*\n`;
+      topStores.forEach((store, index) => {
+        message += `${index + 1}. ${store.store}: $${store.total} (${store.count} visits)\n`;
+      });
+    }
+
+    return { text: message, chartUrl: null };
+  }
+
+  /**
+   * Get summary usage message
+   */
+  getSummaryUsageMessage() {
+    return `📊 *Summary Command Usage*
+
+Usage: \`/summary <period>\`
+
+*Available periods:*
+• \`day\` - Today's summary
+• \`week\` - This week's summary  
+• \`month\` - This month's summary
+• \`jan-aug\` - January to August
+• \`january-march\` - January to March
+• \`1-6\` - January to June
+
+*Examples:*
+• \`/summary day\`
+• \`/summary week\`
+• \`/summary jan-aug\`
+• \`/summary january-march\``;
+  }
+
+  /**
    * Get start message with welcome and command list
    */
   getStartMessage() {
@@ -355,39 +617,73 @@ class BotManager {
 
 I help you track expenses by processing receipt photos and answering questions about your spending.
 
-📸 *Send me a photo* of your receipt to get started!
+📸 *Send me a photo* of your receipt for automatic expense tracking!
 
 📋 *Available Commands:*
-• /help - Show this help message
-• /stats - Monthly spending overview
-• /today - Today's expenses
-• /yesterday - Yesterday's expenses
-• /week - This week's expenses
-• /month - This month's expenses
 
-💡 *Tip:* Upload receipt photos for automatic expense tracking!`;
+*📊 Analytics:*
+• /summary day - Today's detailed summary
+• /summary week - This week's summary  
+• /summary month - This month's summary
+• /summary jan-aug - Custom month range
+• /stats - Quick monthly overview
+• /today, /yesterday, /week, /month - Quick expense totals
+
+*💰 Manual Entry:*
+• /create - Add expense manually (step-by-step)
+
+*📚 Help:*
+• /help - Detailed command guide
+
+💡 *Quick Start:*
+1. Send receipt photos for auto-tracking
+2. Use \`/summary week\` for weekly analysis
+3. Use \`/create\` to add manual expenses
+
+Type /help for detailed usage examples!`;
   }
 
   /**
    * Get help message
    */
   getHelpMessage() {
-    return `🤖 *AI Expense Tracker Commands*
+    return `🤖 *AI Expense Tracker - Complete Guide*
 
 📸 *Photo Processing:*
 • Send receipt photos for automatic expense tracking
-• I'll extract store name, date, amount, and category
+• AI extracts store name, date, amount, and category
 
-📊 *Expense Queries:*
+📊 *Summary Commands (Enhanced Analytics):*
+• \`/summary day\` - Today's detailed breakdown
+• \`/summary week\` - This week's summary
+• \`/summary month\` - This month's summary
+• \`/summary jan-aug\` - January to August
+• \`/summary january-march\` - January to March  
+• \`/summary 1-6\` - January to June (numeric)
+
+*Summary includes:* Total spend, category breakdown with percentages, top 5 stores
+
+📈 *Quick Expense Queries:*
 • /stats - Quick monthly overview
 • /today - Today's total expenses
 • /yesterday - Yesterday's total expenses
 • /week - This week's total expenses
 • /month - This month's total expenses
 
-⚠️ *Important:* Only send photos of receipts or use the commands above. Other messages won't be processed to save AI costs.
+💰 *Manual Expense Entry:*
+• \`/create\` - Add expense step-by-step
+  → Asks for date (YYYY-MM-DD)
+  → Store name
+  → Category selection (numbered menu)
+  → Amount
 
-Need help? Contact your system administrator.`;
+💡 *Pro Tips:*
+• Use month ranges: jan-dec, february-august, 3-9
+• Type /cancel during /create to stop
+• Send clear receipt photos for best results
+• Date format must be YYYY-MM-DD (e.g., 2025-01-15)
+
+❓ Type any unknown command to see available options.`;
   }
 
   /**
@@ -399,15 +695,27 @@ Need help? Contact your system administrator.`;
 I only understand specific commands to save AI processing costs.
 
 📋 *Available Commands:*
-• /start - Welcome message
-• /help - Show available commands
-• /stats - Monthly overview
-• /today - Today's expenses
-• /yesterday - Yesterday's expenses
-• /week - This week's expenses
-• /month - This month's expenses
 
-📸 Or send me a *receipt photo* for expense tracking!`;
+*📊 Detailed Analytics:*
+• /summary day, /summary week, /summary month
+• /summary jan-aug, /summary january-march
+
+*📈 Quick Queries:*
+• /stats, /today, /yesterday, /week, /month
+
+*💰 Manual Entry:*
+• /create - Step-by-step expense entry
+
+*📚 Help:*
+• /start - Welcome & quick start
+• /help - Complete command guide
+
+💡 *Try:*
+• \`/summary week\` - This week's detailed summary
+• \`/create\` - Add an expense manually
+• \`/help\` - See all features
+
+📸 Or send me a *receipt photo* for automatic expense tracking!`;
   }
 
   /**
