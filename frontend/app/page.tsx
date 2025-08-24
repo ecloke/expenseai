@@ -7,7 +7,6 @@ import { createSupabaseClient } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Bot, Receipt, MessageSquare, Smartphone, Zap, Shield, LogIn, LogOut } from 'lucide-react'
-import { ThemeToggle } from '@/components/theme/ThemeToggle'
 
 export default function HomePage() {
   const [user, setUser] = useState<any>(null)
@@ -38,18 +37,17 @@ export default function HomePage() {
     router.refresh()
   }
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
       {/* Header */}
-      <header className="border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-gray-200 dark:border-gray-700">
+      <header className="border-b bg-gray-900/80 backdrop-blur-sm border-gray-700">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Receipt className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-            <span className="text-2xl font-bold text-gray-900 dark:text-white">ExpenseAI</span>
+            <Receipt className="h-8 w-8 text-blue-400" />
+            <span className="text-2xl font-bold text-white">ExpenseAI</span>
           </div>
           <div className="flex items-center space-x-4">
-            <ThemeToggle />
             {loading ? (
-              <div className="w-20 h-9 bg-gray-200 dark:bg-gray-700 animate-pulse rounded"></div>
+              <div className="w-20 h-9 bg-gray-700 animate-pulse rounded"></div>
             ) : user ? (
               <>
                 <Link href="/dashboard">
@@ -80,11 +78,11 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-16 text-center">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-6">
+          <h1 className="text-5xl font-bold text-white mb-6">
             Automate Your Expense Tracking with
-            <span className="text-blue-600 dark:text-blue-400 block">AI-Powered Telegram Bots</span>
+            <span className="text-blue-400 block">AI-Powered Telegram Bots</span>
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
+          <p className="text-xl text-gray-300 mb-8 leading-relaxed">
             Simply photograph your receipts and chat with your personal bot. 
             AI extracts data, provides insights, and tracks expenses automatically.
           </p>
@@ -120,41 +118,41 @@ export default function HomePage() {
 
       {/* Features Grid */}
       <section className="container mx-auto px-4 py-16">
-        <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
+        <h2 className="text-3xl font-bold text-center text-white mb-12">
           How It Works
         </h2>
         <div className="grid md:grid-cols-3 gap-8">
-          <Card className="text-center border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+          <Card className="text-center border-0 shadow-lg bg-gray-800/80 backdrop-blur-sm">
             <CardHeader>
-              <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-4">
-                <Smartphone className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+              <div className="mx-auto w-16 h-16 bg-blue-900 rounded-full flex items-center justify-center mb-4">
+                <Smartphone className="h-8 w-8 text-blue-400" />
               </div>
-              <CardTitle className="dark:text-white">📸 Snap & Send</CardTitle>
-              <CardDescription className="dark:text-gray-300">
+              <CardTitle className="text-white">📸 Snap & Send</CardTitle>
+              <CardDescription className="text-gray-300">
                 Take a photo of any receipt and send it to your personal Telegram bot
               </CardDescription>
             </CardHeader>
           </Card>
 
-          <Card className="text-center border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+          <Card className="text-center border-0 shadow-lg bg-gray-800/80 backdrop-blur-sm">
             <CardHeader>
-              <div className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mb-4">
-                <Zap className="h-8 w-8 text-green-600 dark:text-green-400" />
+              <div className="mx-auto w-16 h-16 bg-green-900 rounded-full flex items-center justify-center mb-4">
+                <Zap className="h-8 w-8 text-green-400" />
               </div>
-              <CardTitle className="dark:text-white">🤖 AI Processing</CardTitle>
-              <CardDescription className="dark:text-gray-300">
+              <CardTitle className="text-white">🤖 AI Processing</CardTitle>
+              <CardDescription className="text-gray-300">
                 Gemini Vision AI extracts store, items, prices, and categories automatically
               </CardDescription>
             </CardHeader>
           </Card>
 
-          <Card className="text-center border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+          <Card className="text-center border-0 shadow-lg bg-gray-800/80 backdrop-blur-sm">
             <CardHeader>
-              <div className="mx-auto w-16 h-16 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mb-4">
-                <Receipt className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+              <div className="mx-auto w-16 h-16 bg-purple-900 rounded-full flex items-center justify-center mb-4">
+                <Receipt className="h-8 w-8 text-purple-400" />
               </div>
-              <CardTitle className="dark:text-white">📊 Smart Tracking</CardTitle>
-              <CardDescription className="dark:text-gray-300">
+              <CardTitle className="text-white">📊 Smart Tracking</CardTitle>
+              <CardDescription className="text-gray-300">
                 Advanced analytics, summaries, and spending insights delivered instantly
               </CardDescription>
             </CardHeader>
@@ -165,10 +163,10 @@ export default function HomePage() {
       {/* Chat Example */}
       <section className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
+          <h2 className="text-3xl font-bold text-center text-white mb-12">
             Ask Questions Naturally
           </h2>
-          <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-xl">
+          <Card className="bg-gray-800/80 backdrop-blur-sm border-0 shadow-xl">
             <CardContent className="p-8">
               <div className="space-y-4">
                 <div className="flex justify-end">
@@ -177,7 +175,7 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="flex justify-start">
-                  <div className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg py-2 px-4 max-w-md">
+                  <div className="bg-gray-700 text-gray-100 rounded-lg py-2 px-4 max-w-md">
                     <Bot className="inline-block h-4 w-4 mr-2" />
                     I'll analyze your expense data and provide detailed spending insights with category breakdowns and trends.
                   </div>
@@ -188,7 +186,7 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="flex justify-start">
-                  <div className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg py-2 px-4 max-w-md">
+                  <div className="bg-gray-700 text-gray-100 rounded-lg py-2 px-4 max-w-md">
                     <Bot className="inline-block h-4 w-4 mr-2" />
                     I can identify your largest purchases and spending patterns from your receipts.
                   </div>
@@ -201,40 +199,40 @@ export default function HomePage() {
 
       {/* Benefits */}
       <section className="container mx-auto px-4 py-16">
-        <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
+        <h2 className="text-3xl font-bold text-center text-white mb-12">
           Why Choose ExpenseAI?
         </h2>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="text-center">
-            <Shield className="h-12 w-12 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Secure & Private</h3>
-            <p className="text-gray-600 dark:text-gray-300 text-sm">Your data stays secure with encrypted storage and privacy-first design.</p>
+            <Shield className="h-12 w-12 text-blue-400 mx-auto mb-4" />
+            <h3 className="font-semibold text-white mb-2">Secure & Private</h3>
+            <p className="text-gray-300 text-sm">Your data stays secure with encrypted storage and privacy-first design.</p>
           </div>
           <div className="text-center">
-            <Zap className="h-12 w-12 text-green-600 dark:text-green-400 mx-auto mb-4" />
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Lightning Fast</h3>
-            <p className="text-gray-600 dark:text-gray-300 text-sm">Process receipts in seconds. Get insights instantly.</p>
+            <Zap className="h-12 w-12 text-green-400 mx-auto mb-4" />
+            <h3 className="font-semibold text-white mb-2">Lightning Fast</h3>
+            <p className="text-gray-300 text-sm">Process receipts in seconds. Get insights instantly.</p>
           </div>
           <div className="text-center">
-            <Bot className="h-12 w-12 text-purple-600 dark:text-purple-400 mx-auto mb-4" />
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Personal Bot</h3>
-            <p className="text-gray-600 dark:text-gray-300 text-sm">Your own Telegram bot that learns your spending patterns.</p>
+            <Bot className="h-12 w-12 text-purple-400 mx-auto mb-4" />
+            <h3 className="font-semibold text-white mb-2">Personal Bot</h3>
+            <p className="text-gray-300 text-sm">Your own Telegram bot that learns your spending patterns.</p>
           </div>
           <div className="text-center">
-            <MessageSquare className="h-12 w-12 text-orange-600 dark:text-orange-400 mx-auto mb-4" />
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Natural Language</h3>
-            <p className="text-gray-600 dark:text-gray-300 text-sm">Ask questions like you're talking to a friend.</p>
+            <MessageSquare className="h-12 w-12 text-orange-400 mx-auto mb-4" />
+            <h3 className="font-semibold text-white mb-2">Natural Language</h3>
+            <p className="text-gray-300 text-sm">Ask questions like you're talking to a friend.</p>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="bg-blue-600 dark:bg-blue-700 text-white py-16">
+      <section className="bg-blue-700 text-white py-16">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">
             Ready to Automate Your Expenses?
           </h2>
-          <p className="text-xl mb-8 text-blue-100 dark:text-blue-200">
+          <p className="text-xl mb-8 text-blue-200">
             Set up your AI expense tracker in under 10 minutes
           </p>
           {user ? (
@@ -256,13 +254,13 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 dark:bg-gray-950 text-white py-8">
+      <footer className="bg-gray-950 text-white py-8">
         <div className="container mx-auto px-4 text-center">
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <Receipt className="h-6 w-6 text-blue-400 dark:text-blue-300" />
+            <Receipt className="h-6 w-6 text-blue-300" />
             <span className="text-xl font-bold">ExpenseAI</span>
           </div>
-          <p className="text-gray-400 dark:text-gray-500">
+          <p className="text-gray-500">
             Automate your expense tracking with AI-powered Telegram bots
           </p>
         </div>
