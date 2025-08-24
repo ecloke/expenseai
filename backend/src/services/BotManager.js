@@ -35,6 +35,10 @@ class BotManager {
    */
   async initialize() {
     console.log('🤖 Initializing Bot Manager...');
+    console.log('🔄 Clearing any cached bot instances to prevent stale user ID issues...');
+    
+    // Force clear any existing bots to prevent user ID cache issues
+    this.bots.clear();
     
     try {
       // Test Supabase connection first
