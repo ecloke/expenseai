@@ -54,10 +54,10 @@ export default function Sidebar({ userConfig, botSession }: SidebarProps) {
   ]
 
   return (
-    <div className="flex h-full w-64 flex-col bg-gray-900 border-r border-gray-800">
+    <div className="flex h-full w-64 flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800">
       {/* Logo/Brand */}
-      <div className="flex h-16 items-center px-6 border-b border-gray-800">
-        <h1 className="text-xl font-bold text-white">ExpenseAI</h1>
+      <div className="flex h-16 items-center px-6 border-b border-gray-200 dark:border-gray-800">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">ExpenseAI</h1>
       </div>
 
       {/* Navigation */}
@@ -72,7 +72,7 @@ export default function Sidebar({ userConfig, botSession }: SidebarProps) {
                 group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors
                 ${item.current
                   ? 'bg-blue-600 text-white' 
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
                 }
               `}
             >
@@ -85,9 +85,9 @@ export default function Sidebar({ userConfig, botSession }: SidebarProps) {
 
       {/* Bot Status */}
       {userConfig?.telegram_bot_username && (
-        <div className="border-t border-gray-800 p-4">
+        <div className="border-t border-gray-200 dark:border-gray-800 p-4">
           <div className="mb-3">
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-300">
+            <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
               <Bot className="h-4 w-4" />
               Bot Status
             </div>
@@ -99,7 +99,7 @@ export default function Sidebar({ userConfig, botSession }: SidebarProps) {
               ) : (
                 <AlertCircle className="h-4 w-4 text-yellow-400" />
               )}
-              <span className="text-xs text-gray-400 truncate">
+              <span className="text-xs text-gray-600 dark:text-gray-400 truncate">
                 @{userConfig.telegram_bot_username}
               </span>
             </div>
