@@ -218,6 +218,117 @@ class ExpenseService {
 
     return message;
   }
+
+  /**
+   * Get expenses for custom date range
+   */
+  async getCustomRangeExpenses(userId, startDate, endDate) {
+    return this.getExpensesByDateRange(userId, startDate, endDate);
+  }
+
+  /**
+   * Get top stores from expenses
+   */
+  getTopStores(expenses, limit = 5) {
+    if (!expenses || expenses.length === 0) {
+      return [];
+    }
+
+    const storeTotals = {};
+    const storeCounts = {};
+
+    expenses.forEach(expense => {
+      const store = expense.store_name;
+      const amount = parseFloat(expense.total_amount);
+      
+      if (!storeTotals[store]) {
+        storeTotals[store] = 0;
+        storeCounts[store] = 0;
+      }
+      
+      storeTotals[store] += amount;
+      storeCounts[store] += 1;
+    });
+
+    return Object.entries(storeTotals)
+      .map(([store, total]) => ({
+        store,
+        total: parseFloat(total.toFixed(2)),
+        count: storeCounts[store]
+      }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, limit);
+  }
+
+  /**
+   * Get category breakdown from expenses
+   */
+  getCategoryBreakdown(expenses) {
+    if (!expenses || expenses.length === 0) {
+      return [];
+    }
+
+    const total = expenses.reduce((sum, expense) => sum + parseFloat(expense.total_amount), 0);
+    const categoryTotals = {};
+
+    expenses.forEach(expense => {
+      const category = expense.category;
+      const amount = parseFloat(expense.total_amount);
+      categoryTotals[category] = (categoryTotals[category] || 0) + amount;
+    });
+
+    return Object.entries(categoryTotals)
+      .map(([category, amount]) => ({
+        category,
+        amount: parseFloat(amount.toFixed(2)),
+        percentage: ((amount / total) * 100).toFixed(1)
+      }))
+      .sort((a, b) => b.amount - a.amount);
+  }
+
+  /**
+   * Create new expense record
+   */
+  async createExpense(userId, expenseData) {
+    try {
+      const { data, error } = await this.supabase
+        .from('expenses')
+        .insert([{
+          user_id: userId,
+          receipt_date: expenseData.receiptDate,
+          store_name: expenseData.storeName,
+          category: expenseData.category,
+          total_amount: parseFloat(expenseData.totalAmount),
+          created_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error creating expense:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get available categories
+   */
+  getAvailableCategories() {
+    return [
+      { value: 'groceries', label: '🛒 Groceries', emoji: '🛒' },
+      { value: 'dining', label: '🍽️ Dining', emoji: '🍽️' },
+      { value: 'gas', label: '⛽ Gas', emoji: '⛽' },
+      { value: 'pharmacy', label: '💊 Pharmacy', emoji: '💊' },
+      { value: 'retail', label: '🛍️ Retail', emoji: '🛍️' },
+      { value: 'services', label: '🔧 Services', emoji: '🔧' },
+      { value: 'other', label: '📦 Other', emoji: '📦' }
+    ];
+  }
 }
 
 export default ExpenseService;
