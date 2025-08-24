@@ -1,3 +1,5 @@
+import { getTopStoresNormalized } from '../utils/storeNormalizer.js';
+
 /**
  * Expense Service for database operations
  * Handles expense queries for Telegram commands and dashboard
@@ -227,37 +229,15 @@ class ExpenseService {
   }
 
   /**
-   * Get top stores from expenses
+   * Get top stores from expenses (with normalized names)
    */
   getTopStores(expenses, limit = 5) {
     if (!expenses || expenses.length === 0) {
       return [];
     }
 
-    const storeTotals = {};
-    const storeCounts = {};
-
-    expenses.forEach(expense => {
-      const store = expense.store_name;
-      const amount = parseFloat(expense.total_amount);
-      
-      if (!storeTotals[store]) {
-        storeTotals[store] = 0;
-        storeCounts[store] = 0;
-      }
-      
-      storeTotals[store] += amount;
-      storeCounts[store] += 1;
-    });
-
-    return Object.entries(storeTotals)
-      .map(([store, total]) => ({
-        store,
-        total: parseFloat(total.toFixed(2)),
-        count: storeCounts[store]
-      }))
-      .sort((a, b) => b.total - a.total)
-      .slice(0, limit);
+    // Use the normalized store grouping
+    return getTopStoresNormalized(expenses, limit);
   }
 
   /**
