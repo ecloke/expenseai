@@ -559,4 +559,33 @@ router.get('/debug/:user_id', async (req, res) => {
   }
 });
 
+/**
+ * Debug and restart bot for a user (force refresh)
+ */
+router.post('/restart/:user_id', async (req, res) => {
+  try {
+    const { user_id } = req.params;
+
+    console.log(`🔧 DEBUG: Force restarting bot for user ${user_id}`);
+
+    // Stop existing bot
+    await botManager.removeUserBot(user_id);
+    
+    // Wait a moment
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Start fresh bot
+    await botManager.addUserBot(user_id);
+    
+    res.json({ 
+      success: true, 
+      message: `Bot restarted for user ${user_id}`,
+      user_id: user_id 
+    });
+  } catch (error) {
+    console.error('Failed to restart bot:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

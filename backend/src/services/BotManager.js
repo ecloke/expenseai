@@ -102,6 +102,13 @@ class BotManager {
   async createUserBot(config) {
     const userId = config.user_id;
     
+    console.log(`🔍 DEBUG: Creating bot for user ID: ${userId}`);
+    console.log(`🔍 DEBUG: Config details:`, {
+      user_id: config.user_id,
+      created_at: config.created_at,
+      has_token: !!config.telegram_bot_token
+    });
+    
     try {
       // Decrypt bot token
       const botToken = decrypt(config.telegram_bot_token);
@@ -195,6 +202,11 @@ class BotManager {
    */
   async handlePhoto(msg, userId, config) {
     if (this.isShuttingDown) return;
+
+    // DEBUG: Log user ID being used
+    console.log(`🔍 DEBUG: handlePhoto called with userId: ${userId}`);
+    console.log(`🔍 DEBUG: Chat ID: ${msg.chat.id}`);
+    console.log(`🔍 DEBUG: Config user_id: ${config?.user_id}`);
 
     try {
       // Rate limiting check
