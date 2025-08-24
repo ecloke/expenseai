@@ -219,9 +219,9 @@ export default function ExpenseCharts({ userId }: ExpenseChartsProps) {
         <h2 className="text-2xl font-bold text-white">Expense Analytics</h2>
         <Tabs value={timeRange} onValueChange={(value) => setTimeRange(value as any)}>
           <TabsList className="bg-gray-800 border-gray-600">
-            <TabsTrigger value="week" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white">This Week</TabsTrigger>
-            <TabsTrigger value="month" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white">This Month</TabsTrigger>
-            <TabsTrigger value="all" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white">All Time</TabsTrigger>
+            <TabsTrigger value="week" className="text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">This Week</TabsTrigger>
+            <TabsTrigger value="month" className="text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">This Month</TabsTrigger>
+            <TabsTrigger value="all" className="text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">All Time</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -274,107 +274,138 @@ export default function ExpenseCharts({ userId }: ExpenseChartsProps) {
             <CardDescription className="text-gray-400">Your daily expense pattern</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={dailySpending}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="formatted_date" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
-                <Tooltip 
-                  formatter={(value) => [`$${value}`, 'Amount']}
-                  labelFormatter={(label) => `Date: ${label}`}
-                  contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px', color: '#F3F4F6' }}
-                />
-                <Bar dataKey="amount" fill="#3B82F6" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {dailySpending.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-[300px] text-gray-400">
+                <BarChart3 className="h-12 w-12 mb-4 text-gray-600" />
+                <h3 className="text-lg font-medium text-gray-300 mb-2">No spending data</h3>
+                <p className="text-sm text-center">Start adding expenses to see your daily spending patterns</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={dailySpending}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="formatted_date" stroke="#9CA3AF" />
+                  <YAxis stroke="#9CA3AF" />
+                  <Tooltip 
+                    formatter={(value) => [`$${value}`, 'Amount']}
+                    labelFormatter={(label) => `Date: ${label}`}
+                    contentStyle={{ 
+                      backgroundColor: '#1F2937', 
+                      border: '1px solid #374151', 
+                      borderRadius: '8px', 
+                      color: '#F3F4F6',
+                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+                    }}
+                    cursor={{ fill: 'rgba(75, 85, 99, 0.1)' }}
+                  />
+                  <Bar dataKey="amount" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
-        {/* Category Pie Chart */}
+        {/* Enhanced Category Breakdown */}
         <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-white">
               <PieChartIcon className="h-5 w-5 text-green-400" />
               Category Breakdown
             </CardTitle>
-            <CardDescription className="text-gray-400">Spending by category</CardDescription>
+            <CardDescription className="text-gray-400">Spending by category with details</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={categoryBreakdown}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ category, percentage }) => `${CATEGORY_EMOJIS[category] || ''} ${percentage}%`}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="amount"
-                >
-                  {categoryBreakdown.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            {categoryBreakdown.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-[280px] text-gray-400">
+                <PieChartIcon className="h-12 w-12 mb-4 text-gray-600" />
+                <h3 className="text-lg font-medium text-gray-300 mb-2">No category data</h3>
+                <p className="text-sm text-center">Add expenses to see category breakdowns</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Pie Chart */}
+                <ResponsiveContainer width="100%" height={280}>
+                  <PieChart>
+                    <Pie
+                      data={categoryBreakdown}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ category, percentage }) => `${percentage}%`}
+                      outerRadius={90}
+                      fill="#8884d8"
+                      dataKey="amount"
+                    >
+                      {categoryBreakdown.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value) => [`$${value}`, 'Amount']}
+                      contentStyle={{ 
+                        backgroundColor: '#1F2937', 
+                        border: '1px solid #374151', 
+                        borderRadius: '8px', 
+                        color: '#F3F4F6',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+
+                {/* Legend with Details */}
+                <div className="space-y-3">
+                  {categoryBreakdown.map((category, index) => (
+                    <div key={category.category} className="flex items-center justify-between p-3 rounded-lg bg-gray-700/50 hover:bg-gray-700/70 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className="w-4 h-4 rounded-full" 
+                          style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                        />
+                        <span className="font-medium text-gray-200">
+                          {CATEGORY_EMOJIS[category.category]} {category.category}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold text-white">${category.amount}</div>
+                        <div className="text-sm text-gray-400">{category.percentage}%</div>
+                      </div>
+                    </div>
                   ))}
-                </Pie>
-                <Tooltip 
-                  formatter={(value) => [`$${value}`, 'Amount']}
-                  contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px', color: '#F3F4F6' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Category Details and Top Stores */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Category Details */}
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader>
-            <CardTitle className="text-white">Category Details</CardTitle>
-            <CardDescription className="text-gray-400">Breakdown by category</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {categoryBreakdown.map((category, index) => (
-                <div key={category.category} className="flex items-center justify-between p-3 rounded-lg bg-gray-700/50">
-                  <div className="flex items-center gap-3">
-                    <div 
-                      className="w-4 h-4 rounded-full" 
-                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                    />
-                    <span className="font-medium text-gray-200">
-                      {CATEGORY_EMOJIS[category.category]} {category.category}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-semibold text-white">${category.amount}</div>
-                    <div className="text-sm text-gray-400">{category.percentage}%</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Top Stores */}
+      {/* Top Stores */}
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
         <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
             <CardTitle className="text-white">Top Stores</CardTitle>
             <CardDescription className="text-gray-400">Your most visited stores</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {topStores.map((store, index) => (
-                <div key={store.store} className="flex items-center justify-between p-3 rounded-lg bg-gray-700/50">
-                  <div>
-                    <div className="font-medium text-gray-200">{store.store}</div>
-                    <div className="text-sm text-gray-400">{store.count} transactions</div>
+            {topStores.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-[200px] text-gray-400">
+                <Receipt className="h-12 w-12 mb-4 text-gray-600" />
+                <h3 className="text-lg font-medium text-gray-300 mb-2">No store data</h3>
+                <p className="text-sm text-center">Start shopping to see your favorite stores</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                {topStores.map((store, index) => (
+                  <div key={store.store} className="flex flex-col items-center justify-between p-4 rounded-lg bg-gray-700/50 hover:bg-gray-700/70 transition-colors">
+                    <div className="text-center">
+                      <div className="font-medium text-gray-200 truncate w-full">{store.store}</div>
+                      <div className="text-sm text-gray-400">{store.count} transactions</div>
+                    </div>
+                    <div className="font-semibold text-green-400 text-lg mt-2">${store.amount}</div>
                   </div>
-                  <div className="font-semibold text-white">${store.amount}</div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

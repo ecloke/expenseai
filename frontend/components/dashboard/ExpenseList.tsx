@@ -132,20 +132,21 @@ export default function ExpenseList({ userId }: ExpenseListProps) {
               placeholder="Search by store name or category..."
               value={searchTerm}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="pl-10 bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:bg-gray-600"
+              className="pl-10 bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:bg-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20"
             />
           </div>
         </div>
 
-        {loading ? (
-          <div className="text-center py-8 text-gray-300">Loading expenses...</div>
-        ) : error ? (
-          <div className="text-center py-8 text-red-400">{error}</div>
-        ) : expenses.length === 0 ? (
-          <div className="text-center py-8 text-gray-400">
-            {searchTerm ? 'No expenses found matching your search.' : 'No expenses found.'}
-          </div>
-        ) : (
+        <div className="min-h-[400px]">
+          {loading ? (
+            <div className="text-center py-8 text-gray-300">Loading expenses...</div>
+          ) : error ? (
+            <div className="text-center py-8 text-red-400">{error}</div>
+          ) : expenses.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">
+              {searchTerm ? 'No expenses found matching your search.' : 'No expenses found.'}
+            </div>
+          ) : (
           <>
             {/* Expenses Table */}
             <div className="rounded-md border border-gray-700 bg-gray-700/50">
@@ -206,7 +207,7 @@ export default function ExpenseList({ userId }: ExpenseListProps) {
                     size="sm"
                     onClick={() => goToPage(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                    className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white hover:border-gray-500 disabled:hover:bg-transparent disabled:hover:text-gray-300 disabled:hover:border-gray-600"
                   >
                     <ChevronLeft className="h-4 w-4" />
                     Previous
@@ -224,8 +225,8 @@ export default function ExpenseList({ userId }: ExpenseListProps) {
                           size="sm"
                           onClick={() => goToPage(pageNum)}
                           className={pageNum === currentPage ? 
-                            "w-8 h-8 p-0 bg-blue-600 hover:bg-blue-700" : 
-                            "w-8 h-8 p-0 border-gray-600 text-gray-300 hover:bg-gray-700"}
+                            "w-8 h-8 p-0 bg-blue-600 hover:bg-blue-700 text-white" : 
+                            "w-8 h-8 p-0 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white hover:border-gray-500"}
                         >
                           {pageNum}
                         </Button>
@@ -238,7 +239,7 @@ export default function ExpenseList({ userId }: ExpenseListProps) {
                     size="sm"
                     onClick={() => goToPage(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                    className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white hover:border-gray-500 disabled:hover:bg-transparent disabled:hover:text-gray-300 disabled:hover:border-gray-600"
                   >
                     Next
                     <ChevronRight className="h-4 w-4" />
@@ -247,7 +248,8 @@ export default function ExpenseList({ userId }: ExpenseListProps) {
               </div>
             )}
           </>
-        )}
+          )}
+        </div>
       </CardContent>
     </Card>
   )
