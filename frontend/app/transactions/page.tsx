@@ -278,8 +278,8 @@ export default function Transactions() {
         {/* Page Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-white">Transactions</h1>
-            <p className="text-gray-400 mt-2">View and manage all your expense transactions</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Transactions</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">View and manage all your expense transactions</p>
           </div>
           <Button
             onClick={exportData}
@@ -292,9 +292,9 @@ export default function Transactions() {
         </div>
 
         {/* Filters */}
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white">
+            <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
               <Filter className="h-5 w-5 text-blue-400" />
               Filters
             </CardTitle>
@@ -303,21 +303,21 @@ export default function Transactions() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Search */}
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-300 mb-2">Search</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Search</label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     placeholder="Search by store name or category..."
                     value={searchTerm}
                     onChange={(e) => handleSearchChange(e.target.value)}
-                    className="pl-10 bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:bg-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20"
+                    className="pl-10 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:bg-gray-50 dark:focus:bg-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20"
                   />
                 </div>
               </div>
 
               {/* Category Filter */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Category</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
                 <SimpleSelect
                   value={categoryFilter}
                   onValueChange={handleCategoryChange}
@@ -331,7 +331,7 @@ export default function Transactions() {
 
               {/* Date Range Filter */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Time Period</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Time Period</label>
                 <SimpleSelect
                   value={dateRange}
                   onValueChange={handleDateRangeChange}
@@ -362,13 +362,13 @@ export default function Transactions() {
         </Card>
 
         {/* Transactions Table */}
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white">
+            <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
               <Calendar className="h-5 w-5 text-blue-400" />
               Transactions
             </CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardDescription className="text-gray-600 dark:text-gray-400">
               {totalCount > 0 ? `${totalCount} total transactions` : 'No transactions found'}
             </CardDescription>
           </CardHeader>
