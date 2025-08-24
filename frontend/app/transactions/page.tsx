@@ -18,15 +18,7 @@ import {
 } from '@/components/ui/table'
 import { ChevronLeft, ChevronRight, Search, Calendar, Store, Filter, Download, Receipt } from 'lucide-react'
 import { format, subDays, startOfMonth, endOfMonth } from 'date-fns'
-
-interface Expense {
-  id: string
-  receipt_date: string
-  store_name: string
-  category: string
-  total_amount: number
-  created_at: string
-}
+import { Expense } from '@/types'
 
 const CATEGORY_EMOJIS: { [key: string]: string } = {
   groceries: '🛒',
