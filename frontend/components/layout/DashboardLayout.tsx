@@ -3,20 +3,8 @@
 import { useState, useEffect, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSupabaseClient } from '@/lib/supabase'
+import { UserConfig, BotSession } from '@/types'
 import Sidebar from './Sidebar'
-
-interface UserConfig {
-  id: string
-  telegram_bot_token: string | null
-  telegram_bot_username: string | null
-  gemini_api_key: string | null
-}
-
-interface BotSession {
-  bot_username: string
-  is_active: boolean
-  last_activity: string
-}
 
 interface DashboardLayoutProps {
   children: ReactNode

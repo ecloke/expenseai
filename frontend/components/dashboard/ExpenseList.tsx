@@ -16,15 +16,7 @@ import {
 } from '@/components/ui/table'
 import { ChevronLeft, ChevronRight, Search, Calendar, Store } from 'lucide-react'
 import { format } from 'date-fns'
-
-interface Expense {
-  id: string
-  receipt_date: string
-  store_name: string
-  category: string
-  total_amount: number
-  created_at: string
-}
+import { Expense } from '@/types'
 
 interface ExpenseListProps {
   userId: string

@@ -15,14 +15,11 @@ import {
 } from 'lucide-react'
 import { createSupabaseClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import { UserConfig, BotSession } from '@/types'
 
 interface SidebarProps {
-  userConfig?: {
-    telegram_bot_username: string | null
-  }
-  botSession?: {
-    is_active: boolean
-  }
+  userConfig?: UserConfig | null
+  botSession?: BotSession | null
 }
 
 export default function Sidebar({ userConfig, botSession }: SidebarProps) {
