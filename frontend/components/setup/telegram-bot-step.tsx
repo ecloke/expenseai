@@ -186,21 +186,21 @@ export default function TelegramBotStep({
           </div>
           <div>
             <h3 className="text-xl font-semibold">Create Your Telegram Bot</h3>
-            <p className="text-sm text-gray-600">Set up a personal bot for expense tracking</p>
+            <p className="text-sm text-gray-400">Set up a personal bot for expense tracking</p>
           </div>
         </div>
 
-        <Card className="border-amber-200 bg-amber-50/50">
+        <Card className="border-amber-700 bg-amber-900/20">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center">
-              <Bot className="h-5 w-5 mr-2 text-amber-600" />
+              <Bot className="h-5 w-5 mr-2 text-amber-400" />
               Step-by-Step Instructions
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="space-y-3 text-sm">
               <div className="flex items-start space-x-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center text-xs font-semibold">1</span>
+                <span className="flex-shrink-0 w-6 h-6 bg-blue-900 text-blue-200 rounded-full flex items-center justify-center text-xs font-semibold">1</span>
                 <div className="space-y-1">
                   <p><strong>Open Telegram and search for @BotFather</strong></p>
                   <Button variant="link" className="p-0 h-auto text-xs" asChild>
@@ -213,10 +213,10 @@ export default function TelegramBotStep({
               </div>
               
               <div className="flex items-start space-x-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center text-xs font-semibold">2</span>
+                <span className="flex-shrink-0 w-6 h-6 bg-blue-900 text-blue-200 rounded-full flex items-center justify-center text-xs font-semibold">2</span>
                 <div className="space-y-1">
                   <p><strong>Send the command to create a new bot</strong></p>
-                  <div className="bg-gray-100 p-2 rounded font-mono text-sm flex items-center justify-between">
+                  <div className="bg-gray-800 p-2 rounded font-mono text-sm flex items-center justify-between text-gray-200">
                     <span>/newbot</span>
                     <Button 
                       size="sm" 
@@ -231,21 +231,21 @@ export default function TelegramBotStep({
               </div>
               
               <div className="flex items-start space-x-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center text-xs font-semibold">3</span>
+                <span className="flex-shrink-0 w-6 h-6 bg-blue-900 text-blue-200 rounded-full flex items-center justify-center text-xs font-semibold">3</span>
                 <p><strong>Choose a name for your bot</strong><br />
-                   <span className="text-gray-600">e.g., "My Expense Tracker"</span></p>
+                   <span className="text-gray-400">e.g., "My Expense Tracker"</span></p>
               </div>
               
               <div className="flex items-start space-x-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center text-xs font-semibold">4</span>
+                <span className="flex-shrink-0 w-6 h-6 bg-blue-900 text-blue-200 rounded-full flex items-center justify-center text-xs font-semibold">4</span>
                 <p><strong>Choose a username ending in "bot"</strong><br />
-                   <span className="text-gray-600">e.g., "myexpense_bot"</span></p>
+                   <span className="text-gray-400">e.g., "myexpense_bot"</span></p>
               </div>
               
               <div className="flex items-start space-x-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center text-xs font-semibold">5</span>
+                <span className="flex-shrink-0 w-6 h-6 bg-blue-900 text-blue-200 rounded-full flex items-center justify-center text-xs font-semibold">5</span>
                 <p><strong>Copy the bot token from BotFather's response</strong><br />
-                   <span className="text-gray-600">It looks like: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz</span></p>
+                   <span className="text-gray-400">It looks like: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz</span></p>
               </div>
             </div>
           </CardContent>
@@ -253,7 +253,7 @@ export default function TelegramBotStep({
 
         <div className="space-y-3">
           <div className="space-y-2">
-            <Label htmlFor="bot-token">Bot Token</Label>
+            <Label htmlFor="bot-token" className="text-gray-300">Bot Token</Label>
             <div className="space-y-2">
               <Input
                 id="bot-token"
@@ -264,10 +264,10 @@ export default function TelegramBotStep({
                 disabled={isLoading || validating}
                 className={
                   validationResult?.isValid === true 
-                    ? "border-green-500 bg-green-50" 
+                    ? "border-green-500 bg-green-900/20 text-white" 
                     : validationResult?.isValid === false
-                    ? "border-red-500 bg-red-50"
-                    : ""
+                    ? "border-red-500 bg-red-900/20 text-white"
+                    : "bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
                 }
               />
               <Button
@@ -328,18 +328,18 @@ export default function TelegramBotStep({
 
           {/* Success message with next steps */}
           {validationResult?.isValid && (
-            <Card className="border-green-200 bg-green-50/50">
+            <Card className="border-green-700 bg-green-900/20">
               <CardContent className="pt-4">
                 <div className="flex items-start space-x-3">
                   <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
                   <div className="space-y-2 text-sm">
-                    <p className="font-medium text-green-800">
+                    <p className="font-medium text-green-200">
                       Great! Your bot is ready for the next step.
                     </p>
-                    <p className="text-green-700">
+                    <p className="text-green-300">
                       You can now proceed to configure AI processing with Gemini API.
                     </p>
-                    <p className="text-xs text-green-600">
+                    <p className="text-xs text-green-400">
                       Once setup is complete, you'll be able to send receipt photos to @{validationResult.botInfo?.username} and get automated expense tracking!
                     </p>
                   </div>
