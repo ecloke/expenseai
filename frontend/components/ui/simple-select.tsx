@@ -56,7 +56,7 @@ export function SimpleSelect({ value, onValueChange, options, placeholder, class
                 onValueChange(option.value)
                 setIsOpen(false)
               }}
-              className="w-full flex items-center justify-between px-3 py-2 text-left text-white hover:bg-gray-600 transition-colors"
+              className="w-full flex items-center justify-between px-3 py-3 text-left text-white hover:bg-gray-600 transition-colors min-h-[44px]"
             >
               <span>{option.label}</span>
               {value === option.value && (

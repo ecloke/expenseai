@@ -560,6 +560,7 @@ export default function Transactions() {
                     label: `${CATEGORY_EMOJIS[category]} ${category}`
                   }))}
                   placeholder="Select category"
+                  className="col-span-3"
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
