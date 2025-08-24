@@ -158,30 +158,20 @@ router.post('/start', async (req, res) => {
       return res.status(404).json({ error: 'User configuration not found' });
     }
 
-    if (!userConfig.telegram_bot_token) {
-      return res.status(400).json({ error: 'Bot token not configured' });
+    if (!userConfig.telegram_bot_token || !userConfig.gemini_api_key) {
+      return res.status(400).json({ error: 'Bot token and Gemini API key are required to start bot' });
     }
 
-    // Bot can start with just telegram token - other components are optional
-    // Processing will gracefully handle missing Gemini/Sheets and show appropriate errors
     console.log(`🚀 Starting bot for user ${user_id}...`);
 
-    // Add bot to BotManager (this would require access to the global BotManager instance)
-    // For now, we'll just update the session status
-    const { error: sessionError } = await req.supabase
-      .from('bot_sessions')
-      .upsert({
-        user_id,
-        bot_username: userConfig.telegram_bot_username,
-        is_active: true,
-        last_activity: new Date().toISOString()
-      }, {
-        onConflict: 'user_id'
-      });
-
-    if (sessionError) {
-      console.error('Failed to update bot session:', sessionError);
+    // Get BotManager instance and start the bot
+    const botManager = req.app.get('botManager');
+    if (!botManager) {
+      return res.status(500).json({ error: 'BotManager not available' });
     }
+
+    // Actually start the bot in BotManager
+    await botManager.addUserBot(user_id);
 
     res.json({
       success: true,
@@ -210,17 +200,27 @@ router.post('/stop', async (req, res) => {
       return res.status(400).json({ error: 'User ID is required' });
     }
 
-    // Update session status
-    const { error } = await req.supabase
-      .from('bot_sessions')
-      .update({
-        is_active: false,
-        last_activity: new Date().toISOString()
-      })
-      .eq('user_id', user_id);
+    console.log(`🛑 Stopping bot for user ${user_id}...`);
 
-    if (error) {
-      console.error('Failed to update bot session:', error);
+    // Get BotManager instance and stop the bot
+    const botManager = req.app.get('botManager');
+    if (botManager) {
+      await botManager.removeUserBot(user_id);
+    } else {
+      console.warn('BotManager not available, only updating database status');
+      
+      // Fallback: Update session status in database only
+      const { error } = await req.supabase
+        .from('bot_sessions')
+        .update({
+          is_active: false,
+          last_activity: new Date().toISOString()
+        })
+        .eq('user_id', user_id);
+
+      if (error) {
+        console.error('Failed to update bot session:', error);
+      }
     }
 
     res.json({
@@ -362,6 +362,14 @@ router.get('/stats/:user_id', async (req, res) => {
 router.delete('/config/:user_id', async (req, res) => {
   try {
     const { user_id } = req.params;
+
+    console.log(`🗑️ Deleting bot configuration for user ${user_id}...`);
+
+    // Stop and remove bot from BotManager first
+    const botManager = req.app.get('botManager');
+    if (botManager) {
+      await botManager.removeUserBot(user_id);
+    }
 
     // Clear bot configuration
     const { error } = await req.supabase
@@ -567,6 +575,12 @@ router.post('/restart/:user_id', async (req, res) => {
     const { user_id } = req.params;
 
     console.log(`🔧 DEBUG: Force restarting bot for user ${user_id}`);
+
+    // Get BotManager instance
+    const botManager = req.app.get('botManager');
+    if (!botManager) {
+      return res.status(500).json({ error: 'BotManager not available' });
+    }
 
     // Stop existing bot
     await botManager.removeUserBot(user_id);
