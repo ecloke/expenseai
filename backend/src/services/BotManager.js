@@ -206,11 +206,56 @@ class BotManager {
         return;
       }
 
+      // Check for multiple photos in quick succession (prevent AI token waste)
+      const now = Date.now();
+      const lastPhotoTime = this.rateLimitMap.get(`photo_${userId}`) || 0;
+      const timeSinceLastPhoto = now - lastPhotoTime;
+      
+      if (timeSinceLastPhoto < 10000) { // Less than 10 seconds since last photo
+        const bot = this.bots.get(userId)?.bot;
+        if (bot) {
+          await bot.sendMessage(msg.chat.id, `⚠️ *Multiple Photos Detected*
+
+Please wait ${Math.ceil((10000 - timeSinceLastPhoto) / 1000)} seconds before sending another receipt.
+
+💡 *Tip:* Send one receipt photo at a time for best AI processing results.`, {
+            parse_mode: 'Markdown'
+          });
+        }
+        return;
+      }
+
+      // Update last photo time
+      this.rateLimitMap.set(`photo_${userId}`, now);
+
       // Update last activity
       this.updateLastActivity(userId);
 
       const bot = this.bots.get(userId)?.bot;
       if (!bot) return;
+
+      // Validate single photo message
+      if (!msg.photo || msg.photo.length === 0) {
+        await bot.sendMessage(msg.chat.id, '❌ No photo detected. Please send a clear receipt photo.');
+        return;
+      }
+
+      // Check for media group (multiple photos sent at once)
+      if (msg.media_group_id) {
+        await bot.sendMessage(msg.chat.id, `⚠️ *Multiple Photos Not Allowed*
+
+I can only process **one receipt photo at a time** to ensure accurate AI analysis and control processing costs.
+
+📋 *Please:*
+• Send individual receipt photos one by one
+• Wait for processing to complete before sending the next
+• Ensure each photo shows a complete receipt
+
+💡 *Tip:* Single photos get better AI recognition results!`, {
+          parse_mode: 'Markdown'
+        });
+        return;
+      }
 
       // Send step-by-step processing messages
       const statusMsg = await bot.sendMessage(msg.chat.id, '📸 Receipt received! Starting analysis...');
@@ -650,8 +695,10 @@ Type /help for detailed usage examples!`;
     return `🤖 *AI Expense Tracker - Complete Guide*
 
 📸 *Photo Processing:*
-• Send receipt photos for automatic expense tracking
+• Send **one receipt photo at a time** for automatic tracking
 • AI extracts store name, date, amount, and category
+• Wait for processing to complete before sending next photo
+• Multiple photos in one message will be rejected
 
 📊 *Summary Commands (Enhanced Analytics):*
 • \`/summary day\` - Today's detailed breakdown
@@ -680,7 +727,8 @@ Type /help for detailed usage examples!`;
 💡 *Pro Tips:*
 • Use month ranges: jan-dec, february-august, 3-9
 • Type /cancel during /create to stop
-• Send clear receipt photos for best results
+• Send **single, clear receipt photos** for best AI results
+• Wait 10 seconds between photos to avoid rate limiting
 • Date format must be YYYY-MM-DD (e.g., 2025-01-15)
 
 ❓ Type any unknown command to see available options.`;
