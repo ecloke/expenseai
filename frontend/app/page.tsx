@@ -51,9 +51,9 @@ export default function HomePage() {
             ) : user ? (
               <>
                 <Link href="/dashboard">
-                  <Button variant="ghost">Dashboard</Button>
+                  <Button variant="ghost" className="text-white hover:bg-gray-800 hover:text-white">Dashboard</Button>
                 </Link>
-                <Button variant="ghost" onClick={handleSignOut}>
+                <Button variant="ghost" onClick={handleSignOut} className="text-white hover:bg-gray-800 hover:text-white">
                   <LogOut className="mr-2 h-4 w-4" />
                   Sign Out
                 </Button>
@@ -61,13 +61,13 @@ export default function HomePage() {
             ) : (
               <>
                 <Link href="/login">
-                  <Button variant="ghost">
+                  <Button variant="ghost" className="text-white hover:bg-gray-800 hover:text-white">
                     <LogIn className="mr-2 h-4 w-4" />
                     Sign In
                   </Button>
                 </Link>
                 <Link href="/login">
-                  <Button>Get Started</Button>
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white">Get Started</Button>
                 </Link>
               </>
             )}
