@@ -333,14 +333,19 @@ export default function ExpenseCharts({ userId }: ExpenseChartsProps) {
                       ))}
                     </Pie>
                     <Tooltip 
-                      formatter={(value) => [`$${value}`, 'Amount']}
+                      formatter={(value, name, props) => [`$${value}`, 'Amount']}
+                      labelFormatter={(label) => `${CATEGORY_EMOJIS[label] || ''} ${label}`}
                       contentStyle={{ 
                         backgroundColor: '#1F2937', 
                         border: '1px solid #374151', 
                         borderRadius: '8px', 
                         color: '#F3F4F6',
-                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2)',
+                        fontSize: '14px',
+                        fontWeight: '500'
                       }}
+                      labelStyle={{ color: '#F3F4F6', fontWeight: '600', marginBottom: '4px' }}
+                      itemStyle={{ color: '#F3F4F6', fontWeight: '500' }}
                     />
                   </PieChart>
                 </ResponsiveContainer>

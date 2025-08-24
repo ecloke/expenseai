@@ -19,6 +19,8 @@ import {
 import { ChevronLeft, ChevronRight, Search, Calendar, Store, Filter, Download, Receipt } from 'lucide-react'
 import { format, subDays, startOfMonth, endOfMonth } from 'date-fns'
 import { Expense } from '@/types'
+import { SimpleSelect } from '@/components/ui/simple-select'
+import { DateRangePicker } from '@/components/ui/date-range-picker'
 
 const CATEGORY_EMOJIS: { [key: string]: string } = {
   groceries: '🛒',
@@ -37,7 +39,9 @@ export default function Transactions() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('all')
-  const [dateRange, setDateRange] = useState('all') // 'week', 'month', 'all'
+  const [dateRange, setDateRange] = useState('all') // 'week', 'month', 'custom', 'all'
+  const [customStartDate, setCustomStartDate] = useState<Date | null>(null)
+  const [customEndDate, setCustomEndDate] = useState<Date | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalCount, setTotalCount] = useState(0)
   const [error, setError] = useState<string | null>(null)
@@ -54,7 +58,7 @@ export default function Transactions() {
     if (user) {
       loadExpenses()
     }
-  }, [user, currentPage, searchTerm, categoryFilter, dateRange])
+  }, [user, currentPage, searchTerm, categoryFilter, dateRange, customStartDate, customEndDate])
 
   const loadUser = async () => {
     try {
@@ -103,6 +107,13 @@ export default function Transactions() {
       } else if (dateRange === 'month') {
         const monthStart = startOfMonth(now)
         query = query.gte('receipt_date', format(monthStart, 'yyyy-MM-dd'))
+      } else if (dateRange === 'custom') {
+        if (customStartDate) {
+          query = query.gte('receipt_date', format(customStartDate, 'yyyy-MM-dd'))
+        }
+        if (customEndDate) {
+          query = query.lte('receipt_date', format(customEndDate, 'yyyy-MM-dd'))
+        }
       }
 
       // Apply pagination
@@ -140,6 +151,18 @@ export default function Transactions() {
 
   const handleDateRangeChange = (value: string) => {
     setDateRange(value)
+    setCurrentPage(1)
+    // Reset custom dates when switching away from custom
+    if (value !== 'custom') {
+      setCustomStartDate(null)
+      setCustomEndDate(null)
+    }
+  }
+
+  const handleCustomDateChange = (startDate: Date | null, endDate: Date | null) => {
+    setCustomStartDate(startDate)
+    setCustomEndDate(endDate)
+    setDateRange('custom')
     setCurrentPage(1)
   }
 
@@ -200,79 +223,64 @@ export default function Transactions() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search by store name or category..."
-                  value={searchTerm}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  className="pl-10 bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:bg-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20"
-                />
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">Search</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search by store name or category..."
+                    value={searchTerm}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    className="pl-10 bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:bg-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20"
+                  />
+                </div>
               </div>
 
               {/* Category Filter */}
-              <div className="space-y-2">
-                <p className="text-sm text-gray-400">Category</p>
-                <div className="flex flex-wrap gap-2">
-                  {CATEGORIES.slice(0, 4).map(category => (
-                    <Button
-                      key={category}
-                      variant={categoryFilter === category ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleCategoryChange(category)}
-                      className={categoryFilter === category
-                        ? "bg-blue-600 hover:bg-blue-700 text-white"
-                        : "border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white hover:border-gray-500"
-                      }
-                    >
-                      {category === 'all' ? 'All' : `${CATEGORY_EMOJIS[category]} ${category}`}
-                    </Button>
-                  ))}
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Category</label>
+                <SimpleSelect
+                  value={categoryFilter}
+                  onValueChange={handleCategoryChange}
+                  options={CATEGORIES.map(category => ({
+                    value: category,
+                    label: category === 'all' ? 'All Categories' : `${CATEGORY_EMOJIS[category]} ${category}`
+                  }))}
+                  placeholder="All Categories"
+                />
               </div>
 
               {/* Date Range Filter */}
-              <div className="space-y-2">
-                <p className="text-sm text-gray-400">Time Period</p>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant={dateRange === 'all' ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleDateRangeChange('all')}
-                    className={dateRange === 'all'
-                      ? "bg-blue-600 hover:bg-blue-700 text-white"
-                      : "border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white hover:border-gray-500"
-                    }
-                  >
-                    All Time
-                  </Button>
-                  <Button
-                    variant={dateRange === 'week' ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleDateRangeChange('week')}
-                    className={dateRange === 'week'
-                      ? "bg-blue-600 hover:bg-blue-700 text-white"
-                      : "border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white hover:border-gray-500"
-                    }
-                  >
-                    Last 7 Days
-                  </Button>
-                  <Button
-                    variant={dateRange === 'month' ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleDateRangeChange('month')}
-                    className={dateRange === 'month'
-                      ? "bg-blue-600 hover:bg-blue-700 text-white"
-                      : "border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white hover:border-gray-500"
-                    }
-                  >
-                    This Month
-                  </Button>
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Time Period</label>
+                <SimpleSelect
+                  value={dateRange}
+                  onValueChange={handleDateRangeChange}
+                  options={[
+                    { value: 'all', label: 'All Time' },
+                    { value: 'week', label: 'Last 7 Days' },
+                    { value: 'month', label: 'This Month' },
+                    { value: 'custom', label: 'Custom Range' }
+                  ]}
+                  placeholder="All Time"
+                />
               </div>
             </div>
+
+            {/* Custom Date Range Picker */}
+            {dateRange === 'custom' && (
+              <div className="mt-4 pt-4 border-t border-gray-600">
+                <label className="block text-sm font-medium text-gray-300 mb-2">Custom Date Range</label>
+                <DateRangePicker
+                  startDate={customStartDate}
+                  endDate={customEndDate}
+                  onDateChange={handleCustomDateChange}
+                  className="max-w-sm"
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
 
