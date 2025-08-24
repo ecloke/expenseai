@@ -29,6 +29,7 @@ const CATEGORY_COLORS: { [key: string]: string } = {
   pharmacy: 'bg-purple-100 text-purple-800',
   retail: 'bg-pink-100 text-pink-800',
   services: 'bg-yellow-100 text-yellow-800',
+  entertainment: 'bg-indigo-100 text-indigo-800',
   other: 'bg-gray-100 text-gray-800'
 }
 
@@ -39,6 +40,7 @@ const CATEGORY_EMOJIS: { [key: string]: string } = {
   pharmacy: '💊',
   retail: '🛍️',
   services: '🔧',
+  entertainment: '🎬',
   other: '📦'
 }
 

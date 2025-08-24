@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Bot, Brain, CheckCircle, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
+import { ThemeToggle } from '@/components/theme/ThemeToggle'
 
 // Import the functional step components (Google Sheets removed per enhancement)
 import TelegramBotStep from '@/components/setup/telegram-bot-step'
@@ -160,20 +161,23 @@ export default function SetupPage() {
   const progressPercentage = (currentStep / SETUP_STEPS.length) * 100
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm">
+      <header className="border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center space-x-2">
-            <Bot className="h-8 w-8 text-blue-600" />
-            <span className="text-2xl font-bold text-gray-900">ExpenseAI Setup</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Bot className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+              <span className="text-2xl font-bold text-gray-900 dark:text-white">ExpenseAI Setup</span>
+            </div>
+            <ThemeToggle />
           </div>
         </div>
       </header>
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Progress Section */}
-        <Card className="mb-8 border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+        <Card className="mb-8 border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
           <CardHeader>
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -197,10 +201,10 @@ export default function SetupPage() {
               key={step.id}
               className={`relative border-2 transition-all cursor-pointer ${
                 step.id === currentStep 
-                  ? 'border-blue-500 bg-blue-50/80' 
+                  ? 'border-blue-500 bg-blue-50/80 dark:bg-blue-900/20 dark:border-blue-400' 
                   : completedSteps.includes(step.id)
-                  ? 'border-green-500 bg-green-50/80'
-                  : 'border-gray-200 bg-white/60'
+                  ? 'border-green-500 bg-green-50/80 dark:bg-green-900/20 dark:border-green-400'
+                  : 'border-gray-200 bg-white/60 dark:border-gray-600 dark:bg-gray-700/60'
               }`}
               onClick={() => setCurrentStep(step.id)}
             >
@@ -208,10 +212,10 @@ export default function SetupPage() {
                 <div className="flex items-center space-x-3">
                   <div className={`p-2 rounded-lg ${
                     step.id === currentStep
-                      ? 'bg-blue-500 text-white'
+                      ? 'bg-blue-500 text-white dark:bg-blue-600'
                       : completedSteps.includes(step.id)
-                      ? 'bg-green-500 text-white'
-                      : 'bg-gray-100 text-gray-600'
+                      ? 'bg-green-500 text-white dark:bg-green-600'
+                      : 'bg-gray-100 text-gray-600 dark:bg-gray-600 dark:text-gray-300'
                   }`}>
                     {completedSteps.includes(step.id) ? (
                       <CheckCircle className="h-6 w-6" />
@@ -232,7 +236,7 @@ export default function SetupPage() {
         </div>
 
         {/* Current Step Content */}
-        <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
+        <Card className="border-0 shadow-xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
           <CardContent className="pt-6">
             {/* Render the appropriate functional step component */}
             {currentStep === 1 && (
@@ -280,14 +284,14 @@ export default function SetupPage() {
 
         {/* Completion Status */}
         {completedSteps.length === SETUP_STEPS.length && (
-          <Card className="mt-8 border-0 shadow-lg bg-green-50/80 backdrop-blur-sm border-green-200">
+          <Card className="mt-8 border-0 shadow-lg bg-green-50/80 dark:bg-green-900/20 backdrop-blur-sm border-green-200 dark:border-green-700">
             <CardContent className="pt-6">
               <div className="text-center">
-                <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
-                <h2 className="text-2xl font-bold text-green-800 mb-2">
+                <CheckCircle className="h-16 w-16 text-green-600 dark:text-green-400 mx-auto mb-4" />
+                <h2 className="text-2xl font-bold text-green-800 dark:text-green-200 mb-2">
                   Setup Complete! 🎉
                 </h2>
-                <p className="text-green-700 mb-4">
+                <p className="text-green-700 dark:text-green-300 mb-4">
                   Your AI expense tracker is ready to use!
                 </p>
                 <div className="space-y-2">
@@ -298,7 +302,7 @@ export default function SetupPage() {
                   >
                     Go to Dashboard
                   </Button>
-                  <p className="text-xs text-green-600">
+                  <p className="text-xs text-green-600 dark:text-green-400">
                     You'll be redirected automatically in a moment...
                   </p>
                 </div>

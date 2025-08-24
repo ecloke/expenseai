@@ -52,6 +52,7 @@ const CATEGORY_EMOJIS: { [key: string]: string } = {
   pharmacy: '💊',
   retail: '🛍️',
   services: '🔧',
+  entertainment: '🎬',
   other: '📦'
 }
 

@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
 import {
   Table,
   TableBody,
@@ -16,8 +18,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { ChevronLeft, ChevronRight, Search, Calendar, Store, Filter, Download, Receipt } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Search, Calendar, Store, Filter, Download, Receipt, Edit, Trash2 } from 'lucide-react'
 import { format, subDays, startOfMonth, endOfMonth } from 'date-fns'
+import { formatInTimeZone } from 'date-fns-tz'
 import { Expense } from '@/types'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
@@ -29,10 +32,13 @@ const CATEGORY_EMOJIS: { [key: string]: string } = {
   pharmacy: '💊',
   retail: '🛍️',
   services: '🔧',
+  entertainment: '🎬',
   other: '📦'
 }
 
-const CATEGORIES = ['all', 'groceries', 'dining', 'gas', 'pharmacy', 'retail', 'services', 'other']
+const CATEGORIES = ['all', 'groceries', 'dining', 'gas', 'pharmacy', 'retail', 'services', 'entertainment', 'other']
+
+const MALAYSIA_TIMEZONE = 'Asia/Kuala_Lumpur'
 
 export default function Transactions() {
   const [expenses, setExpenses] = useState<Expense[]>([])
@@ -46,6 +52,14 @@ export default function Transactions() {
   const [totalCount, setTotalCount] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [user, setUser] = useState<any>(null)
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
+  const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null)
+  const [editForm, setEditForm] = useState({
+    receipt_date: '',
+    store_name: '',
+    category: '',
+    total_amount: 0
+  })
   const router = useRouter()
   
   const itemsPerPage = 20
@@ -188,11 +202,74 @@ export default function Transactions() {
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `expenses-${format(new Date(), 'yyyy-MM-dd')}.csv`
+    a.download = `expenses-${formatInTimeZone(new Date(), MALAYSIA_TIMEZONE, 'yyyy-MM-dd')}.csv`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
     window.URL.revokeObjectURL(url)
+  }
+
+  const handleEdit = (expense: Expense) => {
+    setEditingExpense(expense)
+    setEditForm({
+      receipt_date: expense.receipt_date,
+      store_name: expense.store_name,
+      category: expense.category,
+      total_amount: parseFloat(expense.total_amount.toString())
+    })
+  }
+
+  const handleDelete = (expense: Expense) => {
+    setDeletingExpense(expense)
+  }
+
+  const confirmDelete = async () => {
+    if (!deletingExpense || !user) return
+
+    try {
+      const supabase = createSupabaseClient()
+      const { error } = await supabase
+        .from('expenses')
+        .delete()
+        .eq('id', deletingExpense.id)
+        .eq('user_id', user.id)
+
+      if (error) throw error
+
+      // Refresh the expenses list
+      await loadExpenses()
+      setDeletingExpense(null)
+    } catch (error) {
+      console.error('Error deleting expense:', error)
+      setError('Failed to delete expense')
+    }
+  }
+
+  const handleEditSave = async () => {
+    if (!editingExpense || !user) return
+
+    try {
+      const supabase = createSupabaseClient()
+      const { error } = await supabase
+        .from('expenses')
+        .update({
+          receipt_date: editForm.receipt_date,
+          store_name: editForm.store_name,
+          category: editForm.category,
+          total_amount: editForm.total_amount
+        })
+        .eq('id', editingExpense.id)
+        .eq('user_id', user.id)
+
+      if (error) throw error
+
+      // Refresh the expenses list
+      await loadExpenses()
+      setEditingExpense(null)
+    } catch (error) {
+      console.error('Error updating expense:', error)
+      setError('Failed to update expense')
+    }
   }
 
   return (
@@ -319,6 +396,7 @@ export default function Transactions() {
                           <TableHead className="text-gray-300">Category</TableHead>
                           <TableHead className="text-right text-gray-300">Amount</TableHead>
                           <TableHead className="text-gray-300">Added</TableHead>
+                          <TableHead className="text-gray-300">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -326,7 +404,7 @@ export default function Transactions() {
                           <TableRow key={expense.id} className="border-gray-600 hover:bg-gray-600/50">
                             <TableCell>
                               <div className="font-medium text-gray-200">
-                                {format(new Date(expense.receipt_date), 'MMM dd, yyyy')}
+                                {formatInTimeZone(new Date(expense.receipt_date), MALAYSIA_TIMEZONE, 'MMM dd, yyyy')}
                               </div>
                             </TableCell>
                             <TableCell>
@@ -350,7 +428,27 @@ export default function Transactions() {
                             </TableCell>
                             <TableCell>
                               <div className="text-sm text-gray-400">
-                                {format(new Date(expense.created_at), 'MMM dd, h:mm a')}
+                                {formatInTimeZone(new Date(expense.created_at), MALAYSIA_TIMEZONE, 'MMM dd, h:mm a')}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleEdit(expense)}
+                                  className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white hover:border-gray-500"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleDelete(expense)}
+                                  className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white hover:border-red-500"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                               </div>
                             </TableCell>
                           </TableRow>
@@ -416,6 +514,122 @@ export default function Transactions() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Edit Dialog */}
+        <Dialog open={!!editingExpense} onOpenChange={(open) => !open && setEditingExpense(null)}>
+          <DialogContent className="bg-gray-800 border-gray-700 text-white">
+            <DialogHeader>
+              <DialogTitle>Edit Expense</DialogTitle>
+              <DialogDescription className="text-gray-400">
+                Make changes to your expense record
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-date" className="text-right text-gray-300">
+                  Date
+                </Label>
+                <Input
+                  id="edit-date"
+                  type="date"
+                  value={editForm.receipt_date}
+                  onChange={(e) => setEditForm({ ...editForm, receipt_date: e.target.value })}
+                  className="col-span-3 bg-gray-700 border-gray-600 text-white"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-store" className="text-right text-gray-300">
+                  Store
+                </Label>
+                <Input
+                  id="edit-store"
+                  value={editForm.store_name}
+                  onChange={(e) => setEditForm({ ...editForm, store_name: e.target.value })}
+                  className="col-span-3 bg-gray-700 border-gray-600 text-white"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-category" className="text-right text-gray-300">
+                  Category
+                </Label>
+                <SimpleSelect
+                  value={editForm.category}
+                  onValueChange={(value) => setEditForm({ ...editForm, category: value })}
+                  options={CATEGORIES.filter(cat => cat !== 'all').map(category => ({
+                    value: category,
+                    label: `${CATEGORY_EMOJIS[category]} ${category}`
+                  }))}
+                  placeholder="Select category"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-amount" className="text-right text-gray-300">
+                  Amount
+                </Label>
+                <Input
+                  id="edit-amount"
+                  type="number"
+                  step="0.01"
+                  value={editForm.total_amount}
+                  onChange={(e) => setEditForm({ ...editForm, total_amount: parseFloat(e.target.value) || 0 })}
+                  className="col-span-3 bg-gray-700 border-gray-600 text-white"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditingExpense(null)} className="border-gray-600 text-gray-300 hover:bg-gray-700">
+                Cancel
+              </Button>
+              <Button onClick={handleEditSave} className="bg-blue-600 hover:bg-blue-700">
+                Save changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={!!deletingExpense} onOpenChange={(open) => !open && setDeletingExpense(null)}>
+          <DialogContent className="bg-gray-800 border-gray-700 text-white">
+            <DialogHeader>
+              <DialogTitle>Delete Expense</DialogTitle>
+              <DialogDescription className="text-gray-400">
+                Are you sure you want to delete this expense? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            {deletingExpense && (
+              <div className="py-4">
+                <div className="bg-gray-700 p-4 rounded-lg">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-400">Date:</span>
+                      <div className="text-white">{formatInTimeZone(new Date(deletingExpense.receipt_date), MALAYSIA_TIMEZONE, 'MMM dd, yyyy')}</div>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Store:</span>
+                      <div className="text-white">{deletingExpense.store_name}</div>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Category:</span>
+                      <div className="text-white">{CATEGORY_EMOJIS[deletingExpense.category]} {deletingExpense.category}</div>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Amount:</span>
+                      <div className="text-green-400 font-semibold">${parseFloat(deletingExpense.total_amount.toString()).toFixed(2)}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeletingExpense(null)} className="border-gray-600 text-gray-300 hover:bg-gray-700">
+                Cancel
+              </Button>
+              <Button onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   )

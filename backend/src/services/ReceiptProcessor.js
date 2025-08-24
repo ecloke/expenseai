@@ -69,7 +69,7 @@ class ReceiptProcessor {
       "name": "string", 
       "total": number,
       "quantity": number,
-      "category": "groceries|dining|gas|pharmacy|retail|services|other"
+      "category": "groceries|dining|gas|pharmacy|retail|services|entertainment|other"
     }
   ]
 }
@@ -245,6 +245,13 @@ Rules:
     } else if (storeName.includes('pharmacy') || storeName.includes('guardian') || 
                storeName.includes('watsons')) {
       return 'pharmacy';
+    } else if (storeName.includes('cinema') || storeName.includes('movie') || 
+               storeName.includes('gsc') || storeName.includes('tgv') || 
+               storeName.includes('entertainment') || storeName.includes('arcade') ||
+               storeName.includes('bowling') || storeName.includes('karaoke') ||
+               storeName.includes('ktv') || storeName.includes('theme park') ||
+               storeName.includes('zoo') || storeName.includes('museum')) {
+      return 'entertainment';
     }
 
     return 'other';
