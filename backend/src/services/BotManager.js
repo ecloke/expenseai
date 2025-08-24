@@ -407,7 +407,7 @@ class BotManager {
           }
       }
 
-      return this.formatEnhancedSummary(expenses, title, userId);
+      return await this.formatEnhancedSummary(expenses, title, userId);
     } catch (error) {
       console.error('Error in summary command:', error);
       return '❌ Sorry, I encountered an error generating your summary. Please try again.';
