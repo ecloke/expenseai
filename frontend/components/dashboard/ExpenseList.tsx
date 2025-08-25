@@ -66,7 +66,7 @@ export default function ExpenseList({ userId, projectId }: ExpenseListProps) {
 
       let query = supabase
         .from('expenses')
-        .select('*', { count: 'exact' })
+        .select('*, projects(name, currency)', { count: 'exact' })
         .eq('user_id', userId)
         .order('receipt_date', { ascending: false })
 
@@ -104,6 +104,12 @@ export default function ExpenseList({ userId, projectId }: ExpenseListProps) {
   }
 
   const totalPages = Math.ceil(totalCount / itemsPerPage)
+
+  const formatAmount = (expense: any) => {
+    const currency = expense.projects?.currency || '$'
+    const amount = parseFloat(expense.total_amount.toString()).toFixed(2)
+    return `${currency}${amount}`
+  }
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value)
@@ -188,7 +194,7 @@ export default function ExpenseList({ userId, projectId }: ExpenseListProps) {
                       </TableCell>
                       <TableCell className="text-right">
                         <span className="font-semibold text-lg text-green-400">
-                          ${parseFloat(expense.total_amount.toString()).toFixed(2)}
+                          {formatAmount(expense)}
                         </span>
                       </TableCell>
                     </TableRow>

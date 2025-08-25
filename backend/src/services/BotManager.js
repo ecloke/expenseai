@@ -466,17 +466,17 @@ I can only process **one receipt photo at a time** to ensure accurate AI analysi
     try {
       switch (period) {
         case 'day':
-          expenses = await this.expenseService.getTodayExpenses(userId);
+          expenses = await this.expenseService.getTodayExpensesWithProjects(userId);
           title = "Today's Summary";
           break;
         
         case 'week':
-          expenses = await this.expenseService.getWeekExpenses(userId);
+          expenses = await this.expenseService.getWeekExpensesWithProjects(userId);
           title = "This Week's Summary";
           break;
         
         case 'month':
-          expenses = await this.expenseService.getMonthExpenses(userId);
+          expenses = await this.expenseService.getMonthExpensesWithProjects(userId);
           title = "This Month's Summary";
           break;
         
@@ -484,7 +484,7 @@ I can only process **one receipt photo at a time** to ensure accurate AI analysi
           // Try to parse as month range
           const range = parseMonthRange(period);
           if (range) {
-            expenses = await this.expenseService.getCustomRangeExpenses(userId, range.startDate, range.endDate);
+            expenses = await this.expenseService.getCustomRangeExpensesWithProjects(userId, range.startDate, range.endDate);
             title = `${formatDateRange(range)} Summary`;
           } else {
             return this.getSummaryUsageMessage();
@@ -991,7 +991,14 @@ Your expense has been saved to the database! 💾`;
   /**
    * Format enhanced summary with chart and top stores
    */
-  async formatEnhancedSummary(expenses, title, userId) {
+  async formatEnhancedSummary(data, title, userId) {
+    // Check if it's the new project-separated structure
+    if (data && typeof data === 'object' && ('general' in data || 'projects' in data)) {
+      return this.formatEnhancedSummaryWithProjects(data, title);
+    }
+
+    // Fallback for old structure (array of expenses)
+    const expenses = data;
     if (!expenses || expenses.length === 0) {
       return `📊 *${title}*\n💰 Total: $0.00\n📋 No expenses found`;
     }
@@ -1023,6 +1030,73 @@ Your expense has been saved to the database! 💾`;
     }
 
     return message;
+  }
+
+  /**
+   * Format enhanced summary with project separation
+   */
+  formatEnhancedSummaryWithProjects(data, title) {
+    const { general, projects } = data;
+    let message = `📊 *${title}*\n\n`;
+
+    // General expenses section
+    if (general && general.length > 0) {
+      const generalTotal = general.reduce((sum, expense) => sum + parseFloat(expense.total_amount), 0);
+      const generalCategories = this.expenseService.getCategoryBreakdown(general);
+      const generalStores = this.expenseService.getTopStores(general, 3); // Limit to 3 for space
+
+      message += `💰 **General Expenses:** $${generalTotal.toFixed(2)}\n`;
+      message += `📋 ${general.length} transaction${general.length !== 1 ? 's' : ''}\n`;
+      
+      if (generalCategories.length > 0) {
+        message += `🥧 Categories: `;
+        message += generalCategories.slice(0, 3).map(cat => {
+          const emoji = this.expenseService.getCategoryEmoji(cat.category);
+          return `${emoji} ${cat.percentage}%`;
+        }).join(', ') + '\n';
+      }
+
+      if (generalStores.length > 0) {
+        message += `🏪 Top stores: `;
+        message += generalStores.slice(0, 2).map(store => `${store.store} $${store.total}`).join(', ') + '\n';
+      }
+      message += '\n';
+    }
+
+    // Project expenses sections
+    if (projects && projects.length > 0) {
+      projects.forEach(projectGroup => {
+        const { project, expenses } = projectGroup;
+        const projectTotal = expenses.reduce((sum, expense) => sum + parseFloat(expense.total_amount), 0);
+        const currency = project?.currency || '$';
+        const projectCategories = this.expenseService.getCategoryBreakdown(expenses);
+        const projectStores = this.expenseService.getTopStores(expenses, 3);
+        
+        message += `📁 **${project?.name || 'Unknown Project'}:** ${currency}${projectTotal.toFixed(2)}\n`;
+        message += `📋 ${expenses.length} transaction${expenses.length !== 1 ? 's' : ''}\n`;
+        
+        if (projectCategories.length > 0) {
+          message += `🥧 Categories: `;
+          message += projectCategories.slice(0, 3).map(cat => {
+            const emoji = this.expenseService.getCategoryEmoji(cat.category);
+            return `${emoji} ${cat.percentage}%`;
+          }).join(', ') + '\n';
+        }
+
+        if (projectStores.length > 0) {
+          message += `🏪 Top stores: `;
+          message += projectStores.slice(0, 2).map(store => `${store.store} ${currency}${store.total}`).join(', ') + '\n';
+        }
+        message += '\n';
+      });
+    }
+
+    // No expenses found
+    if ((!general || general.length === 0) && (!projects || projects.length === 0)) {
+      message += `💰 Total: $0.00\n📋 No expenses found`;
+    }
+
+    return message.trim();
   }
 
   /**
