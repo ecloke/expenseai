@@ -437,7 +437,7 @@ export default function Transactions() {
                                   size="sm"
                                   variant="outline"
                                   onClick={() => handleEdit(expense)}
-                                  className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white hover:border-gray-500"
+                                  className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700 hover:text-white hover:border-gray-500"
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
@@ -445,7 +445,7 @@ export default function Transactions() {
                                   size="sm"
                                   variant="outline"
                                   onClick={() => handleDelete(expense)}
-                                  className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white hover:border-red-500"
+                                  className="bg-gray-800 border-red-600 text-red-400 hover:bg-red-600 hover:text-white hover:border-red-500"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>

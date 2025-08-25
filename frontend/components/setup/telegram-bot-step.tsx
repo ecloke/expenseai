@@ -185,14 +185,14 @@ export default function TelegramBotStep({
             <Bot className="h-6 w-6" />
           </div>
           <div>
-            <h3 className="text-xl font-semibold">Create Your Telegram Bot</h3>
+            <h3 className="text-xl font-semibold text-white">Create Your Telegram Bot</h3>
             <p className="text-sm text-gray-400">Set up a personal bot for expense tracking</p>
           </div>
         </div>
 
         <Card className="border-amber-700 bg-amber-900/20">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center">
+            <CardTitle className="text-lg flex items-center text-white">
               <Bot className="h-5 w-5 mr-2 text-amber-400" />
               Step-by-Step Instructions
             </CardTitle>
@@ -202,7 +202,7 @@ export default function TelegramBotStep({
               <div className="flex items-start space-x-3">
                 <span className="flex-shrink-0 w-6 h-6 bg-blue-900 text-blue-200 rounded-full flex items-center justify-center text-xs font-semibold">1</span>
                 <div className="space-y-1">
-                  <p><strong>Open Telegram and search for @BotFather</strong></p>
+                  <p className="text-white"><strong>Open Telegram and search for @BotFather</strong></p>
                   <Button variant="link" className="p-0 h-auto text-xs" asChild>
                     <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="h-3 w-3 mr-1" />
@@ -215,7 +215,7 @@ export default function TelegramBotStep({
               <div className="flex items-start space-x-3">
                 <span className="flex-shrink-0 w-6 h-6 bg-blue-900 text-blue-200 rounded-full flex items-center justify-center text-xs font-semibold">2</span>
                 <div className="space-y-1">
-                  <p><strong>Send the command to create a new bot</strong></p>
+                  <p className="text-white"><strong>Send the command to create a new bot</strong></p>
                   <div className="bg-gray-800 p-2 rounded font-mono text-sm flex items-center justify-between text-gray-200">
                     <span>/newbot</span>
                     <Button 
@@ -232,19 +232,19 @@ export default function TelegramBotStep({
               
               <div className="flex items-start space-x-3">
                 <span className="flex-shrink-0 w-6 h-6 bg-blue-900 text-blue-200 rounded-full flex items-center justify-center text-xs font-semibold">3</span>
-                <p><strong>Choose a name for your bot</strong><br />
+                <p className="text-white"><strong>Choose a name for your bot</strong><br />
                    <span className="text-gray-400">e.g., "My Expense Tracker"</span></p>
               </div>
               
               <div className="flex items-start space-x-3">
                 <span className="flex-shrink-0 w-6 h-6 bg-blue-900 text-blue-200 rounded-full flex items-center justify-center text-xs font-semibold">4</span>
-                <p><strong>Choose a username ending in "bot"</strong><br />
+                <p className="text-white"><strong>Choose a username ending in "bot"</strong><br />
                    <span className="text-gray-400">e.g., "myexpense_bot"</span></p>
               </div>
               
               <div className="flex items-start space-x-3">
                 <span className="flex-shrink-0 w-6 h-6 bg-blue-900 text-blue-200 rounded-full flex items-center justify-center text-xs font-semibold">5</span>
-                <p><strong>Copy the bot token from BotFather's response</strong><br />
+                <p className="text-white"><strong>Copy the bot token from BotFather's response</strong><br />
                    <span className="text-gray-400">It looks like: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz</span></p>
               </div>
             </div>
