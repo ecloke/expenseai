@@ -10,6 +10,7 @@ import botRoutes from './routes/bot.js';
 import userRoutes from './routes/user.js';
 import analyticsRoutes from './routes/analytics.js';
 import healthRoutes from './routes/health.js';
+import projectRoutes from './routes/projects.js';
 
 // Import services
 import BotManager from './services/BotManager.js';
@@ -59,6 +60,7 @@ app.use('/api/bot', botRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/health', healthRoutes);
+app.use('/api/projects', projectRoutes);
 
 // Test endpoints for validation
 app.use('/api/test', (req, res) => {

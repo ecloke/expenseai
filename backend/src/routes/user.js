@@ -1,5 +1,5 @@
 import express from 'express';
-import { validateInput, geminiApiKeySchema } from '../utils/validation.js';
+import { validateInput, geminiApiKeySchema, expenseSchema } from '../utils/validation.js';
 import { encrypt, decrypt } from '../utils/encryption.js';
 
 const router = express.Router();
@@ -386,6 +386,145 @@ router.get('/setup-status/:user_id', async (req, res) => {
     res.status(500).json({ 
       error: 'Failed to get setup status',
       message: error.message 
+    });
+  }
+});
+
+/**
+ * POST /api/user/expenses
+ * Create new expense
+ */
+router.post('/expenses', async (req, res) => {
+  try {
+    const validation = validateInput(req.body, expenseSchema);
+    
+    if (!validation.isValid) {
+      return res.status(400).json({ 
+        success: false, 
+        message: validation.error 
+      });
+    }
+
+    const supabase = req.supabase;
+    const { user_id, project_id, date, store_name, category, total, description } = validation.data;
+
+    // If project_id is provided, verify it exists and belongs to user
+    if (project_id) {
+      const { data: project, error: projectError } = await supabase
+        .from('projects')
+        .select('id')
+        .eq('id', project_id)
+        .eq('user_id', user_id)
+        .single();
+
+      if (projectError || !project) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Project not found or does not belong to user' 
+        });
+      }
+    }
+
+    const { data: expense, error } = await supabase
+      .from('expenses')
+      .insert([{ 
+        user_id,
+        project_id: project_id || null,
+        date,
+        store_name,
+        category,
+        total,
+        description: description || ''
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating expense:', error);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Failed to create expense' 
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Expense created successfully',
+      data: expense
+    });
+
+  } catch (error) {
+    console.error('Error in POST /expenses:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Internal server error' 
+    });
+  }
+});
+
+/**
+ * GET /api/user/expenses
+ * Get expenses with optional project filtering
+ */
+router.get('/expenses', async (req, res) => {
+  try {
+    const { user_id, project_id, limit = 50, offset = 0 } = req.query;
+
+    if (!user_id) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'user_id is required' 
+      });
+    }
+
+    const supabase = req.supabase;
+    let query = supabase
+      .from('expenses')
+      .select(`
+        id,
+        date,
+        store_name,
+        category,
+        total,
+        description,
+        created_at,
+        project_id,
+        projects:project_id (
+          name,
+          currency
+        )
+      `)
+      .eq('user_id', user_id)
+      .order('date', { ascending: false })
+      .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
+
+    // Filter by project if specified
+    if (project_id === 'general') {
+      query = query.is('project_id', null);
+    } else if (project_id && project_id !== 'all') {
+      query = query.eq('project_id', project_id);
+    }
+
+    const { data: expenses, error } = await query;
+
+    if (error) {
+      console.error('Error fetching expenses:', error);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Failed to fetch expenses' 
+      });
+    }
+
+    res.json({
+      success: true,
+      data: expenses
+    });
+
+  } catch (error) {
+    console.error('Error in GET /expenses:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Internal server error' 
     });
   }
 });

@@ -325,12 +325,25 @@ I can only process **one receipt photo at a time** to ensure accurate AI analysi
           throw new Error('AI failed to extract receipt data');
         }
 
-        // Step 4: Receipt processing complete - Google Sheets integration removed
-        await bot.editMessageText('✅ Receipt processed successfully!\n\n' + this.formatReceiptConfirmation(receiptData), {
-          chat_id: msg.chat.id,
-          message_id: statusMsg.message_id,
-          parse_mode: 'Markdown'
-        });
+        // Step 4: Check for open projects and show selection
+        const hasOpenProjects = await this.hasOpenProjects(userId);
+        
+        if (hasOpenProjects) {
+          const projectSelectionMessage = await this.showProjectSelection(userId, receiptData);
+          await bot.editMessageText(projectSelectionMessage, {
+            chat_id: msg.chat.id,
+            message_id: statusMsg.message_id,
+            parse_mode: 'Markdown'
+          });
+        } else {
+          // No open projects, save directly as general expense
+          await this.saveReceiptAsExpense(userId, receiptData, null);
+          await bot.editMessageText('✅ Receipt processed successfully!\n\n' + this.formatReceiptConfirmation(receiptData, null), {
+            chat_id: msg.chat.id,
+            message_id: statusMsg.message_id,
+            parse_mode: 'Markdown'
+          });
+        }
         return;
 
         // Step 5: Save to sheets
@@ -417,6 +430,18 @@ I can only process **one receipt photo at a time** to ensure accurate AI analysi
         case '/create':
           return this.handleCreateCommand(userId);
         
+        case '/new':
+          return this.handleNewProjectCommand(userId);
+        
+        case '/list':
+          return this.handleListProjectsCommand(userId);
+        
+        case '/close':
+          return this.handleCloseProjectCommand(userId);
+        
+        case '/open':
+          return this.handleOpenProjectCommand(userId);
+        
         default:
           return this.getUnknownCommandMessage();
       }
@@ -501,6 +526,14 @@ Type the date or /cancel to stop:`;
     switch (conversation.type) {
       case 'create_expense':
         return this.handleCreateExpenseFlow(userId, input, conversation);
+      case 'create_project':
+        return this.handleCreateProjectFlow(userId, input, conversation);
+      case 'close_project':
+        return this.handleCloseProjectFlow(userId, input, conversation);
+      case 'open_project':
+        return this.handleOpenProjectFlow(userId, input, conversation);
+      case 'project_selection':
+        return this.handleProjectSelectionFlow(userId, input, conversation);
       default:
         this.conversationManager.endConversation(userId);
         return '❌ Unknown conversation type. Please try again.';
@@ -579,32 +612,399 @@ Please enter the total amount:`;
 
         const amount = parseFloat(input).toFixed(2);
         const expenseData = {
-          receiptDate: conversation.data.receiptDate,
-          storeName: conversation.data.storeName,
+          date: conversation.data.receiptDate,
+          store_name: conversation.data.storeName,
           category: conversation.data.category,
-          totalAmount: amount
+          total: parseFloat(amount)
         };
 
-        try {
-          const createdExpense = await this.expenseService.createExpense(userId, expenseData);
+        // Check for open projects
+        const hasOpenProjects = await this.hasOpenProjects(userId);
+        
+        if (hasOpenProjects) {
+          // Show project selection
           this.conversationManager.endConversation(userId);
-          
-          const categoryEmoji = this.expenseService.getCategoryEmoji(expenseData.category);
-          return `✅ *Expense Created Successfully!*
+          return await this.showProjectSelection(userId, expenseData);
+        } else {
+          // No open projects, save directly as general expense
+          try {
+            await this.saveReceiptAsExpense(userId, expenseData, null);
+            this.conversationManager.endConversation(userId);
+            
+            const categoryEmoji = this.expenseService.getCategoryEmoji(expenseData.category);
+            return `✅ *Expense Created Successfully!*
 
 📊 *Summary:*
-📅 Date: ${expenseData.receiptDate}
-🏪 Store: ${expenseData.storeName}
+📅 Date: ${expenseData.date}
+🏪 Store: ${expenseData.store_name}
 📋 Category: ${categoryEmoji} ${this.expenseService.capitalizeFirst(expenseData.category)}
 💰 Amount: $${amount}
+📁 Project: General expenses
 
 The expense has been saved to your account.`;
 
-        } catch (error) {
-          console.error('Error creating expense:', error);
-          this.conversationManager.endConversation(userId);
-          return '❌ Sorry, there was an error saving your expense. Please try again with /create command.';
+          } catch (error) {
+            console.error('Error creating expense:', error);
+            this.conversationManager.endConversation(userId);
+            return '❌ Sorry, there was an error saving your expense. Please try again with /create command.';
+          }
         }
+    }
+  }
+
+  /**
+   * Handle create project conversation flow
+   */
+  async handleCreateProjectFlow(userId, input, conversation) {
+    switch (conversation.data.step) {
+      case 'name': // Waiting for project name
+        if (!input || input.trim().length < 1) {
+          return `❌ Project name cannot be empty.
+
+🆕 Please enter a name for your project:`;
+        }
+
+        if (input.trim().length > 255) {
+          return `❌ Project name is too long (max 255 characters).
+
+🆕 Please enter a shorter name for your project:`;
+        }
+
+        this.conversationManager.updateData(userId, { step: 'currency', name: input.trim() });
+        return `✅ Project name: ${input.trim()}
+
+💱 What currency will this project use?
+
+*Examples:*
+• USD (US Dollars)
+• RM (Malaysian Ringgit)  
+• EUR (Euros)
+• GBP (British Pounds)
+
+💡 Type any currency name you prefer (e.g., "USD", "RM", "Baht")`;
+
+      case 'currency': // Waiting for currency
+        if (!input || input.trim().length < 1) {
+          return `❌ Currency cannot be empty.
+
+💱 Please enter the currency for this project:`;
+        }
+
+        if (input.trim().length > 20) {
+          return `❌ Currency name is too long (max 20 characters).
+
+💱 Please enter a shorter currency name:`;
+        }
+
+        const projectData = {
+          name: conversation.data.name,
+          currency: input.trim(),
+          user_id: userId
+        };
+
+        try {
+          const response = await fetch(`${process.env.API_BASE_URL || 'http://localhost:3000'}/api/projects`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(projectData)
+          });
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            throw new Error(result.message || 'Failed to create project');
+          }
+
+          this.conversationManager.endConversation(userId);
+          return `✅ *Project Created Successfully!*
+
+📊 *Project Details:*
+📝 Name: ${projectData.name}
+💱 Currency: ${projectData.currency}
+🔓 Status: Open
+
+🎉 Your project is ready! Now you can:
+• Upload receipt photos to add expenses to this project
+• Use **/list** to view all your open projects
+• Use **/close** to close the project when finished`;
+
+        } catch (error) {
+          console.error('Error creating project:', error);
+          this.conversationManager.endConversation(userId);
+          return '❌ Sorry, there was an error creating your project. Please try again with /new command.';
+        }
+    }
+  }
+
+  /**
+   * Handle close project conversation flow
+   */
+  async handleCloseProjectFlow(userId, input, conversation) {
+    const projectIndex = parseInt(input) - 1;
+    const projects = conversation.data.projects;
+
+    if (isNaN(projectIndex) || projectIndex < 0 || projectIndex >= projects.length) {
+      return `❌ Invalid selection. Please choose a number from 1 to ${projects.length}:
+
+${projects.map((project, index) => `${index + 1}. ${project.name}`).join('\n')}`;
+    }
+
+    const selectedProject = projects[projectIndex];
+
+    try {
+      const response = await fetch(`${process.env.API_BASE_URL || 'http://localhost:3000'}/api/projects/${selectedProject.id}?user_id=${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: 'closed' })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to close project');
+      }
+
+      this.conversationManager.endConversation(userId);
+      return `🔒 *Project Closed Successfully!*
+
+📝 Project: ${selectedProject.name}
+🔓 Status: Closed
+
+💡 This project will no longer appear in expense selection menus.
+🔓 Use **/open** to reopen it later if needed.`;
+
+    } catch (error) {
+      console.error('Error closing project:', error);
+      this.conversationManager.endConversation(userId);
+      return '❌ Sorry, there was an error closing the project. Please try again.';
+    }
+  }
+
+  /**
+   * Handle open project conversation flow
+   */
+  async handleOpenProjectFlow(userId, input, conversation) {
+    const projectIndex = parseInt(input) - 1;
+    const projects = conversation.data.projects;
+
+    if (isNaN(projectIndex) || projectIndex < 0 || projectIndex >= projects.length) {
+      return `❌ Invalid selection. Please choose a number from 1 to ${projects.length}:
+
+${projects.map((project, index) => `${index + 1}. ${project.name}`).join('\n')}`;
+    }
+
+    const selectedProject = projects[projectIndex];
+
+    try {
+      const response = await fetch(`${process.env.API_BASE_URL || 'http://localhost:3000'}/api/projects/${selectedProject.id}?user_id=${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: 'open' })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to open project');
+      }
+
+      this.conversationManager.endConversation(userId);
+      return `🔓 *Project Reopened Successfully!*
+
+📝 Project: ${selectedProject.name}
+🔓 Status: Open
+
+✅ This project will now appear in expense selection menus again.
+📸 Upload receipts to start adding expenses to this project!`;
+
+    } catch (error) {
+      console.error('Error opening project:', error);
+      this.conversationManager.endConversation(userId);
+      return '❌ Sorry, there was an error opening the project. Please try again.';
+    }
+  }
+
+  /**
+   * Handle project selection for expenses
+   */
+  async handleProjectSelectionFlow(userId, input, conversation) {
+    const selectionIndex = parseInt(input) - 1;
+    const options = conversation.data.options;
+    const expenseData = conversation.data.expenseData;
+
+    if (isNaN(selectionIndex) || selectionIndex < 0 || selectionIndex >= options.length) {
+      return `❌ Invalid selection. Please choose a number from 1 to ${options.length}:
+
+${options.map((option, index) => `${index + 1}. ${option.label}`).join('\n')}`;
+    }
+
+    const selectedOption = options[selectionIndex];
+    
+    try {
+      // Create expense with project_id (null for general expenses)
+      const finalExpenseData = {
+        ...expenseData,
+        user_id: userId,
+        project_id: selectedOption.project_id
+      };
+
+      const response = await fetch(`${process.env.API_BASE_URL || 'http://localhost:3000'}/api/user/expenses`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(finalExpenseData)
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to create expense');
+      }
+
+      this.conversationManager.endConversation(userId);
+
+      const currency = selectedOption.project_id ? selectedOption.currency : '$';
+      const projectInfo = selectedOption.project_id ? `\n📁 Project: ${selectedOption.label}` : '\n📁 Project: General expenses';
+
+      return `✅ *Expense Saved Successfully!*
+
+📊 *Summary:*
+📅 Date: ${expenseData.date}
+🏪 Store: ${expenseData.store_name}
+🏷️ Category: ${expenseData.category}
+💰 Total: ${currency}${expenseData.total.toFixed(2)}${projectInfo}
+
+Your expense has been saved to the database! 💾`;
+
+    } catch (error) {
+      console.error('Error saving expense to project:', error);
+      this.conversationManager.endConversation(userId);
+      return '❌ Sorry, there was an error saving your expense. Please try again.';
+    }
+  }
+
+  /**
+   * Check if user has open projects
+   */
+  async hasOpenProjects(userId) {
+    try {
+      const { data: projects, error } = await this.supabase
+        .from('projects')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('status', 'open')
+        .limit(1);
+
+      return !error && projects && projects.length > 0;
+    } catch (error) {
+      console.error('Error checking open projects:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Show project selection menu for expense
+   */
+  async showProjectSelection(userId, expenseData) {
+    try {
+      const { data: projects, error } = await this.supabase
+        .from('projects')
+        .select('id, name, currency')
+        .eq('user_id', userId)
+        .eq('status', 'open')
+        .order('name');
+
+      if (error || !projects) {
+        console.error('Error fetching projects for selection:', error);
+        return '❌ Error fetching projects. Saving as general expense.';
+      }
+
+      // Build selection options
+      const options = [
+        { label: 'General expenses', project_id: null, currency: '$' }
+      ];
+
+      projects.forEach(project => {
+        options.push({
+          label: project.name,
+          project_id: project.id,
+          currency: project.currency
+        });
+      });
+
+      // Start project selection conversation
+      this.conversationManager.startConversation(userId, 'project_selection', {
+        options: options,
+        expenseData: expenseData
+      });
+
+      let message = `✅ *Receipt Processed Successfully!*
+
+📊 *Extracted Data:*
+📅 Date: ${expenseData.date}
+🏪 Store: ${expenseData.store_name}
+🏷️ Category: ${expenseData.category}
+💰 Total: ${expenseData.total.toFixed(2)}
+
+📁 *Where would you like to save this expense?*
+
+`;
+
+      options.forEach((option, index) => {
+        const currencyInfo = option.project_id ? ` (${option.currency})` : '';
+        message += `${index + 1}. ${option.label}${currencyInfo}\n`;
+      });
+
+      message += `\n💡 Reply with the number of your choice.`;
+
+      return message;
+
+    } catch (error) {
+      console.error('Error in showProjectSelection:', error);
+      return '❌ Error showing project selection. Please try again.';
+    }
+  }
+
+  /**
+   * Save receipt data as expense
+   */
+  async saveReceiptAsExpense(userId, receiptData, projectId) {
+    try {
+      const expenseData = {
+        user_id: userId,
+        project_id: projectId,
+        date: receiptData.date,
+        store_name: receiptData.store_name,
+        category: receiptData.category,
+        total: receiptData.total,
+        description: ''
+      };
+
+      const response = await fetch(`${process.env.API_BASE_URL || 'http://localhost:3000'}/api/user/expenses`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(expenseData)
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to save expense');
+      }
+
+      return result.data;
+    } catch (error) {
+      console.error('Error saving receipt as expense:', error);
+      throw error;
     }
   }
 
@@ -674,11 +1074,17 @@ Usage: \`/summary <period>\`
   getStartMessage() {
     return `🎉 *Welcome to AI Expense Tracker!*
 
-I help you track expenses by processing receipt photos and answering questions about your spending.
+I help you track expenses by processing receipt photos and organizing them by projects.
 
 📸 *Send me a photo* of your receipt for automatic expense tracking!
 
 📋 *Available Commands:*
+
+*📁 Project Management:*
+• /new - Create a new project (trips, events, etc.)
+• /list - View all open projects
+• /close - Close a project when finished
+• /open - Reopen a previously closed project
 
 *📊 Analytics:*
 • /summary day - Today's detailed summary
@@ -695,9 +1101,9 @@ I help you track expenses by processing receipt photos and answering questions a
 • /help - Detailed command guide
 
 💡 *Quick Start:*
-1. Send receipt photos for auto-tracking
-2. Use \`/summary week\` for weekly analysis
-3. Use \`/create\` to add manual expenses
+1. Create a project with /new (optional)
+2. Send receipt photos for auto-tracking
+3. Use \`/summary week\` for weekly analysis
 
 Type /help for detailed usage examples!`;
   }
@@ -708,9 +1114,23 @@ Type /help for detailed usage examples!`;
   getHelpMessage() {
     return `🤖 *AI Expense Tracker - Complete Guide*
 
+📁 *Project Management:*
+• \`/new\` - Create new project (trips, events, etc.)
+  → Enter project name
+  → Set currency (USD, RM, EUR, etc.)
+• \`/list\` - View all open projects
+• \`/close\` - Close a project (removes from selection menu)
+• \`/open\` - Reopen a previously closed project
+
+*Project Features:*
+• Organize expenses by purpose (Thailand Trip, Birthday Party)
+• Each project has its own currency
+• Expenses can be general (no project) or project-specific
+
 📸 *Photo Processing:*
 • Send **one receipt photo at a time** for automatic tracking
 • AI extracts store name, date, amount, and category
+• If you have open projects, you'll choose where to save the expense
 • Wait for processing to complete before sending next photo
 • Multiple photos in one message will be rejected
 
@@ -733,14 +1153,16 @@ Type /help for detailed usage examples!`;
 
 💰 *Manual Expense Entry:*
 • \`/create\` - Add expense step-by-step
-  → Asks for date (YYYY-MM-DD)
+  → Date (YYYY-MM-DD)
   → Store name
-  → Category selection (numbered menu)
+  → Category selection
   → Amount
+  → Project selection (if you have open projects)
 
 💡 *Pro Tips:*
+• Create projects for trips, events, or any specific spending category
 • Use month ranges: jan-dec, february-august, 3-9
-• Type /cancel during /create to stop
+• Type /cancel during conversations to stop
 • Send **single, clear receipt photos** for best AI results
 • Wait 10 seconds between photos to avoid rate limiting
 • Date format must be YYYY-MM-DD (e.g., 2025-01-15)
@@ -758,6 +1180,9 @@ I only understand specific commands to save AI processing costs.
 
 📋 *Available Commands:*
 
+*📁 Projects:*
+• /new, /list, /close, /open - Manage projects
+
 *📊 Detailed Analytics:*
 • /summary day, /summary week, /summary month
 • /summary jan-aug, /summary january-march
@@ -773,11 +1198,183 @@ I only understand specific commands to save AI processing costs.
 • /help - Complete command guide
 
 💡 *Try:*
+• \`/new\` - Create a project for your trip/event
 • \`/summary week\` - This week's detailed summary
 • \`/create\` - Add an expense manually
 • \`/help\` - See all features
 
 📸 Or send me a *receipt photo* for automatic expense tracking!`;
+  }
+
+  /**
+   * Handle /new project command - start project creation conversation
+   */
+  async handleNewProjectCommand(userId) {
+    this.conversationManager.startConversation(userId, 'create_project', { step: 'name' });
+    return `🆕 *Create New Project*
+
+What would you like to name your project?
+
+*Examples:*
+• Thailand Trip
+• Birthday Party
+• Office Renovation
+• Wedding Expenses
+
+💡 Choose a descriptive name to easily identify expenses for this project.`;
+  }
+
+  /**
+   * Handle /list projects command - show all open projects
+   */
+  async handleListProjectsCommand(userId) {
+    try {
+      const { data: projects, error } = await this.supabase
+        .from('projects')
+        .select('id, name, currency, created_at')
+        .eq('user_id', userId)
+        .eq('status', 'open')
+        .order('name');
+
+      if (error) {
+        console.error('Error fetching open projects:', error);
+        return '❌ Sorry, I encountered an error fetching your projects. Please try again.';
+      }
+
+      if (!projects || projects.length === 0) {
+        return `📝 *No Open Projects*
+
+You currently have no open projects.
+
+🆕 To create a new project, type **/new**
+
+💡 Projects help you organize expenses for specific events, trips, or purposes.`;
+      }
+
+      let message = `📋 *Your Open Projects*\n\n`;
+      
+      projects.forEach((project, index) => {
+        const createdDate = new Date(project.created_at).toLocaleDateString();
+        message += `${index + 1}. **${project.name}**\n`;
+        message += `   💱 Currency: ${project.currency}\n`;
+        message += `   📅 Created: ${createdDate}\n\n`;
+      });
+
+      message += `💡 *Tips:*
+• Upload receipts to add expenses to these projects
+• Use **/close** to close a project when finished
+• Use **/new** to create another project`;
+
+      return message;
+
+    } catch (error) {
+      console.error('Error in handleListProjectsCommand:', error);
+      return '❌ Sorry, I encountered an error. Please try again.';
+    }
+  }
+
+  /**
+   * Handle /close project command - close an open project
+   */
+  async handleCloseProjectCommand(userId) {
+    try {
+      const { data: projects, error } = await this.supabase
+        .from('projects')
+        .select('id, name')
+        .eq('user_id', userId)
+        .eq('status', 'open')
+        .order('name');
+
+      if (error) {
+        console.error('Error fetching open projects:', error);
+        return '❌ Sorry, I encountered an error fetching your projects. Please try again.';
+      }
+
+      if (!projects || projects.length === 0) {
+        return `📝 *No Open Projects*
+
+You currently have no open projects to close.
+
+🆕 To create a new project, type **/new**`;
+      }
+
+      // Start close project conversation
+      this.conversationManager.startConversation(userId, 'close_project', { 
+        step: 'select',
+        projects: projects
+      });
+
+      let message = `🔒 *Close Project*
+
+Select which project you want to close:
+
+`;
+      
+      projects.forEach((project, index) => {
+        message += `${index + 1}. ${project.name}\n`;
+      });
+
+      message += `\n💡 Reply with the number of the project you want to close.
+⚠️ Closed projects won't appear in expense selection menus.`;
+
+      return message;
+
+    } catch (error) {
+      console.error('Error in handleCloseProjectCommand:', error);
+      return '❌ Sorry, I encountered an error. Please try again.';
+    }
+  }
+
+  /**
+   * Handle /open project command - reopen a closed project
+   */
+  async handleOpenProjectCommand(userId) {
+    try {
+      const { data: projects, error } = await this.supabase
+        .from('projects')
+        .select('id, name')
+        .eq('user_id', userId)
+        .eq('status', 'closed')
+        .order('name');
+
+      if (error) {
+        console.error('Error fetching closed projects:', error);
+        return '❌ Sorry, I encountered an error fetching your projects. Please try again.';
+      }
+
+      if (!projects || projects.length === 0) {
+        return `📝 *No Closed Projects*
+
+You currently have no closed projects to reopen.
+
+🔒 Use **/close** to close an open project first.`;
+      }
+
+      // Start open project conversation
+      this.conversationManager.startConversation(userId, 'open_project', { 
+        step: 'select',
+        projects: projects
+      });
+
+      let message = `🔓 *Reopen Project*
+
+Select which project you want to reopen:
+
+`;
+      
+      projects.forEach((project, index) => {
+        message += `${index + 1}. ${project.name}\n`;
+      });
+
+      message += `\n💡 Reply with the number of the project you want to reopen.
+✅ Reopened projects will appear in expense selection menus again.`;
+
+      return message;
+
+    } catch (error) {
+      console.error('Error in handleOpenProjectCommand:', error);
+      return '❌ Sorry, I encountered an error. Please try again.';
+    }
   }
 
   /**
@@ -926,7 +1523,7 @@ I only understand specific commands to save AI processing costs.
   /**
    * Format receipt confirmation message
    */
-  formatReceiptConfirmation(receiptData) {
+  formatReceiptConfirmation(receiptData, projectData = null) {
     // Escape special markdown characters
     const escapeMarkdown = (text) => {
       if (!text) return 'N/A';
@@ -935,13 +1532,19 @@ I only understand specific commands to save AI processing costs.
 
     // Determine category for the receipt 
     const category = this.receiptProcessor.categorizeReceipt(receiptData);
+    
+    // Format currency and project info
+    const currency = projectData ? projectData.currency : '$';
+    const projectInfo = projectData ? 
+      `\n📁 *Project:* ${escapeMarkdown(projectData.name)}` : 
+      '\n📁 *Project:* General expenses';
 
     return `✅ *Receipt processed successfully\\!*
 
 🏪 *Store:* ${escapeMarkdown(receiptData.store_name)}
 📅 *Date:* ${escapeMarkdown(receiptData.date)}
 🏷️ *Category:* ${escapeMarkdown(category)}
-💰 *Total:* $${receiptData.total.toFixed(2)}
+💰 *Total:* ${currency}${receiptData.total.toFixed(2)}${projectInfo}
 
 Your expense has been saved to the database\\! 💾`;
   }
