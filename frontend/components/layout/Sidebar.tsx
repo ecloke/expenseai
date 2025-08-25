@@ -67,12 +67,7 @@ export default function Sidebar({ userConfig, botSession }: SidebarProps) {
       current: false,
       onClick: handleOpenTutorial
     },
-    {
-      name: 'Settings',
-      href: '/settings',
-      icon: Settings,
-      current: pathname === '/settings'
-    }
+
   ]
 
   return (
