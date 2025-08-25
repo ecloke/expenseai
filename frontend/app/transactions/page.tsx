@@ -639,7 +639,7 @@ export default function Transactions() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setEditingExpense(null)} className="border-gray-600 text-gray-300 hover:bg-gray-700">
+              <Button variant="outline" onClick={() => setEditingExpense(null)} className="border-gray-600 text-gray-300 hover:bg-gray-700 bg-gray-800">
                 Cancel
               </Button>
               <Button onClick={handleEditSave} className="bg-blue-600 hover:bg-blue-700">
@@ -683,7 +683,7 @@ export default function Transactions() {
               </div>
             )}
             <DialogFooter>
-              <Button variant="outline" onClick={() => setDeletingExpense(null)} className="border-gray-600 text-gray-300 hover:bg-gray-700">
+              <Button variant="outline" onClick={() => setDeletingExpense(null)} className="border-gray-600 text-gray-300 hover:bg-gray-700 bg-gray-800">
                 Cancel
               </Button>
               <Button onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">

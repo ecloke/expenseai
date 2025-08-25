@@ -34,6 +34,7 @@ import { Expense } from '@/types'
 interface ExpenseChartsProps {
   userId: string
   projectId?: string
+  currency?: string
 }
 
 const COLORS = [
@@ -57,7 +58,7 @@ const CATEGORY_EMOJIS: { [key: string]: string } = {
   other: '📦'
 }
 
-export default function ExpenseCharts({ userId, projectId }: ExpenseChartsProps) {
+export default function ExpenseCharts({ userId, projectId, currency = '$' }: ExpenseChartsProps) {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'all'>('month')
@@ -235,7 +236,7 @@ export default function ExpenseCharts({ userId, projectId }: ExpenseChartsProps)
             <DollarSign className="h-4 w-4 text-green-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-white">${stats.total}</div>
+            <div className="text-3xl font-bold text-white">{currency}{stats.total}</div>
             <p className="text-xs text-gray-400 mt-1">This {timeRange === 'week' ? 'week' : timeRange === 'month' ? 'month' : 'period'}</p>
           </CardContent>
         </Card>
@@ -257,7 +258,7 @@ export default function ExpenseCharts({ userId, projectId }: ExpenseChartsProps)
             <TrendingUp className="h-4 w-4 text-purple-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-white">${stats.avgPerTransaction}</div>
+            <div className="text-3xl font-bold text-white">{currency}{stats.avgPerTransaction}</div>
             <p className="text-xs text-gray-400 mt-1">Average spend</p>
           </CardContent>
         </Card>
@@ -288,7 +289,7 @@ export default function ExpenseCharts({ userId, projectId }: ExpenseChartsProps)
                   <XAxis dataKey="formatted_date" stroke="#9CA3AF" />
                   <YAxis stroke="#9CA3AF" />
                   <Tooltip 
-                    formatter={(value) => [`$${value}`, 'Amount']}
+                    formatter={(value) => [`${currency}${value}`, 'Amount']}
                     labelFormatter={(label) => `Date: ${label}`}
                     contentStyle={{ 
                       backgroundColor: '#1F2937', 
@@ -342,7 +343,7 @@ export default function ExpenseCharts({ userId, projectId }: ExpenseChartsProps)
                       ))}
                     </Pie>
                     <Tooltip 
-                      formatter={(value, name, props) => [`$${value}`, 'Amount']}
+                      formatter={(value, name, props) => [`${currency}${value}`, 'Amount']}
                       labelFormatter={(label) => `${CATEGORY_EMOJIS[label] || ''} ${label}`}
                       contentStyle={{ 
                         backgroundColor: '#1F2937', 
@@ -373,7 +374,7 @@ export default function ExpenseCharts({ userId, projectId }: ExpenseChartsProps)
                         </span>
                       </div>
                       <div className="text-right">
-                        <div className="font-semibold text-white">${category.amount}</div>
+                        <div className="font-semibold text-white">{currency}{category.amount}</div>
                         <div className="text-sm text-gray-400">{category.percentage}%</div>
                       </div>
                     </div>
@@ -407,7 +408,7 @@ export default function ExpenseCharts({ userId, projectId }: ExpenseChartsProps)
                       <div className="font-medium text-gray-200 truncate w-full">{store.store}</div>
                       <div className="text-sm text-gray-400">{store.count} transactions</div>
                     </div>
-                    <div className="font-semibold text-green-400 text-lg mt-2">${store.amount}</div>
+                    <div className="font-semibold text-green-400 text-lg mt-2">{currency}{store.amount}</div>
                   </div>
                 ))}
               </div>

@@ -45,7 +45,7 @@ router.get('/', async (req, res) => {
       projects.map(async (project) => {
         const { data: expenseStats, error: statsError } = await supabase
           .from('expenses')
-          .select('total')
+          .select('total_amount')
           .eq('project_id', project.id);
 
         if (statsError) {

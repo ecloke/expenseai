@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ChevronLeft, ChevronRight, X, MessageCircle, BarChart3, List, Bot, Smartphone, Upload } from 'lucide-react'
+import { ChevronLeft, ChevronRight, X, MessageCircle, BarChart3, List, Bot, Smartphone, Upload, FolderPlus } from 'lucide-react'
 
 interface TutorialStep {
   id: number
@@ -135,7 +135,48 @@ export default function TutorialGuide({ isOpen, onClose, onComplete }: TutorialG
 
           <div className="bg-gray-800 rounded-lg p-3">
             <p className="text-sm text-gray-400">
-              💡 <strong>Ready to start?</strong> Upload your first receipt to your Telegram bot and watch the magic happen!
+              💡 <strong>Tip:</strong> Use filters to quickly find specific transactions or export data for analysis.
+            </p>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 4,
+      title: "Project Management",
+      icon: <FolderPlus className="h-8 w-8 text-orange-400" />,
+      content: (
+        <div className="space-y-4 text-gray-300">
+          <div className="bg-orange-900/20 border border-orange-700 rounded-lg p-4">
+            <h4 className="font-semibold text-orange-200 mb-2">📁 Organize by Projects</h4>
+            <p className="text-sm">Create projects for trips, events, or any specific purpose to track expenses separately.</p>
+          </div>
+          
+          <div className="grid gap-3">
+            <div className="bg-gray-800 rounded-lg p-3">
+              <h5 className="font-medium text-white mb-1">🆕 Create Projects</h5>
+              <p className="text-sm">Use <code className="text-blue-300">/new</code> in Telegram or visit the Projects page</p>
+            </div>
+            
+            <div className="bg-gray-800 rounded-lg p-3">
+              <h5 className="font-medium text-white mb-1">💱 Custom Currencies</h5>
+              <p className="text-sm">Set different currencies for each project (THB, RM, EUR, etc.)</p>
+            </div>
+            
+            <div className="bg-gray-800 rounded-lg p-3">
+              <h5 className="font-medium text-white mb-1">📊 Project Analytics</h5>
+              <p className="text-sm">Filter dashboard and transactions by project to see detailed spending</p>
+            </div>
+            
+            <div className="bg-gray-800 rounded-lg p-3">
+              <h5 className="font-medium text-white mb-1">🔄 Project Status</h5>
+              <p className="text-sm">Open/close projects with <code className="text-blue-300">/close</code> and <code className="text-blue-300">/open</code> commands</p>
+            </div>
+          </div>
+
+          <div className="bg-gray-800 rounded-lg p-3">
+            <p className="text-sm text-gray-400">
+              💡 <strong>Ready to start?</strong> Create your first project in Telegram with <code className="text-blue-300">/new</code> or visit the Projects page!
             </p>
           </div>
         </div>
