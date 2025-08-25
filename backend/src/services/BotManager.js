@@ -409,20 +409,20 @@ I can only process **one receipt photo at a time** to ensure accurate AI analysi
           return this.expenseService.formatMonthlyStats(stats);
         
         case '/today':
-          const todayExpenses = await this.expenseService.getTodayExpenses(userId);
-          return this.expenseService.formatExpenseSummary(todayExpenses, "Today's Expenses");
+          const todayExpenses = await this.expenseService.getTodayExpensesWithProjects(userId);
+          return this.expenseService.formatExpenseSummaryWithProjects(todayExpenses, "Today's Expenses");
         
         case '/yesterday':
-          const yesterdayExpenses = await this.expenseService.getYesterdayExpenses(userId);
-          return this.expenseService.formatExpenseSummary(yesterdayExpenses, "Yesterday's Expenses");
+          const yesterdayExpenses = await this.expenseService.getYesterdayExpensesWithProjects(userId);
+          return this.expenseService.formatExpenseSummaryWithProjects(yesterdayExpenses, "Yesterday's Expenses");
         
         case '/week':
-          const weekExpenses = await this.expenseService.getWeekExpenses(userId);
-          return this.expenseService.formatExpenseSummary(weekExpenses, "This Week's Expenses");
+          const weekExpenses = await this.expenseService.getWeekExpensesWithProjects(userId);
+          return this.expenseService.formatExpenseSummaryWithProjects(weekExpenses, "This Week's Expenses");
         
         case '/month':
-          const monthExpenses = await this.expenseService.getMonthExpenses(userId);
-          return this.expenseService.formatExpenseSummary(monthExpenses, "This Month's Expenses");
+          const monthExpenses = await this.expenseService.getMonthExpensesWithProjects(userId);
+          return this.expenseService.formatExpenseSummaryWithProjects(monthExpenses, "This Month's Expenses");
         
         case '/summary':
           return this.handleSummaryCommand(userId, params);

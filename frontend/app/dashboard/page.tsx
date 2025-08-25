@@ -94,6 +94,14 @@ export default function Dashboard() {
     setSelectedProject(value)
   }
 
+  const getCurrentProjectCurrency = () => {
+    if (selectedProject === 'general') {
+      return '$'
+    }
+    const project = projects.find(p => p.id === selectedProject)
+    return project?.currency || '$'
+  }
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -105,7 +113,7 @@ export default function Dashboard() {
           </div>
           
           {/* Project Filter */}
-          <Card className="bg-gray-800 border-gray-700 w-64">
+          <Card className="bg-gray-800 border-gray-700 w-80">
             <CardContent className="pt-4">
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-300">Project</label>
@@ -116,7 +124,7 @@ export default function Dashboard() {
                     { value: 'general', label: '📁 General Expenses' },
                     ...projects.map(project => ({
                       value: project.id,
-                      label: `📁 ${project.name}`
+                      label: `📁 ${project.name.length > 20 ? project.name.substring(0, 17) + '...' : project.name}`
                     }))
                   ]}
                   placeholder="Select Project"
@@ -132,7 +140,7 @@ export default function Dashboard() {
             <BarChart3 className="h-6 w-6 text-blue-400" />
             Analytics Overview
           </h2>
-          <ExpenseCharts userId={user?.id} projectId={selectedProject} />
+          <ExpenseCharts userId={user?.id} projectId={selectedProject} currency={getCurrentProjectCurrency()} />
         </div>
 
         {/* Expenses Table Section */}

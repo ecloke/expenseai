@@ -55,6 +55,97 @@ class ExpenseService {
   }
 
   /**
+   * Get today's expenses with project separation
+   */
+  async getTodayExpensesWithProjects(userId) {
+    const today = new Date().toISOString().split('T')[0];
+    return this.getExpensesByDateRangeWithProjects(userId, today, today);
+  }
+
+  /**
+   * Get yesterday's expenses with project separation
+   */
+  async getYesterdayExpensesWithProjects(userId) {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    return this.getExpensesByDateRangeWithProjects(userId, yesterdayStr, yesterdayStr);
+  }
+
+  /**
+   * Get this week's expenses with project separation
+   */
+  async getWeekExpensesWithProjects(userId) {
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+    
+    const startDate = startOfWeek.toISOString().split('T')[0];
+    const endDate = today.toISOString().split('T')[0];
+    
+    return this.getExpensesByDateRangeWithProjects(userId, startDate, endDate);
+  }
+
+  /**
+   * Get this month's expenses with project separation
+   */
+  async getMonthExpensesWithProjects(userId) {
+    const today = new Date();
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    
+    const startDate = startOfMonth.toISOString().split('T')[0];
+    const endDate = today.toISOString().split('T')[0];
+    
+    return this.getExpensesByDateRangeWithProjects(userId, startDate, endDate);
+  }
+
+  /**
+   * Get expenses by date range with project separation
+   */
+  async getExpensesByDateRangeWithProjects(userId, startDate, endDate) {
+    try {
+      const { data, error } = await this.supabase
+        .from('expenses')
+        .select('*, projects(name, currency)')
+        .eq('user_id', userId)
+        .gte('receipt_date', startDate)
+        .lte('receipt_date', endDate)
+        .order('receipt_date', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      const expenses = data || [];
+      
+      // Separate general and project expenses
+      const generalExpenses = expenses.filter(e => !e.project_id);
+      const projectExpenses = expenses.filter(e => e.project_id);
+      
+      // Group project expenses by project
+      const projectGroups = {};
+      projectExpenses.forEach(expense => {
+        const projectId = expense.project_id;
+        if (!projectGroups[projectId]) {
+          projectGroups[projectId] = {
+            project: expense.projects,
+            expenses: []
+          };
+        }
+        projectGroups[projectId].expenses.push(expense);
+      });
+
+      return {
+        general: generalExpenses,
+        projects: Object.values(projectGroups)
+      };
+    } catch (error) {
+      console.error('Error fetching expenses by date range with projects:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get expenses by date range
    */
   async getExpensesByDateRange(userId, startDate, endDate) {
@@ -125,6 +216,40 @@ class ExpenseService {
       console.error('Error fetching monthly stats:', error);
       throw error;
     }
+  }
+
+  /**
+   * Format expense summary with project separation for Telegram
+   */
+  formatExpenseSummaryWithProjects(data, title) {
+    const { general, projects } = data;
+    let message = `📊 ${title}\n\n`;
+
+    // General expenses
+    if (general && general.length > 0) {
+      const generalTotal = general.reduce((sum, expense) => sum + parseFloat(expense.total_amount), 0);
+      message += `💰 **General Expenses:** $${generalTotal.toFixed(2)}\n`;
+      message += `   📋 ${general.length} transaction${general.length !== 1 ? 's' : ''}\n\n`;
+    }
+
+    // Project expenses
+    if (projects && projects.length > 0) {
+      projects.forEach(projectGroup => {
+        const { project, expenses } = projectGroup;
+        const projectTotal = expenses.reduce((sum, expense) => sum + parseFloat(expense.total_amount), 0);
+        const currency = project?.currency || '$';
+        
+        message += `📁 **${project?.name || 'Unknown Project'}:** ${currency}${projectTotal.toFixed(2)}\n`;
+        message += `   📋 ${expenses.length} transaction${expenses.length !== 1 ? 's' : ''}\n\n`;
+      });
+    }
+
+    // No expenses found
+    if ((!general || general.length === 0) && (!projects || projects.length === 0)) {
+      message += `💰 Total: $0.00\n📋 No expenses found`;
+    }
+
+    return message.trim();
   }
 
   /**

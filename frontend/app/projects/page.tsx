@@ -301,7 +301,7 @@ export default function ProjectsPage() {
                 <Button 
                   variant="outline" 
                   onClick={() => setIsCreateDialogOpen(false)}
-                  className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700"
+                  className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700 bg-gray-800"
                 >
                   Cancel
                 </Button>
@@ -435,7 +435,7 @@ export default function ProjectsPage() {
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel className="border-gray-600 text-gray-300 hover:bg-gray-700">
+                              <AlertDialogCancel className="border-gray-600 text-gray-300 hover:bg-gray-700 bg-gray-800">
                                 Cancel
                               </AlertDialogCancel>
                               <AlertDialogAction
@@ -504,7 +504,7 @@ export default function ProjectsPage() {
               <Button 
                 variant="outline" 
                 onClick={() => setIsEditDialogOpen(false)}
-                className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700"
+                className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700 bg-gray-800"
               >
                 Cancel
               </Button>
