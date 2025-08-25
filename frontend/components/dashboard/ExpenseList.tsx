@@ -20,6 +20,7 @@ import { Expense } from '@/types'
 
 interface ExpenseListProps {
   userId: string
+  projectId?: string
 }
 
 const CATEGORY_COLORS: { [key: string]: string } = {
@@ -44,7 +45,7 @@ const CATEGORY_EMOJIS: { [key: string]: string } = {
   other: '📦'
 }
 
-export default function ExpenseList({ userId }: ExpenseListProps) {
+export default function ExpenseList({ userId, projectId }: ExpenseListProps) {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -56,7 +57,7 @@ export default function ExpenseList({ userId }: ExpenseListProps) {
 
   useEffect(() => {
     loadExpenses()
-  }, [userId, currentPage, searchTerm])
+  }, [userId, currentPage, searchTerm, projectId])
 
   const loadExpenses = async () => {
     try {
@@ -68,6 +69,13 @@ export default function ExpenseList({ userId }: ExpenseListProps) {
         .select('*', { count: 'exact' })
         .eq('user_id', userId)
         .order('receipt_date', { ascending: false })
+
+      // Apply project filter
+      if (projectId === 'general') {
+        query = query.is('project_id', null)
+      } else if (projectId && projectId !== 'general') {
+        query = query.eq('project_id', projectId)
+      }
 
       // Apply search filter
       if (searchTerm.trim()) {
