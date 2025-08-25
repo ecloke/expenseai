@@ -53,7 +53,7 @@ export const receiptDataSchema = Joi.object({
       quantity: Joi.number().integer().positive().default(1),
       category: Joi.string().valid(
         'groceries', 'dining', 'gas', 'pharmacy', 
-        'retail', 'services', 'other'
+        'retail', 'services', 'entertainment', 'other'
       ).default('other')
     })
   ).min(1).required()
