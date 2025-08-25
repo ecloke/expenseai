@@ -176,25 +176,25 @@ export default function SetupPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Bot className="h-8 w-8 text-blue-400" />
-              <span className="text-2xl font-bold text-white">ExpenseAI Setup</span>
+              <Bot className="h-6 w-6 sm:h-8 sm:w-8 text-blue-400" />
+              <span className="text-xl sm:text-2xl font-bold text-white">ExpenseAI Setup</span>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto px-4 py-6 sm:py-8 max-w-4xl">
         {/* Progress Section */}
-        <Card className="mb-8 border-0 shadow-lg bg-gray-800/80 backdrop-blur-sm">
-          <CardHeader>
-            <div className="flex items-center justify-between mb-4">
+        <Card className="mb-6 sm:mb-8 border-0 shadow-lg bg-gray-800/80 backdrop-blur-sm">
+          <CardHeader className="pb-4 sm:pb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 space-y-2 sm:space-y-0">
               <div>
-                <CardTitle className="text-2xl text-white">Setup Your Enhanced Expense Tracker</CardTitle>
-                <CardDescription className="text-gray-300">
+                <CardTitle className="text-xl sm:text-2xl text-white">Setup Your Enhanced Expense Tracker</CardTitle>
+                <CardDescription className="text-gray-300 text-sm sm:text-base">
                   Simplified setup - now with database storage and instant commands (no Google Sheets needed!)
                 </CardDescription>
               </div>
-              <Badge variant="secondary" className="text-sm">
+              <Badge variant="secondary" className="text-sm self-start sm:self-center">
                 Step {currentStep} of {SETUP_STEPS.length}
               </Badge>
             </div>
@@ -203,7 +203,7 @@ export default function SetupPage() {
         </Card>
 
         {/* Steps Overview */}
-        <div className="grid md:grid-cols-2 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 sm:mb-8">
           {SETUP_STEPS.map((step) => (
             <Card 
               key={step.id}
@@ -226,14 +226,14 @@ export default function SetupPage() {
                       : 'bg-gray-600 text-gray-300'
                   }`}>
                     {completedSteps.includes(step.id) ? (
-                      <CheckCircle className="h-6 w-6" />
+                      <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6" />
                     ) : (
-                      step.icon
+                      <div className="h-5 w-5 sm:h-6 sm:w-6">{step.icon}</div>
                     )}
                   </div>
                   <div>
-                    <CardTitle className="text-lg text-white">{step.title}</CardTitle>
-                    <CardDescription className="text-sm text-gray-300">
+                    <CardTitle className="text-base sm:text-lg text-white">{step.title}</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm text-gray-300">
                       {step.description}
                     </CardDescription>
                   </div>
@@ -245,7 +245,7 @@ export default function SetupPage() {
 
         {/* Current Step Content */}
         <Card className="border-0 shadow-xl bg-gray-800/90 backdrop-blur-sm">
-          <CardContent className="pt-6">
+          <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6">
             {/* Render the appropriate functional step component */}
             {currentStep === 1 && (
               <TelegramBotStep
@@ -268,7 +268,7 @@ export default function SetupPage() {
 
             {/* Navigation for Step 1 only (other steps have built-in navigation) */}
             {currentStep === 1 && (
-              <div className="flex gap-3 pt-6 border-t mt-6">
+              <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t mt-6">
                 <Button 
                   variant="outline" 
                   onClick={handleBack}
@@ -295,11 +295,11 @@ export default function SetupPage() {
           <Card className="mt-8 border-0 shadow-lg bg-green-900/20 backdrop-blur-sm border-green-700">
             <CardContent className="pt-6">
               <div className="text-center">
-                <CheckCircle className="h-16 w-16 text-green-400 mx-auto mb-4" />
-                <h2 className="text-2xl font-bold text-green-200 mb-2">
+                <CheckCircle className="h-12 w-12 sm:h-16 sm:w-16 text-green-400 mx-auto mb-4" />
+                <h2 className="text-xl sm:text-2xl font-bold text-green-200 mb-2">
                   Setup Complete! 🎉
                 </h2>
-                <p className="text-green-300 mb-4">
+                <p className="text-green-300 mb-4 text-sm sm:text-base">
                   Your AI expense tracker is ready to use!
                 </p>
                 <div className="space-y-2">
@@ -318,7 +318,7 @@ export default function SetupPage() {
                       'Go to Dashboard'
                     )}
                   </Button>
-                  <p className="text-xs text-green-400">
+                  <p className="text-xs sm:text-sm text-green-400">
                     You'll be redirected automatically in a moment...
                   </p>
                 </div>
