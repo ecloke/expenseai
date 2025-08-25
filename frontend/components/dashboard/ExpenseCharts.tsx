@@ -401,16 +401,28 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
                 <p className="text-sm text-center">Start shopping to see your favorite stores</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                 {topStores.map((store, index) => (
-                  <div key={store.store} className="flex flex-col items-center justify-between p-4 rounded-lg bg-gray-700/50 hover:bg-gray-700/70 transition-colors min-h-[120px]">
-                    <div className="text-center flex-1 flex flex-col justify-center">
-                      <div className="font-medium text-gray-200 text-sm leading-tight mb-1 max-w-[140px] mx-auto" title={store.store}>
-                        {store.store.length > 20 ? `${store.store.substring(0, 17)}...` : store.store}
+                  <div key={store.store} className="flex flex-col justify-between p-3 rounded-lg bg-gray-700/50 hover:bg-gray-700/70 transition-colors min-h-[100px] w-full">
+                    <div className="flex-1 flex flex-col justify-center text-center mb-2">
+                      <div 
+                        className="font-medium text-gray-200 text-xs leading-tight mb-1 break-words hyphens-auto overflow-hidden" 
+                        title={store.store}
+                        style={{ 
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          wordBreak: 'break-word',
+                          overflowWrap: 'break-word'
+                        }}
+                      >
+                        {store.store}
                       </div>
-                      <div className="text-xs text-gray-400">{store.count} transaction{store.count !== 1 ? 's' : ''}</div>
+                      <div className="text-xs text-gray-400 mt-auto">{store.count} visit{store.count !== 1 ? 's' : ''}</div>
                     </div>
-                    <div className="font-semibold text-green-400 text-base mt-2">{currency}{store.amount.toFixed(2)}</div>
+                    <div className="font-semibold text-green-400 text-sm text-center border-t border-gray-600 pt-2">
+                      {currency}{store.amount.toFixed(2)}
+                    </div>
                   </div>
                 ))}
               </div>

@@ -240,14 +240,14 @@ export default function ProjectsPage() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="space-y-6">
+        <div className="space-y-6 pt-16 lg:pt-0">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white">Projects</h1>
-            <p className="text-gray-400">Manage your expense tracking projects</p>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">Projects</h1>
+            <p className="text-gray-400 text-sm sm:text-base">Manage your expense tracking projects</p>
           </div>
           <div className="space-y-4">
-            <Skeleton className="h-[200px] w-full bg-gray-800" />
-            <Skeleton className="h-[400px] w-full bg-gray-800" />
+            <Skeleton className="h-[150px] sm:h-[200px] w-full bg-gray-800" />
+            <Skeleton className="h-[300px] sm:h-[400px] w-full bg-gray-800" />
           </div>
         </div>
       </DashboardLayout>
@@ -256,23 +256,23 @@ export default function ProjectsPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="space-y-6 pt-16 lg:pt-0">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Projects</h1>
-          <p className="text-gray-400">Organize your expenses by trips, events, or any specific purpose</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">Projects</h1>
+          <p className="text-gray-400 text-sm sm:text-base">Organize your expenses by trips, events, or any specific purpose</p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               New Project
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-gray-800 border-gray-700 text-white">
+          <DialogContent className="bg-gray-800 border-gray-700 text-white max-w-sm sm:max-w-md mx-4 sm:mx-auto">
             <DialogHeader>
-              <DialogTitle>Create New Project</DialogTitle>
-              <DialogDescription className="text-gray-400">
+              <DialogTitle className="text-lg sm:text-xl">Create New Project</DialogTitle>
+              <DialogDescription className="text-gray-400 text-sm sm:text-base">
                 Create a project to organize expenses for trips, events, or any specific purpose.
               </DialogDescription>
             </DialogHeader>
@@ -297,7 +297,7 @@ export default function ProjectsPage() {
                   className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
                 />
               </div>
-              <div className="flex gap-3 pt-4">
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
                 <Button 
                   variant="outline" 
                   onClick={() => setIsCreateDialogOpen(false)}
@@ -350,119 +350,201 @@ export default function ProjectsPage() {
       ) : (
         <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle className="text-white">Your Projects</CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardTitle className="text-white text-lg sm:text-xl">Your Projects</CardTitle>
+            <CardDescription className="text-gray-400 text-sm sm:text-base">
               {projects.length} project{projects.length !== 1 ? 's' : ''} • {projects.filter(p => p.status === 'open').length} open
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow className="border-gray-700 hover:bg-gray-750">
-                  <TableHead className="text-gray-300">
-                    <Calendar className="h-4 w-4 inline mr-2" />
-                    Created
-                  </TableHead>
-                  <TableHead className="text-gray-300">Project Name</TableHead>
-                  <TableHead className="text-gray-300">Currency</TableHead>
-                  <TableHead className="text-gray-300">
-                    <Hash className="h-4 w-4 inline mr-2" />
-                    Transactions
-                  </TableHead>
-                  <TableHead className="text-gray-300">
-                    <DollarSign className="h-4 w-4 inline mr-2" />
-                    Total Amount
-                  </TableHead>
-                  <TableHead className="text-gray-300">Status</TableHead>
-                  <TableHead className="text-gray-300 text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {projects.map((project) => (
-                  <TableRow key={project.id} className="border-gray-700 hover:bg-gray-750/50">
-                    <TableCell className="text-gray-300">
-                      {formatDate(project.created_at)}
-                    </TableCell>
-                    <TableCell className="font-medium text-white">
-                      {project.name}
-                    </TableCell>
-                    <TableCell className="text-gray-300">
-                      {project.currency}
-                    </TableCell>
-                    <TableCell className="text-gray-300">
-                      {project.transaction_count}
-                    </TableCell>
-                    <TableCell className="text-gray-300">
-                      {formatAmount(project.total_amount, project.currency)}
-                    </TableCell>
-                    <TableCell>
+            {/* Desktop Table View */}
+            <div className="hidden lg:block">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-gray-700 hover:bg-gray-750">
+                    <TableHead className="text-gray-300 text-sm">
+                      <Calendar className="h-4 w-4 inline mr-2" />
+                      Created
+                    </TableHead>
+                    <TableHead className="text-gray-300 text-sm">Project Name</TableHead>
+                    <TableHead className="text-gray-300 text-sm">Currency</TableHead>
+                    <TableHead className="text-gray-300 text-sm">
+                      <Hash className="h-4 w-4 inline mr-2" />
+                      Transactions
+                    </TableHead>
+                    <TableHead className="text-gray-300 text-sm">
+                      <DollarSign className="h-4 w-4 inline mr-2" />
+                      Total Amount
+                    </TableHead>
+                    <TableHead className="text-gray-300 text-sm">Status</TableHead>
+                    <TableHead className="text-gray-300 text-right text-sm">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {projects.map((project) => (
+                    <TableRow key={project.id} className="border-gray-700 hover:bg-gray-750/50">
+                      <TableCell className="text-gray-300 text-sm">
+                        {formatDate(project.created_at)}
+                      </TableCell>
+                      <TableCell className="font-medium text-white text-sm">
+                        {project.name}
+                      </TableCell>
+                      <TableCell className="text-gray-300 text-sm">
+                        {project.currency}
+                      </TableCell>
+                      <TableCell className="text-gray-300 text-sm">
+                        {project.transaction_count}
+                      </TableCell>
+                      <TableCell className="text-gray-300 text-sm">
+                        {formatAmount(project.total_amount, project.currency)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={project.status === 'open' ? 'default' : 'secondary'}
+                          className={
+                            project.status === 'open' 
+                              ? 'bg-green-700 text-white hover:bg-green-600 text-xs' 
+                              : 'bg-gray-600 text-gray-300 hover:bg-gray-500 text-xs'
+                          }
+                        >
+                          {project.status === 'open' ? 'Open' : 'Closed'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEditDialog(project)}
+                            className="text-gray-400 hover:text-white hover:bg-gray-700 p-2"
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-gray-400 hover:text-red-400 hover:bg-red-900/20 p-2"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="bg-gray-800 border-gray-700 text-white">
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Project</AlertDialogTitle>
+                                <AlertDialogDescription className="text-gray-400">
+                                  Are you sure you want to delete "{project.name}"? This action cannot be undone and will permanently delete all {project.transaction_count} associated transactions.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel className="border-gray-600 text-gray-300 hover:bg-gray-700 bg-gray-800">
+                                  Cancel
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteProject(project.id)}
+                                  className="bg-red-600 hover:bg-red-700 text-white"
+                                >
+                                  Delete Project
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="lg:hidden space-y-4">
+              {projects.map((project) => (
+                <Card key={project.id} className="bg-gray-700/50 border-gray-600">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1">
+                        <h3 className="font-medium text-white text-base mb-1">{project.name}</h3>
+                        <div className="flex items-center gap-4 text-sm text-gray-400">
+                          <span>{project.currency}</span>
+                          <span>Created {formatDate(project.created_at)}</span>
+                        </div>
+                      </div>
                       <Badge 
                         variant={project.status === 'open' ? 'default' : 'secondary'}
                         className={
                           project.status === 'open' 
-                            ? 'bg-green-700 text-white hover:bg-green-600' 
-                            : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                            ? 'bg-green-700 text-white hover:bg-green-600 text-xs' 
+                            : 'bg-gray-600 text-gray-300 hover:bg-gray-500 text-xs'
                         }
                       >
                         {project.status === 'open' ? 'Open' : 'Closed'}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openEditDialog(project)}
-                          className="text-gray-400 hover:text-white hover:bg-gray-700"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-gray-400 hover:text-red-400 hover:bg-red-900/20"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent className="bg-gray-800 border-gray-700 text-white">
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Project</AlertDialogTitle>
-                              <AlertDialogDescription className="text-gray-400">
-                                Are you sure you want to delete "{project.name}"? This action cannot be undone and will permanently delete all {project.transaction_count} associated transactions.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel className="border-gray-600 text-gray-300 hover:bg-gray-700 bg-gray-800">
-                                Cancel
-                              </AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteProject(project.id)}
-                                className="bg-red-600 hover:bg-red-700 text-white"
-                              >
-                                Delete Project
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 mb-3">
+                      <div>
+                        <div className="text-xs text-gray-400 mb-1">Transactions</div>
+                        <div className="text-sm text-white">{project.transaction_count}</div>
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                      <div>
+                        <div className="text-xs text-gray-400 mb-1">Total Amount</div>
+                        <div className="text-sm text-white">{formatAmount(project.total_amount, project.currency)}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEditDialog(project)}
+                        className="text-gray-400 hover:text-white hover:bg-gray-700 p-2"
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-gray-400 hover:text-red-400 hover:bg-red-900/20 p-2"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="bg-gray-800 border-gray-700 text-white max-w-sm mx-4">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="text-base">Delete Project</AlertDialogTitle>
+                            <AlertDialogDescription className="text-gray-400 text-sm">
+                              Are you sure you want to delete "{project.name}"? This action cannot be undone and will permanently delete all {project.transaction_count} associated transactions.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                            <AlertDialogCancel className="border-gray-600 text-gray-300 hover:bg-gray-700 bg-gray-800 w-full sm:w-auto">
+                              Cancel
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteProject(project.id)}
+                              className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto"
+                            >
+                              Delete Project
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}
 
       {/* Edit Project Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="bg-gray-800 border-gray-700 text-white">
+        <DialogContent className="bg-gray-800 border-gray-700 text-white max-w-sm sm:max-w-md mx-4 sm:mx-auto">
           <DialogHeader>
-            <DialogTitle>Edit Project</DialogTitle>
-            <DialogDescription className="text-gray-400">
+            <DialogTitle className="text-lg sm:text-xl">Edit Project</DialogTitle>
+            <DialogDescription className="text-gray-400 text-sm sm:text-base">
               Update your project details.
             </DialogDescription>
           </DialogHeader>
@@ -500,7 +582,7 @@ export default function ProjectsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex gap-3 pt-4">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <Button 
                 variant="outline" 
                 onClick={() => setIsEditDialogOpen(false)}

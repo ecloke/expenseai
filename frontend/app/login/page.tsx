@@ -62,30 +62,30 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6 sm:mb-8">
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <Receipt className="h-8 w-8 text-blue-400" />
-            <span className="text-2xl font-bold text-white">ExpenseAI</span>
+            <Receipt className="h-6 w-6 sm:h-8 sm:w-8 text-blue-400" />
+            <span className="text-xl sm:text-2xl font-bold text-white">ExpenseAI</span>
           </div>
-          <p className="text-gray-300">AI-powered expense tracking with Telegram bots</p>
+          <p className="text-sm sm:text-base text-gray-300 px-2">AI-powered expense tracking with Telegram bots</p>
         </div>
 
         <Card className="border-0 shadow-xl bg-gray-800/90 backdrop-blur-sm border-gray-700">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl text-white">
+          <CardHeader className="text-center pb-4 sm:pb-6">
+            <CardTitle className="text-xl sm:text-2xl text-white">
               {isSignUp ? 'Create Account' : 'Welcome Back'}
             </CardTitle>
-            <CardDescription className="text-gray-300">
+            <CardDescription className="text-gray-300 text-sm sm:text-base px-2">
               {isSignUp 
                 ? 'Sign up to create your AI expense tracker' 
                 : 'Sign in to access your dashboard'
               }
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 sm:px-6">
             <form onSubmit={handleAuth} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-gray-200">Email</Label>
+                <Label htmlFor="email" className="text-gray-200 text-sm">Email</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
@@ -93,7 +93,7 @@ export default function LoginPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10 bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:bg-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20"
+                    className="pl-10 bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:bg-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 text-base"
                     placeholder="Enter your email"
                     required
                   />
@@ -101,7 +101,7 @@ export default function LoginPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-gray-200">Password</Label>
+                <Label htmlFor="password" className="text-gray-200 text-sm">Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
@@ -109,7 +109,7 @@ export default function LoginPage() {
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:bg-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20"
+                    className="pl-10 bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:bg-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 text-base"
                     placeholder="Enter your password"
                     required
                     minLength={6}
@@ -119,13 +119,13 @@ export default function LoginPage() {
 
               {error && (
                 <Alert variant={error.includes('Check your email') ? 'default' : 'destructive'}>
-                  <AlertDescription>{error}</AlertDescription>
+                  <AlertDescription className="text-sm">{error}</AlertDescription>
                 </Alert>
               )}
 
               <Button
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-600 disabled:text-gray-400"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-600 disabled:text-gray-400 py-3 text-base"
                 disabled={isLoading}
               >
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -140,7 +140,7 @@ export default function LoginPage() {
                   setIsSignUp(!isSignUp)
                   setError('')
                 }}
-                className="text-blue-400 hover:text-blue-300 font-medium transition-colors duration-200"
+                className="text-blue-400 hover:text-blue-300 font-medium transition-colors duration-200 text-sm sm:text-base"
               >
                 {isSignUp 
                   ? 'Already have an account? Sign in' 
@@ -149,8 +149,8 @@ export default function LoginPage() {
               </button>
             </div>
 
-            <div className="mt-4 text-center">
-              <Link href="/" className="text-sm text-gray-400 hover:text-gray-300 transition-colors duration-200">
+            <div className="mt-4 text-center pb-2">
+              <Link href="/" className="text-xs sm:text-sm text-gray-400 hover:text-gray-300 transition-colors duration-200">
                 ← Back to homepage
               </Link>
             </div>

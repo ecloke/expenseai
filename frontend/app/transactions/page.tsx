@@ -317,16 +317,16 @@ export default function Transactions() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 pt-16 lg:pt-0">
         {/* Page Header */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0">
           <div>
-            <h1 className="text-3xl font-bold text-white">Transactions</h1>
-            <p className="text-gray-400 mt-2">View and manage all your expense transactions</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">Transactions</h1>
+            <p className="text-gray-400 mt-1 sm:mt-2 text-sm sm:text-base">View and manage all your expense transactions</p>
           </div>
           <Button
             onClick={exportData}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
             disabled={expenses.length === 0}
           >
             <Download className="h-4 w-4 mr-2" />
@@ -337,15 +337,15 @@ export default function Transactions() {
         {/* Filters */}
         <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white">
+            <CardTitle className="flex items-center gap-2 text-white text-lg sm:text-xl">
               <Filter className="h-5 w-5 text-blue-400" />
               Filters
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               {/* Search */}
-              <div className="md:col-span-2">
+              <div className="sm:col-span-2 lg:col-span-2">
                 <label className="block text-sm font-medium text-gray-300 mb-2">Search</label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -425,16 +425,16 @@ export default function Transactions() {
         {/* Transactions Table */}
         <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white">
+            <CardTitle className="flex items-center gap-2 text-white text-lg sm:text-xl">
               <Calendar className="h-5 w-5 text-blue-400" />
               Transactions
             </CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardDescription className="text-gray-400 text-sm sm:text-base">
               {totalCount > 0 ? `${totalCount} total transactions` : 'No transactions found'}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="min-h-[600px]">
+            <div className="min-h-[400px] sm:min-h-[600px]">
               {loading ? (
                 <div className="text-center py-8 text-gray-300">Loading transactions...</div>
               ) : error ? (
@@ -447,68 +447,68 @@ export default function Transactions() {
                 </div>
               ) : (
                 <>
-                  {/* Table */}
-                  <div className="rounded-md border border-gray-700 bg-gray-700/50">
+                  {/* Table - Desktop View */}
+                  <div className="hidden sm:block rounded-md border border-gray-700 bg-gray-700/50">
                     <Table>
                       <TableHeader>
                         <TableRow className="border-gray-600 hover:bg-gray-700/50">
-                          <TableHead className="text-gray-300">Date</TableHead>
-                          <TableHead className="text-gray-300">Store</TableHead>
-                          <TableHead className="text-gray-300">Category</TableHead>
-                          <TableHead className="text-right text-gray-300">Amount</TableHead>
-                          <TableHead className="text-gray-300">Added</TableHead>
-                          <TableHead className="text-gray-300">Actions</TableHead>
+                          <TableHead className="text-gray-300 text-xs sm:text-sm">Date</TableHead>
+                          <TableHead className="text-gray-300 text-xs sm:text-sm">Store</TableHead>
+                          <TableHead className="text-gray-300 text-xs sm:text-sm">Category</TableHead>
+                          <TableHead className="text-right text-gray-300 text-xs sm:text-sm">Amount</TableHead>
+                          <TableHead className="text-gray-300 text-xs sm:text-sm">Added</TableHead>
+                          <TableHead className="text-gray-300 text-xs sm:text-sm">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {expenses.map((expense) => (
                           <TableRow key={expense.id} className="border-gray-600 hover:bg-gray-600/50">
                             <TableCell>
-                              <div className="font-medium text-gray-200">
+                              <div className="font-medium text-gray-200 text-xs sm:text-sm">
                                 {formatInTimeZone(new Date(expense.receipt_date), MALAYSIA_TIMEZONE, 'MMM dd, yyyy')}
                               </div>
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
-                                <Store className="h-4 w-4 text-gray-400" />
-                                <span className="font-medium text-gray-200">{expense.store_name}</span>
+                                <Store className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
+                                <span className="font-medium text-gray-200 text-xs sm:text-sm truncate max-w-24 sm:max-w-none">{expense.store_name}</span>
                               </div>
                             </TableCell>
                             <TableCell>
                               <Badge 
                                 variant="secondary" 
-                                className="bg-gray-600 text-gray-200 border-gray-500"
+                                className="bg-gray-600 text-gray-200 border-gray-500 text-xs"
                               >
                                 {CATEGORY_EMOJIS[expense.category]} {expense.category}
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right">
-                              <span className="font-semibold text-lg text-green-400">
+                              <span className="font-semibold text-sm sm:text-lg text-green-400">
                                 {formatAmount(expense)}
                               </span>
                             </TableCell>
                             <TableCell>
-                              <div className="text-sm text-gray-400">
+                              <div className="text-xs sm:text-sm text-gray-400">
                                 {formatInTimeZone(new Date(expense.created_at), MALAYSIA_TIMEZONE, 'MMM dd, h:mm a')}
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1 sm:gap-2">
                                 <Button
                                   size="sm"
                                   variant="outline"
                                   onClick={() => handleEdit(expense)}
-                                  className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700 hover:text-white hover:border-gray-500"
+                                  className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700 hover:text-white hover:border-gray-500 p-1 sm:p-2"
                                 >
-                                  <Edit className="h-4 w-4" />
+                                  <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                                 </Button>
                                 <Button
                                   size="sm"
                                   variant="outline"
                                   onClick={() => handleDelete(expense)}
-                                  className="bg-gray-800 border-red-600 text-red-400 hover:bg-red-600 hover:text-white hover:border-red-500"
+                                  className="bg-gray-800 border-red-600 text-red-400 hover:bg-red-600 hover:text-white hover:border-red-500 p-1 sm:p-2"
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                                 </Button>
                               </div>
                             </TableCell>
@@ -518,27 +518,82 @@ export default function Transactions() {
                     </Table>
                   </div>
 
+                  {/* Mobile Card View */}
+                  <div className="sm:hidden space-y-3">
+                    {expenses.map((expense) => (
+                      <Card key={expense.id} className="bg-gray-700/50 border-gray-600">
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Store className="h-4 w-4 text-gray-400" />
+                                <span className="font-medium text-gray-200 text-sm">{expense.store_name}</span>
+                              </div>
+                              <div className="text-xs text-gray-400">
+                                {formatInTimeZone(new Date(expense.receipt_date), MALAYSIA_TIMEZONE, 'MMM dd, yyyy')}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-semibold text-lg text-green-400 mb-1">
+                                {formatAmount(expense)}
+                              </div>
+                              <Badge 
+                                variant="secondary" 
+                                className="bg-gray-600 text-gray-200 border-gray-500 text-xs"
+                              >
+                                {CATEGORY_EMOJIS[expense.category]} {expense.category}
+                              </Badge>
+                            </div>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <div className="text-xs text-gray-400">
+                              Added {formatInTimeZone(new Date(expense.created_at), MALAYSIA_TIMEZONE, 'MMM dd, h:mm a')}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEdit(expense)}
+                                className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700 hover:text-white hover:border-gray-500 p-2"
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDelete(expense)}
+                                className="bg-gray-800 border-red-600 text-red-400 hover:bg-red-600 hover:text-white hover:border-red-500 p-2"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
                   {/* Pagination */}
                   {totalPages > 1 && (
-                    <div className="flex items-center justify-between mt-6">
-                      <div className="text-sm text-gray-400">
+                    <div className="flex flex-col sm:flex-row items-center justify-between mt-6 space-y-3 sm:space-y-0">
+                      <div className="text-xs sm:text-sm text-gray-400">
                         Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} transactions
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-1 sm:space-x-2">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => goToPage(currentPage - 1)}
                           disabled={currentPage === 1}
-                          className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white hover:border-gray-500 disabled:hover:bg-transparent disabled:hover:text-gray-300 disabled:hover:border-gray-600"
+                          className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white hover:border-gray-500 disabled:hover:bg-transparent disabled:hover:text-gray-300 disabled:hover:border-gray-600 text-xs sm:text-sm"
                         >
-                          <ChevronLeft className="h-4 w-4" />
-                          Previous
+                          <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
+                          <span className="hidden sm:inline">Previous</span>
                         </Button>
                         
                         <div className="flex items-center space-x-1">
-                          {[...Array(Math.min(5, totalPages))].map((_, i) => {
-                            const pageNum = Math.max(1, currentPage - 2) + i
+                          {[...Array(Math.min(3, totalPages))].map((_, i) => {
+                            const pageNum = Math.max(1, currentPage - 1) + i
                             if (pageNum > totalPages) return null
                             
                             return (
@@ -548,8 +603,8 @@ export default function Transactions() {
                                 size="sm"
                                 onClick={() => goToPage(pageNum)}
                                 className={pageNum === currentPage ? 
-                                  "w-8 h-8 p-0 bg-blue-600 hover:bg-blue-700 text-white" : 
-                                  "w-8 h-8 p-0 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white hover:border-gray-500"}
+                                  "w-7 h-7 sm:w-8 sm:h-8 p-0 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm" : 
+                                  "w-7 h-7 sm:w-8 sm:h-8 p-0 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white hover:border-gray-500 text-xs sm:text-sm"}
                               >
                                 {pageNum}
                               </Button>
@@ -562,10 +617,10 @@ export default function Transactions() {
                           size="sm"
                           onClick={() => goToPage(currentPage + 1)}
                           disabled={currentPage === totalPages}
-                          className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white hover:border-gray-500 disabled:hover:bg-transparent disabled:hover:text-gray-300 disabled:hover:border-gray-600"
+                          className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white hover:border-gray-500 disabled:hover:bg-transparent disabled:hover:text-gray-300 disabled:hover:border-gray-600 text-xs sm:text-sm"
                         >
-                          Next
-                          <ChevronRight className="h-4 w-4" />
+                          <span className="hidden sm:inline">Next</span>
+                          <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
                       </div>
                     </div>

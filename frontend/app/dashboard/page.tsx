@@ -104,17 +104,17 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8 pt-16 lg:pt-0">
         {/* Page Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
           <div>
-            <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-            <p className="text-gray-400 mt-2">Track and analyze your spending patterns</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">Dashboard</h1>
+            <p className="text-gray-400 mt-1 sm:mt-2 text-sm sm:text-base">Track and analyze your spending patterns</p>
           </div>
           
           {/* Project Filter */}
-          <Card className="bg-gray-800 border-gray-700 w-80">
-            <CardContent className="pt-4">
+          <Card className="bg-gray-800 border-gray-700 w-full lg:w-80">
+            <CardContent className="pt-3 sm:pt-4">
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-300">Project</label>
                 <SimpleSelect
@@ -136,8 +136,8 @@ export default function Dashboard() {
 
         {/* Analytics Section */}
         <div>
-          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-            <BarChart3 className="h-6 w-6 text-blue-400" />
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6 text-blue-400" />
             Analytics Overview
           </h2>
           <ExpenseCharts userId={user?.id} projectId={selectedProject} currency={getCurrentProjectCurrency()} />
@@ -145,8 +145,8 @@ export default function Dashboard() {
 
         {/* Expenses Table Section */}
         <div>
-          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-            <Receipt className="h-6 w-6 text-green-400" />
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 flex items-center gap-2">
+            <Receipt className="h-5 w-5 sm:h-6 sm:w-6 text-green-400" />
             Recent Transactions
           </h2>
           <ExpenseList userId={user?.id} projectId={selectedProject} />

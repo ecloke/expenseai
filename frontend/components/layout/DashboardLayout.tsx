@@ -95,7 +95,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="flex h-screen bg-gray-900">
       <Sidebar userConfig={userConfig} botSession={botSession} />
       <main className="flex-1 overflow-auto bg-gray-900">
-        <div className="p-8">
+        <div className="p-4 sm:p-6 lg:p-8">
           {children}
         </div>
       </main>
