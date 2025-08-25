@@ -116,7 +116,7 @@ export default function GeminiKeyStep({ onNext, onBack }: GeminiKeyStepProps) {
       {/* Instructions */}
       <Card className="border-purple-700 bg-purple-900/20">
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
+          <CardTitle className="text-lg flex items-center gap-2 text-white">
             <Brain className="h-6 w-6 text-purple-400" />
             Get Your Gemini AI API Key
           </CardTitle>
@@ -126,7 +126,7 @@ export default function GeminiKeyStep({ onNext, onBack }: GeminiKeyStepProps) {
             <div className="flex items-start gap-3">
               <Badge className="bg-purple-700 text-white min-w-[24px] h-6 flex items-center justify-center text-xs">1</Badge>
               <div>
-                <p className="font-medium">Visit Google AI Studio</p>
+                <p className="font-medium text-white">Visit Google AI Studio</p>
                 <p className="text-sm text-gray-400">
                   Go to{' '}
                   <a 
@@ -145,7 +145,7 @@ export default function GeminiKeyStep({ onNext, onBack }: GeminiKeyStepProps) {
             <div className="flex items-start gap-3">
               <Badge className="bg-purple-700 text-white min-w-[24px] h-6 flex items-center justify-center text-xs">2</Badge>
               <div>
-                <p className="font-medium">Create an API key</p>
+                <p className="font-medium text-white">Create an API key</p>
                 <p className="text-sm text-gray-400">
                   Click "Create API key" and select your Google Cloud project
                 </p>
@@ -155,7 +155,7 @@ export default function GeminiKeyStep({ onNext, onBack }: GeminiKeyStepProps) {
             <div className="flex items-start gap-3">
               <Badge className="bg-purple-700 text-white min-w-[24px] h-6 flex items-center justify-center text-xs">3</Badge>
               <div>
-                <p className="font-medium">Copy your API key</p>
+                <p className="font-medium text-white">Copy your API key</p>
                 <p className="text-sm text-gray-400">
                   Your key will start with "AI" followed by random characters
                 </p>
