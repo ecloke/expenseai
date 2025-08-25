@@ -106,9 +106,8 @@ export default function GeminiKeyStep({ onNext, onBack }: GeminiKeyStepProps) {
     if (isConfigured && !isContinuing) {
       setIsContinuing(true)
       try {
-        await new Promise(resolve => setTimeout(resolve, 500))
         onNext()
-      } finally {
+      } catch (error) {
         setIsContinuing(false)
       }
     }
@@ -321,23 +320,23 @@ export default function GeminiKeyStep({ onNext, onBack }: GeminiKeyStepProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid sm:grid-cols-2 gap-4 text-green-300">
+            <div className="space-y-3 text-green-300">
               <div>
                 <p className="font-medium text-sm">Receipt Processing</p>
                 <ul className="text-xs space-y-1 mt-1">
                   <li>• Store name extraction</li>
-                  <li>• Item-by-item breakdown</li>
-                  <li>• Price and quantity detection</li>
-                  <li>• Smart categorization</li>
+                  <li>• Smart categorization (groceries, dining, entertainment, etc.)</li>
+                  <li>• Total amount detection</li>
+                  <li>• Date recognition</li>
                 </ul>
               </div>
               <div>
-                <p className="font-medium text-sm">Natural Language Chat</p>
+                <p className="font-medium text-sm">Telegram Bot Integration</p>
                 <ul className="text-xs space-y-1 mt-1">
-                  <li>• "How much did I spend on food?"</li>
-                  <li>• "Show my biggest expenses"</li>
-                  <li>• "Compare this month to last"</li>
-                  <li>• "What's my average grocery bill?"</li>
+                  <li>• Upload receipt photos directly to your bot</li>
+                  <li>• Get instant confirmation with processed data</li>
+                  <li>• Use commands like /summary, /today, /month</li>
+                  <li>• Automatic data storage to your dashboard</li>
                 </ul>
               </div>
             </div>
