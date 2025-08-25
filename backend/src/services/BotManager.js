@@ -703,18 +703,15 @@ The expense has been saved to your account.`;
         };
 
         try {
-          const response = await fetch(`${process.env.API_BASE_URL || 'http://localhost:3000'}/api/projects`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(projectData)
-          });
+          // Create project directly using Supabase instead of API call
+          const { data: project, error } = await this.supabase
+            .from('projects')
+            .insert([projectData])
+            .select()
+            .single();
 
-          const result = await response.json();
-
-          if (!response.ok) {
-            throw new Error(result.message || 'Failed to create project');
+          if (error) {
+            throw new Error(error.message || 'Failed to create project');
           }
 
           this.conversationManager.endConversation(userId);
@@ -754,18 +751,14 @@ ${projects.map((project, index) => `${index + 1}. ${project.name}`).join('\n')}`
     const selectedProject = projects[projectIndex];
 
     try {
-      const response = await fetch(`${process.env.API_BASE_URL || 'http://localhost:3000'}/api/projects/${selectedProject.id}?user_id=${userId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status: 'closed' })
-      });
+      const { error } = await this.supabase
+        .from('projects')
+        .update({ status: 'closed' })
+        .eq('id', selectedProject.id)
+        .eq('user_id', userId);
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || 'Failed to close project');
+      if (error) {
+        throw new Error(error.message || 'Failed to close project');
       }
 
       this.conversationManager.endConversation(userId);
@@ -800,18 +793,14 @@ ${projects.map((project, index) => `${index + 1}. ${project.name}`).join('\n')}`
     const selectedProject = projects[projectIndex];
 
     try {
-      const response = await fetch(`${process.env.API_BASE_URL || 'http://localhost:3000'}/api/projects/${selectedProject.id}?user_id=${userId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status: 'open' })
-      });
+      const { error } = await this.supabase
+        .from('projects')
+        .update({ status: 'open' })
+        .eq('id', selectedProject.id)
+        .eq('user_id', userId);
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || 'Failed to open project');
+      if (error) {
+        throw new Error(error.message || 'Failed to open project');
       }
 
       this.conversationManager.endConversation(userId);
@@ -854,18 +843,14 @@ ${options.map((option, index) => `${index + 1}. ${option.label}`).join('\n')}`;
         project_id: selectedOption.project_id
       };
 
-      const response = await fetch(`${process.env.API_BASE_URL || 'http://localhost:3000'}/api/user/expenses`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(finalExpenseData)
-      });
+      const { data: expense, error } = await this.supabase
+        .from('expenses')
+        .insert([finalExpenseData])
+        .select()
+        .single();
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || 'Failed to create expense');
+      if (error) {
+        throw new Error(error.message || 'Failed to create expense');
       }
 
       this.conversationManager.endConversation(userId);
@@ -987,21 +972,17 @@ Your expense has been saved to the database! 💾`;
         description: ''
       };
 
-      const response = await fetch(`${process.env.API_BASE_URL || 'http://localhost:3000'}/api/user/expenses`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(expenseData)
-      });
+      const { data: expense, error } = await this.supabase
+        .from('expenses')
+        .insert([expenseData])
+        .select()
+        .single();
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || 'Failed to save expense');
+      if (error) {
+        throw new Error(error.message || 'Failed to save expense');
       }
 
-      return result.data;
+      return expense;
     } catch (error) {
       console.error('Error saving receipt as expense:', error);
       throw error;
