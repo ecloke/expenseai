@@ -44,6 +44,17 @@ class ConversationStateManager {
   }
 
   /**
+   * Update conversation data
+   */
+  updateData(userId, newData) {
+    const conversation = this.conversations.get(userId);
+    if (conversation) {
+      conversation.data = { ...conversation.data, ...newData };
+      conversation.lastActivity = new Date();
+    }
+  }
+
+  /**
    * Get conversation state
    */
   getConversation(userId) {
