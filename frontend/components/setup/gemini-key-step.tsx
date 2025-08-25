@@ -29,6 +29,7 @@ interface GeminiKeyStepProps {
 export default function GeminiKeyStep({ onNext, onBack }: GeminiKeyStepProps) {
   const [isValidating, setIsValidating] = useState(false)
   const [isConfigured, setIsConfigured] = useState(false)
+  const [isContinuing, setIsContinuing] = useState(false)
   const [showApiKey, setShowApiKey] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
@@ -101,9 +102,15 @@ export default function GeminiKeyStep({ onNext, onBack }: GeminiKeyStepProps) {
     }
   }
 
-  const handleContinue = () => {
-    if (isConfigured) {
-      onNext()
+  const handleContinue = async () => {
+    if (isConfigured && !isContinuing) {
+      setIsContinuing(true)
+      try {
+        await new Promise(resolve => setTimeout(resolve, 500))
+        onNext()
+      } finally {
+        setIsContinuing(false)
+      }
     }
   }
 
@@ -259,13 +266,18 @@ export default function GeminiKeyStep({ onNext, onBack }: GeminiKeyStepProps) {
               <Button 
                 type={isConfigured ? "button" : "submit"}
                 onClick={isConfigured ? handleContinue : undefined}
-                disabled={isValidating || (!apiKey && !isConfigured)}
+                disabled={isValidating || isContinuing || (!apiKey && !isConfigured)}
                 className="flex-1"
               >
                 {isValidating ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Validating...
+                  </>
+                ) : isContinuing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Continuing...
                   </>
                 ) : isConfigured ? (
                   'Continue'
