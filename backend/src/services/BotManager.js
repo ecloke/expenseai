@@ -933,10 +933,10 @@ Your expense has been saved to the database! 💾`;
       let message = `✅ *Receipt Processed Successfully!*
 
 📊 *Extracted Data:*
-📅 Date: ${expenseData.date}
+📅 Date: ${expenseData.receipt_date}
 🏪 Store: ${expenseData.store_name}
 🏷️ Category: ${expenseData.category}
-💰 Total: ${expenseData.total.toFixed(2)}
+💰 Total: ${expenseData.total_amount.toFixed(2)}
 
 📁 *Where would you like to save this expense?*
 
