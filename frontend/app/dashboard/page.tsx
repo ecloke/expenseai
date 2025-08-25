@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import ExpenseCharts from '@/components/dashboard/ExpenseCharts'
 import ExpenseList from '@/components/dashboard/ExpenseList'
+import TutorialGuide from '@/components/tutorial/TutorialGuide'
 import { 
   BarChart3,
   Receipt
@@ -13,11 +14,32 @@ import { useRouter } from 'next/navigation'
 
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null)
+  const [showTutorial, setShowTutorial] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
     loadUser()
+    checkTutorialStatus()
   }, [])
+
+  const checkTutorialStatus = () => {
+    // Check if user has seen tutorial before
+    const tutorialSeen = localStorage.getItem('tutorial-completed')
+    
+    // Check if user just completed setup (indicated by setup completion redirect)
+    const fromSetup = sessionStorage.getItem('from-setup')
+    
+    if (!tutorialSeen || fromSetup) {
+      setShowTutorial(true)
+      // Clear the setup flag
+      sessionStorage.removeItem('from-setup')
+    }
+  }
+
+  const handleTutorialComplete = () => {
+    localStorage.setItem('tutorial-completed', 'true')
+    setShowTutorial(false)
+  }
 
   const loadUser = async () => {
     try {
@@ -62,6 +84,13 @@ export default function Dashboard() {
           <ExpenseList userId={user?.id} />
         </div>
       </div>
+
+      {/* Tutorial Guide */}
+      <TutorialGuide 
+        isOpen={showTutorial} 
+        onClose={() => setShowTutorial(false)}
+        onComplete={handleTutorialComplete}
+      />
     </DashboardLayout>
   )
 }

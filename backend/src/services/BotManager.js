@@ -325,15 +325,13 @@ I can only process **one receipt photo at a time** to ensure accurate AI analysi
           throw new Error('AI failed to extract receipt data');
         }
 
-        // Step 4: Check Google Sheets
-        if (!config.google_access_token) {
-          await bot.editMessageText('⚠️ Google Sheets not configured. Receipt processed but not saved to sheets.\n\n' + this.formatReceiptConfirmation(receiptData), {
-            chat_id: msg.chat.id,
-            message_id: statusMsg.message_id,
-            parse_mode: 'Markdown'
-          });
-          return;
-        }
+        // Step 4: Receipt processing complete - Google Sheets integration removed
+        await bot.editMessageText('✅ Receipt processed successfully!\n\n' + this.formatReceiptConfirmation(receiptData), {
+          chat_id: msg.chat.id,
+          message_id: statusMsg.message_id,
+          parse_mode: 'Markdown'
+        });
+        return;
 
         // Step 5: Save to sheets
         await bot.editMessageText('📊 Saving to Google Sheets...', {
@@ -935,20 +933,17 @@ I only understand specific commands to save AI processing costs.
       return text.toString().replace(/[_*[\]()~`>#+=|{}.!-]/g, '\\$&');
     };
 
-    const itemsList = receiptData.items
-      .map(item => `• ${escapeMarkdown(item.name)}: $${(item.total || item.price || 0).toFixed(2)}`)
-      .join('\n');
+    // Determine category for the receipt 
+    const category = this.receiptProcessor.categorizeReceipt(receiptData);
 
     return `✅ *Receipt processed successfully\\!*
 
 🏪 *Store:* ${escapeMarkdown(receiptData.store_name)}
 📅 *Date:* ${escapeMarkdown(receiptData.date)}
+🏷️ *Category:* ${escapeMarkdown(category)}
 💰 *Total:* $${receiptData.total.toFixed(2)}
 
-*Items:*
-${itemsList}
-
-Your expense has been added to your Google Sheet\\! 📊`;
+Your expense has been saved to the database\\! 💾`;
   }
 
   /**

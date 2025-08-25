@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -11,11 +12,13 @@ import {
   LogOut,
   Bot,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  HelpCircle
 } from 'lucide-react'
 import { createSupabaseClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { UserConfig, BotSession } from '@/types'
+import TutorialGuide from '@/components/tutorial/TutorialGuide'
 
 interface SidebarProps {
   userConfig?: UserConfig | null
@@ -25,11 +28,16 @@ interface SidebarProps {
 export default function Sidebar({ userConfig, botSession }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const [showTutorial, setShowTutorial] = useState(false)
 
   const handleSignOut = async () => {
     const supabase = createSupabaseClient()
     await supabase.auth.signOut()
     router.push('/login')
+  }
+
+  const handleOpenTutorial = () => {
+    setShowTutorial(true)
   }
 
   const navigation = [
@@ -44,6 +52,13 @@ export default function Sidebar({ userConfig, botSession }: SidebarProps) {
       href: '/transactions',
       icon: Receipt,
       current: pathname === '/transactions'
+    },
+    {
+      name: 'Tutorial',
+      href: '#',
+      icon: HelpCircle,
+      current: false,
+      onClick: handleOpenTutorial
     },
     {
       name: 'Settings',
@@ -64,6 +79,26 @@ export default function Sidebar({ userConfig, botSession }: SidebarProps) {
       <nav className="flex-1 space-y-2 px-4 py-6">
         {navigation.map((item) => {
           const Icon = item.icon
+          
+          if (item.onClick) {
+            return (
+              <button
+                key={item.name}
+                onClick={item.onClick}
+                className={`
+                  w-full group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left
+                  ${item.current
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                  }
+                `}
+              >
+                <Icon className="h-5 w-5" />
+                {item.name}
+              </button>
+            )
+          }
+          
           return (
             <Link
               key={item.name}
@@ -124,6 +159,12 @@ export default function Sidebar({ userConfig, botSession }: SidebarProps) {
           Sign Out
         </Button>
       </div>
+
+      {/* Tutorial Guide */}
+      <TutorialGuide 
+        isOpen={showTutorial} 
+        onClose={() => setShowTutorial(false)}
+      />
     </div>
   )
 }

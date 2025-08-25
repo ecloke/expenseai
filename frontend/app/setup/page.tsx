@@ -6,7 +6,7 @@ import { createSupabaseClient } from '@/lib/supabase'
 import { Progress } from '@/components/ui/progress'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Bot, Brain, CheckCircle, ArrowLeft } from 'lucide-react'
+import { Bot, Brain, CheckCircle, ArrowLeft, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
 
@@ -21,6 +21,7 @@ export default function SetupPage() {
   const [botToken, setBotToken] = useState('')
   const [botUsername, setBotUsername] = useState('')
   const [userId, setUserId] = useState<string | null>(null)
+  const [isCompleting, setIsCompleting] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
   const supabase = createSupabaseClient()
@@ -106,7 +107,11 @@ export default function SetupPage() {
   }
 
   const handleSetupComplete = async () => {
+    if (isCompleting) return // Prevent multiple clicks
+    
     try {
+      setIsCompleting(true)
+      
       if (!userId) {
         toast({
           title: "Error",
@@ -146,10 +151,15 @@ export default function SetupPage() {
         description: "Setup finished but bot startup failed. You can start it manually from dashboard.",
         variant: "destructive"
       })
+    } finally {
+      setIsCompleting(false)
     }
     
     // Clear setup progress
     localStorage.removeItem('setup-progress')
+    
+    // Set flag to show tutorial on dashboard
+    sessionStorage.setItem('from-setup', 'true')
     
     // Redirect to dashboard
     setTimeout(() => {
@@ -179,8 +189,8 @@ export default function SetupPage() {
           <CardHeader>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <CardTitle className="text-2xl">Setup Your Enhanced Expense Tracker</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-2xl text-white">Setup Your Enhanced Expense Tracker</CardTitle>
+                <CardDescription className="text-gray-300">
                   Simplified setup - now with database storage and instant commands (no Google Sheets needed!)
                 </CardDescription>
               </div>
@@ -222,8 +232,8 @@ export default function SetupPage() {
                     )}
                   </div>
                   <div>
-                    <CardTitle className="text-lg">{step.title}</CardTitle>
-                    <CardDescription className="text-sm">
+                    <CardTitle className="text-lg text-white">{step.title}</CardTitle>
+                    <CardDescription className="text-sm text-gray-300">
                       {step.description}
                     </CardDescription>
                   </div>
@@ -295,10 +305,18 @@ export default function SetupPage() {
                 <div className="space-y-2">
                   <Button 
                     onClick={handleSetupComplete}
+                    disabled={isCompleting}
                     className="w-full"
                     size="lg"
                   >
-                    Go to Dashboard
+                    {isCompleting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Starting Bot & Redirecting...
+                      </>
+                    ) : (
+                      'Go to Dashboard'
+                    )}
                   </Button>
                   <p className="text-xs text-green-400">
                     You'll be redirected automatically in a moment...
