@@ -960,33 +960,28 @@ Your expense has been saved to the database! 💾`;
   /**
    * Save receipt data as expense
    */
-  async saveReceiptAsExpense(userId, receiptData, projectId) {
-    try {
-      const expenseData = {
-        user_id: userId,
-        project_id: projectId,
-        receipt_date: receiptData.date,  // Map 'date' to 'receipt_date'
-        store_name: receiptData.store_name,
-        category: receiptData.category,
-        total_amount: receiptData.total  // Map 'total' to 'total_amount'
-      };
+async saveReceiptAsExpense(userId, receiptData, projectId) {
+  try {
+    // Since ReceiptProcessor.saveToDatabase already inserted the expense,
+    // we just fetch the latest one for this user
+    const { data: expense, error } = await this.supabase
+      .from('expenses')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
 
-      const { data: expense, error } = await this.supabase
-        .from('expenses')
-        .insert([expenseData])
-        .select()
-        .single();
-
-      if (error) {
-        throw new Error(error.message || 'Failed to save expense');
-      }
-
-      return expense;
-    } catch (error) {
-      console.error('Error saving receipt as expense:', error);
-      throw error;
+    if (error) {
+      throw new Error(error.message || 'Failed to fetch saved expense');
     }
+
+    return expense;
+  } catch (error) {
+    console.error('Error fetching saved expense:', error);
+    throw error;
   }
+}
 
   /**
    * Format enhanced summary with chart and top stores
