@@ -140,7 +140,7 @@ export default function LoginPage() {
                   setIsSignUp(!isSignUp)
                   setError('')
                 }}
-                className="text-blue-400 hover:text-blue-300 font-medium transition-colors duration-200">
+                className="text-blue-400 hover:text-blue-300 font-medium transition-colors duration-200"
               >
                 {isSignUp 
                   ? 'Already have an account? Sign in' 
