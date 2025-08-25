@@ -403,12 +403,14 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 {topStores.map((store, index) => (
-                  <div key={store.store} className="flex flex-col items-center justify-between p-4 rounded-lg bg-gray-700/50 hover:bg-gray-700/70 transition-colors">
-                    <div className="text-center">
-                      <div className="font-medium text-gray-200 truncate w-full">{store.store}</div>
-                      <div className="text-sm text-gray-400">{store.count} transactions</div>
+                  <div key={store.store} className="flex flex-col items-center justify-between p-4 rounded-lg bg-gray-700/50 hover:bg-gray-700/70 transition-colors min-h-[120px]">
+                    <div className="text-center flex-1 flex flex-col justify-center">
+                      <div className="font-medium text-gray-200 text-sm leading-tight mb-1 max-w-[140px] mx-auto" title={store.store}>
+                        {store.store.length > 20 ? `${store.store.substring(0, 17)}...` : store.store}
+                      </div>
+                      <div className="text-xs text-gray-400">{store.count} transaction{store.count !== 1 ? 's' : ''}</div>
                     </div>
-                    <div className="font-semibold text-green-400 text-lg mt-2">{currency}{store.amount}</div>
+                    <div className="font-semibold text-green-400 text-base mt-2">{currency}{store.amount.toFixed(2)}</div>
                   </div>
                 ))}
               </div>
