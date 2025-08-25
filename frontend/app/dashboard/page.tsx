@@ -7,20 +7,31 @@ import ExpenseList from '@/components/dashboard/ExpenseList'
 import TutorialGuide from '@/components/tutorial/TutorialGuide'
 import { 
   BarChart3,
-  Receipt
+  Receipt,
+  Filter
 } from 'lucide-react'
+import { SimpleSelect } from '@/components/ui/simple-select'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { createSupabaseClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null)
   const [showTutorial, setShowTutorial] = useState(false)
+  const [selectedProject, setSelectedProject] = useState('general')
+  const [projects, setProjects] = useState<any[]>([])
   const router = useRouter()
 
   useEffect(() => {
     loadUser()
     checkTutorialStatus()
   }, [])
+
+  useEffect(() => {
+    if (user) {
+      loadProjects()
+    }
+  }, [user])
 
   const checkTutorialStatus = () => {
     // Check if user has seen tutorial before
@@ -57,13 +68,62 @@ export default function Dashboard() {
     }
   }
 
+  const loadProjects = async () => {
+    if (!user) return
+
+    try {
+      const supabase = createSupabaseClient()
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, name, currency')
+        .eq('user_id', user.id)
+        .order('name')
+
+      if (error) {
+        console.error('Error loading projects:', error)
+        return
+      }
+
+      setProjects(data || [])
+    } catch (error) {
+      console.error('Error loading projects:', error)
+    }
+  }
+
+  const handleProjectChange = (value: string) => {
+    setSelectedProject(value)
+  }
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
         {/* Page Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-          <p className="text-gray-400 mt-2">Track and analyze your spending patterns</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-white">Dashboard</h1>
+            <p className="text-gray-400 mt-2">Track and analyze your spending patterns</p>
+          </div>
+          
+          {/* Project Filter */}
+          <Card className="bg-gray-800 border-gray-700 w-64">
+            <CardContent className="pt-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-300">Project</label>
+                <SimpleSelect
+                  value={selectedProject}
+                  onValueChange={handleProjectChange}
+                  options={[
+                    { value: 'general', label: '📁 General Expenses' },
+                    ...projects.map(project => ({
+                      value: project.id,
+                      label: `📁 ${project.name}`
+                    }))
+                  ]}
+                  placeholder="Select Project"
+                />
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Analytics Section */}
@@ -72,7 +132,7 @@ export default function Dashboard() {
             <BarChart3 className="h-6 w-6 text-blue-400" />
             Analytics Overview
           </h2>
-          <ExpenseCharts userId={user?.id} />
+          <ExpenseCharts userId={user?.id} projectId={selectedProject} />
         </div>
 
         {/* Expenses Table Section */}
@@ -81,7 +141,7 @@ export default function Dashboard() {
             <Receipt className="h-6 w-6 text-green-400" />
             Recent Transactions
           </h2>
-          <ExpenseList userId={user?.id} />
+          <ExpenseList userId={user?.id} projectId={selectedProject} />
         </div>
       </div>
 

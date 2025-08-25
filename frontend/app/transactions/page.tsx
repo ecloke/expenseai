@@ -45,6 +45,8 @@ export default function Transactions() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('all')
+  const [projectFilter, setProjectFilter] = useState('all')
+  const [projects, setProjects] = useState<any[]>([])
   const [dateRange, setDateRange] = useState('all') // 'week', 'month', 'custom', 'all'
   const [customStartDate, setCustomStartDate] = useState<Date | null>(null)
   const [customEndDate, setCustomEndDate] = useState<Date | null>(null)
@@ -71,8 +73,9 @@ export default function Transactions() {
   useEffect(() => {
     if (user) {
       loadExpenses()
+      loadProjects()
     }
-  }, [user, currentPage, searchTerm, categoryFilter, dateRange, customStartDate, customEndDate])
+  }, [user, currentPage, searchTerm, categoryFilter, projectFilter, dateRange, customStartDate, customEndDate])
 
   const loadUser = async () => {
     try {
@@ -99,7 +102,7 @@ export default function Transactions() {
 
       let query = supabase
         .from('expenses')
-        .select('*', { count: 'exact' })
+        .select('*, projects(name, currency)', { count: 'exact' })
         .eq('user_id', user.id)
         .order('receipt_date', { ascending: false })
 
@@ -111,6 +114,13 @@ export default function Transactions() {
       // Apply category filter
       if (categoryFilter !== 'all') {
         query = query.eq('category', categoryFilter)
+      }
+
+      // Apply project filter
+      if (projectFilter === 'general') {
+        query = query.is('project_id', null)
+      } else if (projectFilter !== 'all') {
+        query = query.eq('project_id', projectFilter)
       }
 
       // Apply date range filter
@@ -151,7 +161,35 @@ export default function Transactions() {
     }
   }
 
+  const loadProjects = async () => {
+    if (!user) return
+
+    try {
+      const supabase = createSupabaseClient()
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, name, currency')
+        .eq('user_id', user.id)
+        .order('name')
+
+      if (error) {
+        console.error('Error loading projects:', error)
+        return
+      }
+
+      setProjects(data || [])
+    } catch (error) {
+      console.error('Error loading projects:', error)
+    }
+  }
+
   const totalPages = Math.ceil(totalCount / itemsPerPage)
+
+  const formatAmount = (expense: any) => {
+    const currency = expense.projects?.currency || '$'
+    const amount = parseFloat(expense.total_amount.toString()).toFixed(2)
+    return `${currency}${amount}`
+  }
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value)
@@ -160,6 +198,11 @@ export default function Transactions() {
 
   const handleCategoryChange = (value: string) => {
     setCategoryFilter(value)
+    setCurrentPage(1)
+  }
+
+  const handleProjectChange = (value: string) => {
+    setProjectFilter(value)
     setCurrentPage(1)
   }
 
@@ -300,7 +343,7 @@ export default function Transactions() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               {/* Search */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-300 mb-2">Search</label>
@@ -326,6 +369,24 @@ export default function Transactions() {
                     label: category === 'all' ? 'All Categories' : `${CATEGORY_EMOJIS[category]} ${category}`
                   }))}
                   placeholder="All Categories"
+                />
+              </div>
+
+              {/* Project Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Project</label>
+                <SimpleSelect
+                  value={projectFilter}
+                  onValueChange={handleProjectChange}
+                  options={[
+                    { value: 'all', label: 'All Projects' },
+                    { value: 'general', label: '📁 General Expenses' },
+                    ...projects.map(project => ({
+                      value: project.id,
+                      label: `📁 ${project.name}`
+                    }))
+                  ]}
+                  placeholder="All Projects"
                 />
               </div>
 
@@ -423,7 +484,7 @@ export default function Transactions() {
                             </TableCell>
                             <TableCell className="text-right">
                               <span className="font-semibold text-lg text-green-400">
-                                ${parseFloat(expense.total_amount.toString()).toFixed(2)}
+                                {formatAmount(expense)}
                               </span>
                             </TableCell>
                             <TableCell>
@@ -615,7 +676,7 @@ export default function Transactions() {
                     </div>
                     <div>
                       <span className="text-gray-400">Amount:</span>
-                      <div className="text-green-400 font-semibold">${parseFloat(deletingExpense.total_amount.toString()).toFixed(2)}</div>
+                      <div className="text-green-400 font-semibold">{formatAmount(deletingExpense)}</div>
                     </div>
                   </div>
                 </div>
