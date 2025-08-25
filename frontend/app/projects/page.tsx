@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createSupabaseClient } from '@/lib/supabase'
+import DashboardLayout from '@/components/layout/DashboardLayout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -238,21 +239,24 @@ export default function ProjectsPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Projects</h1>
-          <p className="text-gray-400">Manage your expense tracking projects</p>
+      <DashboardLayout>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-white">Projects</h1>
+            <p className="text-gray-400">Manage your expense tracking projects</p>
+          </div>
+          <div className="space-y-4">
+            <Skeleton className="h-[200px] w-full bg-gray-800" />
+            <Skeleton className="h-[400px] w-full bg-gray-800" />
+          </div>
         </div>
-        <div className="space-y-4">
-          <Skeleton className="h-[200px] w-full bg-gray-800" />
-          <Skeleton className="h-[400px] w-full bg-gray-800" />
-        </div>
-      </div>
+      </DashboardLayout>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <DashboardLayout>
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-white">Projects</h1>
@@ -514,6 +518,7 @@ export default function ProjectsPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </DashboardLayout>
   )
 }
