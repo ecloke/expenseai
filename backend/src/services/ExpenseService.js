@@ -355,6 +355,13 @@ class ExpenseService {
   }
 
   /**
+   * Get expenses for custom date range with project separation
+   */
+  async getCustomRangeExpensesWithProjects(userId, startDate, endDate) {
+    return this.getExpensesByDateRangeWithProjects(userId, startDate, endDate);
+  }
+
+  /**
    * Get top stores from expenses (with normalized names)
    */
   getTopStores(expenses, limit = 5) {

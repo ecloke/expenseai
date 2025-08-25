@@ -258,7 +258,7 @@ export default function TutorialGuide({ isOpen, onClose, onComplete }: TutorialG
                 <Button 
                   variant="outline" 
                   onClick={handlePrevious}
-                  className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                  className="border-gray-600 text-gray-300 hover:bg-gray-700 bg-gray-800"
                 >
                   <ChevronLeft className="h-4 w-4 mr-1" />
                   Previous
