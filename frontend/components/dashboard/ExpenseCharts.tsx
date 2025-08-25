@@ -33,6 +33,7 @@ import { Expense } from '@/types'
 
 interface ExpenseChartsProps {
   userId: string
+  projectId?: string
 }
 
 const COLORS = [
@@ -56,7 +57,7 @@ const CATEGORY_EMOJIS: { [key: string]: string } = {
   other: '📦'
 }
 
-export default function ExpenseCharts({ userId }: ExpenseChartsProps) {
+export default function ExpenseCharts({ userId, projectId }: ExpenseChartsProps) {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'all'>('month')
@@ -64,7 +65,7 @@ export default function ExpenseCharts({ userId }: ExpenseChartsProps) {
 
   useEffect(() => {
     loadExpenses()
-  }, [userId, timeRange])
+  }, [userId, timeRange, projectId])
 
   const loadExpenses = async () => {
     try {
@@ -76,6 +77,13 @@ export default function ExpenseCharts({ userId }: ExpenseChartsProps) {
         .select('*')
         .eq('user_id', userId)
         .order('receipt_date', { ascending: false })
+
+      // Apply project filter
+      if (projectId === 'general') {
+        query = query.is('project_id', null)
+      } else if (projectId && projectId !== 'general') {
+        query = query.eq('project_id', projectId)
+      }
 
       // Apply time range filter
       const now = new Date()
