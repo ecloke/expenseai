@@ -335,7 +335,7 @@ User query: "${sanitizedQuery}"`;
    * Calculate total spending
    */
   calculateTotal(expenses) {
-    return expenses.reduce((sum, expense) => sum + expense.total, 0).toFixed(2);
+    return expenses.reduce((sum, expense) => sum + expense.total_amount, 0).toFixed(2);
   }
 
   /**
@@ -348,7 +348,7 @@ User query: "${sanitizedQuery}"`;
       if (!breakdown[expense.category]) {
         breakdown[expense.category] = { total: 0, count: 0 };
       }
-      breakdown[expense.category].total += expense.total;
+      breakdown[expense.category].total += expense.total_amount;
       breakdown[expense.category].count += 1;
     });
 
@@ -381,7 +381,7 @@ User query: "${sanitizedQuery}"`;
         store: expense.store,
         item: expense.item,
         category: expense.category,
-        amount: expense.total
+        amount: expense.total_amount
       }));
 
     return {
@@ -402,7 +402,7 @@ User query: "${sanitizedQuery}"`;
         store: expense.store,
         item: expense.item,
         category: expense.category,
-        amount: expense.total
+        amount: expense.total_amount
       }));
 
     return {

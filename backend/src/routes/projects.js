@@ -58,7 +58,7 @@ router.get('/', async (req, res) => {
         }
 
         const transactionCount = expenseStats.length;
-        const totalAmount = expenseStats.reduce((sum, expense) => sum + expense.total, 0);
+        const totalAmount = expenseStats.reduce((sum, expense) => sum + expense.total_amount, 0);
 
         return {
           ...project,

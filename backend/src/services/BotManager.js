@@ -612,10 +612,10 @@ Please enter the total amount:`;
 
         const amount = parseFloat(input).toFixed(2);
         const expenseData = {
-          date: conversation.data.receiptDate,
+          receipt_date: conversation.data.receiptDate,
           store_name: conversation.data.storeName,
           category: conversation.data.category,
-          total: parseFloat(amount)
+          total_amount: parseFloat(amount)
         };
 
         // Check for open projects
@@ -635,7 +635,7 @@ Please enter the total amount:`;
             return `✅ *Expense Created Successfully!*
 
 📊 *Summary:*
-📅 Date: ${expenseData.date}
+📅 Date: ${expenseData.receipt_date}
 🏪 Store: ${expenseData.store_name}
 📋 Category: ${categoryEmoji} ${this.expenseService.capitalizeFirst(expenseData.category)}
 💰 Amount: $${amount}
@@ -861,10 +861,10 @@ ${options.map((option, index) => `${index + 1}. ${option.label}`).join('\n')}`;
       return `✅ *Expense Saved Successfully!*
 
 📊 *Summary:*
-📅 Date: ${expenseData.date}
+📅 Date: ${expenseData.receipt_date}
 🏪 Store: ${expenseData.store_name}
 🏷️ Category: ${expenseData.category}
-💰 Total: ${currency}${expenseData.total.toFixed(2)}${projectInfo}
+💰 Total: ${currency}${expenseData.total_amount.toFixed(2)}${projectInfo}
 
 Your expense has been saved to the database! 💾`;
 
@@ -965,11 +965,10 @@ Your expense has been saved to the database! 💾`;
       const expenseData = {
         user_id: userId,
         project_id: projectId,
-        date: receiptData.date,
+        receipt_date: receiptData.date,  // Map 'date' to 'receipt_date'
         store_name: receiptData.store_name,
         category: receiptData.category,
-        total: receiptData.total,
-        description: ''
+        total_amount: receiptData.total  // Map 'total' to 'total_amount'
       };
 
       const { data: expense, error } = await this.supabase
