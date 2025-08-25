@@ -123,6 +123,34 @@ export function checkRateLimit(rateLimitMap, key, windowMs = 60000, maxRequests 
   return true;
 }
 
+// Project validation schemas
+export const projectSchema = Joi.object({
+  name: Joi.string().min(1).max(255).required(),
+  currency: Joi.string().min(1).max(20).required(),
+  status: Joi.string().valid('open', 'closed').default('open'),
+  user_id: Joi.string().uuid().required()
+});
+
+export const projectUpdateSchema = Joi.object({
+  name: Joi.string().min(1).max(255).optional(),
+  currency: Joi.string().min(1).max(20).optional(),
+  status: Joi.string().valid('open', 'closed').optional()
+});
+
+// Expense validation schema (updated to include project_id)
+export const expenseSchema = Joi.object({
+  user_id: Joi.string().uuid().required(),
+  project_id: Joi.string().uuid().optional().allow(null),
+  date: Joi.date().iso().required(),
+  store_name: Joi.string().min(1).max(100).required(),
+  category: Joi.string().valid(
+    'groceries', 'dining', 'gas', 'pharmacy', 
+    'retail', 'services', 'entertainment', 'other'
+  ).default('other'),
+  total: Joi.number().positive().precision(2).required(),
+  description: Joi.string().max(500).optional().allow('')
+});
+
 /**
  * Validate user ID format
  * @param {string} userId - User ID to validate

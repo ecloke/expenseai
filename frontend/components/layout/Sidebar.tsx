@@ -13,7 +13,8 @@ import {
   Bot,
   CheckCircle,
   AlertCircle,
-  HelpCircle
+  HelpCircle,
+  FolderOpen
 } from 'lucide-react'
 import { createSupabaseClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
@@ -52,6 +53,12 @@ export default function Sidebar({ userConfig, botSession }: SidebarProps) {
       href: '/transactions',
       icon: Receipt,
       current: pathname === '/transactions'
+    },
+    {
+      name: 'Projects',
+      href: '/projects',
+      icon: FolderOpen,
+      current: pathname === '/projects'
     },
     {
       name: 'Tutorial',
