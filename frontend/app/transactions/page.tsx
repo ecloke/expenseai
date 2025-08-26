@@ -19,26 +19,11 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { ChevronLeft, ChevronRight, Search, Calendar, Store, Filter, Download, Receipt, Edit, Trash2 } from 'lucide-react'
-import { format, subDays, startOfMonth, endOfMonth } from 'date-fns'
-import { formatInTimeZone } from 'date-fns-tz'
 import { Expense } from '@/types'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
-
-const CATEGORY_EMOJIS: { [key: string]: string } = {
-  groceries: '🛒',
-  dining: '🍽️',
-  gas: '⛽',
-  pharmacy: '💊',
-  retail: '🛍️',
-  services: '🔧',
-  entertainment: '🎬',
-  other: '📦'
-}
-
-const CATEGORIES = ['all', 'groceries', 'dining', 'gas', 'pharmacy', 'retail', 'services', 'entertainment', 'other']
-
-const MALAYSIA_TIMEZONE = 'Asia/Kuala_Lumpur'
+import { CATEGORY_EMOJIS, CATEGORIES, ITEMS_PER_PAGE, getCategoryEmoji } from '@/lib/constants'
+import { formatDateForDisplay, formatDateTimeForDisplay, getTodayString, getDaysAgoString, getMonthStartString, formatDateForAPI } from '@/lib/dateUtils'
 
 export default function Transactions() {
   const [expenses, setExpenses] = useState<Expense[]>([])
@@ -64,7 +49,7 @@ export default function Transactions() {
   })
   const router = useRouter()
   
-  const itemsPerPage = 20
+  const itemsPerPage = ITEMS_PER_PAGE
 
   useEffect(() => {
     loadUser()
@@ -124,19 +109,16 @@ export default function Transactions() {
       }
 
       // Apply date range filter
-      const now = new Date()
       if (dateRange === 'week') {
-        const weekAgo = subDays(now, 7)
-        query = query.gte('receipt_date', format(weekAgo, 'yyyy-MM-dd'))
+        query = query.gte('receipt_date', getDaysAgoString(7))
       } else if (dateRange === 'month') {
-        const monthStart = startOfMonth(now)
-        query = query.gte('receipt_date', format(monthStart, 'yyyy-MM-dd'))
+        query = query.gte('receipt_date', getMonthStartString())
       } else if (dateRange === 'custom') {
         if (customStartDate) {
-          query = query.gte('receipt_date', format(customStartDate, 'yyyy-MM-dd'))
+          query = query.gte('receipt_date', formatDateForAPI(customStartDate))
         }
         if (customEndDate) {
-          query = query.lte('receipt_date', format(customEndDate, 'yyyy-MM-dd'))
+          query = query.lte('receipt_date', formatDateForAPI(customEndDate))
         }
       }
 
@@ -245,7 +227,7 @@ export default function Transactions() {
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `expenses-${formatInTimeZone(new Date(), MALAYSIA_TIMEZONE, 'yyyy-MM-dd')}.csv`
+    a.download = `expenses-${getTodayString()}.csv`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -465,7 +447,7 @@ export default function Transactions() {
                           <TableRow key={expense.id} className="border-gray-600 hover:bg-gray-600/50">
                             <TableCell>
                               <div className="font-medium text-gray-200 text-xs sm:text-sm">
-                                {formatInTimeZone(new Date(expense.receipt_date), MALAYSIA_TIMEZONE, 'MMM dd, yyyy')}
+                                {formatDateForDisplay(expense.receipt_date)}
                               </div>
                             </TableCell>
                             <TableCell>
@@ -479,7 +461,7 @@ export default function Transactions() {
                                 variant="secondary" 
                                 className="bg-gray-600 text-gray-200 border-gray-500 text-xs"
                               >
-                                {CATEGORY_EMOJIS[expense.category]} {expense.category}
+                                {getCategoryEmoji(expense.category)} {expense.category}
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right">
@@ -489,7 +471,7 @@ export default function Transactions() {
                             </TableCell>
                             <TableCell>
                               <div className="text-xs sm:text-sm text-gray-400">
-                                {formatInTimeZone(new Date(expense.created_at), MALAYSIA_TIMEZONE, 'MMM dd, h:mm a')}
+                                {formatDateTimeForDisplay(expense.created_at)}
                               </div>
                             </TableCell>
                             <TableCell>
@@ -530,7 +512,7 @@ export default function Transactions() {
                                 <span className="font-medium text-gray-200 text-sm">{expense.store_name}</span>
                               </div>
                               <div className="text-xs text-gray-400">
-                                {formatInTimeZone(new Date(expense.receipt_date), MALAYSIA_TIMEZONE, 'MMM dd, yyyy')}
+                                {formatDateForDisplay(expense.receipt_date)}
                               </div>
                             </div>
                             <div className="text-right">
@@ -541,13 +523,13 @@ export default function Transactions() {
                                 variant="secondary" 
                                 className="bg-gray-600 text-gray-200 border-gray-500 text-xs"
                               >
-                                {CATEGORY_EMOJIS[expense.category]} {expense.category}
+                                {getCategoryEmoji(expense.category)} {expense.category}
                               </Badge>
                             </div>
                           </div>
                           <div className="flex justify-between items-center">
                             <div className="text-xs text-gray-400">
-                              Added {formatInTimeZone(new Date(expense.created_at), MALAYSIA_TIMEZONE, 'MMM dd, h:mm a')}
+                              Added {formatDateTimeForDisplay(expense.created_at)}
                             </div>
                             <div className="flex items-center gap-2">
                               <Button
@@ -719,7 +701,7 @@ export default function Transactions() {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-gray-400">Date:</span>
-                      <div className="text-white">{formatInTimeZone(new Date(deletingExpense.receipt_date), MALAYSIA_TIMEZONE, 'MMM dd, yyyy')}</div>
+                      <div className="text-white">{formatDateForDisplay(deletingExpense.receipt_date)}</div>
                     </div>
                     <div>
                       <span className="text-gray-400">Store:</span>
@@ -727,7 +709,7 @@ export default function Transactions() {
                     </div>
                     <div>
                       <span className="text-gray-400">Category:</span>
-                      <div className="text-white">{CATEGORY_EMOJIS[deletingExpense.category]} {deletingExpense.category}</div>
+                      <div className="text-white">{getCategoryEmoji(deletingExpense.category)} {deletingExpense.category}</div>
                     </div>
                     <div>
                       <span className="text-gray-400">Amount:</span>
