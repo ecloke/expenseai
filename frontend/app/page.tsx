@@ -85,12 +85,12 @@ export default function HomePage() {
       <section className="container mx-auto px-4 py-8 sm:py-16 text-center">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6">
-            Automate Your Expense Tracking with
+            Smart Receipt Processing with
             <span className="text-blue-400 block">AI-Powered Telegram Bots</span>
           </h1>
           <p className="text-lg sm:text-xl text-gray-300 mb-6 sm:mb-8 leading-relaxed px-2 sm:px-0">
-            Simply photograph your receipts and chat with your personal bot. 
-            AI extracts data, provides insights, and tracks expenses automatically.
+            Simply photograph your receipts and send them to your personal Telegram bot. 
+            AI extracts data automatically and provides instant expense summaries.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center px-4 sm:px-0">
             {user ? (
@@ -159,42 +159,45 @@ export default function HomePage() {
               </div>
               <CardTitle className="text-white text-lg sm:text-xl">📊 Smart Tracking</CardTitle>
               <CardDescription className="text-gray-300 text-sm sm:text-base">
-                Advanced analytics, summaries, and spending insights delivered instantly
+                View detailed analytics, get spending summaries, and track expenses by projects
               </CardDescription>
             </CardHeader>
           </Card>
         </div>
       </section>
 
-      {/* Chat Example */}
+      {/* Bot Commands */}
       <section className="container mx-auto px-4 py-8 sm:py-16">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl sm:text-3xl font-bold text-center text-white mb-8 sm:mb-12">
-            Ask Questions Naturally
+            Simple Bot Commands
           </h2>
           <Card className="bg-gray-800/80 backdrop-blur-sm border-0 shadow-xl">
             <CardContent className="p-4 sm:p-8">
               <div className="space-y-4">
                 <div className="flex justify-end">
                   <div className="bg-blue-500 text-white rounded-lg py-2 px-3 sm:px-4 max-w-xs text-sm sm:text-base">
-                    "How much did I spend on groceries this month?"
+                    /month
                   </div>
                 </div>
                 <div className="flex justify-start">
                   <div className="bg-gray-700 text-gray-100 rounded-lg py-2 px-3 sm:px-4 max-w-sm sm:max-w-md text-sm sm:text-base">
                     <Bot className="inline-block h-4 w-4 mr-2" />
-                    I'll analyze your expense data and provide detailed spending insights with category breakdowns and trends.
+                    📊 This Month's Expenses: $1,247.89<br/>
+                    📋 15 transactions • Top category: Groceries ($423.12)
                   </div>
                 </div>
                 <div className="flex justify-end">
                   <div className="bg-blue-500 text-white rounded-lg py-2 px-3 sm:px-4 max-w-xs text-sm sm:text-base">
-                    "Show me my biggest expenses"
+                    📸 [Receipt Photo]
                   </div>
                 </div>
                 <div className="flex justify-start">
                   <div className="bg-gray-700 text-gray-100 rounded-lg py-2 px-3 sm:px-4 max-w-sm sm:max-w-md text-sm sm:text-base">
                     <Bot className="inline-block h-4 w-4 mr-2" />
-                    I can identify your largest purchases and spending patterns from your receipts.
+                    ✅ Receipt processed!<br/>
+                    🏪 Walmart • $67.89 • Groceries<br/>
+                    📁 Choose project: 1. General 2. Trip to Japan
                   </div>
                 </div>
               </div>
@@ -222,12 +225,12 @@ export default function HomePage() {
           <div className="text-center">
             <Bot className="h-10 w-10 sm:h-12 sm:w-12 text-purple-400 mx-auto mb-4" />
             <h3 className="font-semibold text-white mb-2 text-base sm:text-lg">Personal Bot</h3>
-            <p className="text-gray-300 text-sm">Your own Telegram bot that learns your spending patterns.</p>
+            <p className="text-gray-300 text-sm">Your own private Telegram bot for secure expense tracking and analytics.</p>
           </div>
           <div className="text-center">
             <MessageSquare className="h-10 w-10 sm:h-12 sm:w-12 text-orange-400 mx-auto mb-4" />
-            <h3 className="font-semibold text-white mb-2 text-base sm:text-lg">Natural Language</h3>
-            <p className="text-gray-300 text-sm">Ask questions like you're talking to a friend.</p>
+            <h3 className="font-semibold text-white mb-2 text-base sm:text-lg">Simple Commands</h3>
+            <p className="text-gray-300 text-sm">Easy slash commands for instant spending summaries and reports.</p>
           </div>
         </div>
       </section>
