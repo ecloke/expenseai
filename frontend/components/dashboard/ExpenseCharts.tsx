@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, memo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { createSupabaseClient } from '@/lib/supabase'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -38,7 +38,7 @@ interface ExpenseChartsProps {
   currency?: string
 }
 
-const ExpenseCharts = memo(function ExpenseCharts({ userId, projectId, currency = '$' }: ExpenseChartsProps) {
+export default function ExpenseCharts({ userId, projectId, currency = '$' }: ExpenseChartsProps) {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState<TimeRange>('month')
@@ -89,6 +89,10 @@ const ExpenseCharts = memo(function ExpenseCharts({ userId, projectId, currency 
   }
 
   const dailySpendingData = useMemo(() => {
+    if (!expenses || expenses.length === 0) {
+      return [];
+    }
+    
     const dailyData: { [key: string]: number } = {}
     
     expenses.forEach(expense => {
@@ -107,6 +111,10 @@ const ExpenseCharts = memo(function ExpenseCharts({ userId, projectId, currency 
   }, [expenses])
 
   const categoryBreakdownData = useMemo(() => {
+    if (!expenses || expenses.length === 0) {
+      return [];
+    }
+    
     const categoryData: { [key: string]: number } = {}
     
     expenses.forEach(expense => {
@@ -124,6 +132,10 @@ const ExpenseCharts = memo(function ExpenseCharts({ userId, projectId, currency 
   }, [expenses])
 
   const topStoresData = useMemo(() => {
+    if (!expenses || expenses.length === 0) {
+      return [];
+    }
+    
     const storeData: { [key: string]: { amount: number, count: number } } = {}
     
     expenses.forEach(expense => {
@@ -146,6 +158,14 @@ const ExpenseCharts = memo(function ExpenseCharts({ userId, projectId, currency 
   }, [expenses])
 
   const totalStatsData = useMemo(() => {
+    if (!expenses || expenses.length === 0) {
+      return {
+        total: 0,
+        count: 0,
+        avgPerTransaction: 0
+      };
+    }
+    
     const total = expenses.reduce((sum, expense) => sum + parseFloat(expense.total_amount.toString()), 0)
     const count = expenses.length
     const avgPerTransaction = count > 0 ? total / count : 0
@@ -183,6 +203,9 @@ const ExpenseCharts = memo(function ExpenseCharts({ userId, projectId, currency 
   const dailySpending = dailySpendingData
   const categoryBreakdown = useMemo(() => {
     // Calculate percentages for category breakdown
+    if (!categoryBreakdownData || !totalStatsData || totalStatsData.total === 0) {
+      return [];
+    }
     return categoryBreakdownData.map(item => ({
       ...item,
       percentage: parseFloat(((item.amount / totalStatsData.total) * 100).toFixed(1))
@@ -409,6 +432,4 @@ const ExpenseCharts = memo(function ExpenseCharts({ userId, projectId, currency 
       </div>
     </div>
   )
-})
-
-export default ExpenseCharts
+}
