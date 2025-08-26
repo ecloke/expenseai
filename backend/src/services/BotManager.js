@@ -22,6 +22,8 @@ class BotManager {
     this.expenseService = new ExpenseService(supabase);
     this.conversationManager = new ConversationStateManager();
     this.rateLimitMap = new Map(); // For rate limiting per user
+    this.errorLogCache = new Map(); // For error log rate limiting: userId_errorHash -> lastLogTime
+    this.ERROR_LOG_RATE_LIMIT_MS = 60000; // 1 minute between identical error logs
     this.isShuttingDown = false;
     
     // Bind methods to maintain context
@@ -1557,20 +1559,72 @@ Select which project you want to reopen:
   }
 
   /**
-   * Log errors to database for debugging
+   * Log errors to database for debugging with rate limiting to prevent spam
    */
   async logError(userId, error) {
     try {
+      const errorMessage = error.message || error.toString();
+      
+      // Create unique cache key for deduplication
+      const errorHash = this.hashString(errorMessage.substring(0, 100));
+      const cacheKey = `${userId}_${errorHash}`;
+      const now = Date.now();
+      
+      // Check if we recently logged the same error for this user
+      const lastLogTime = this.errorLogCache.get(cacheKey);
+      if (lastLogTime && (now - lastLogTime) < this.ERROR_LOG_RATE_LIMIT_MS) {
+        // Skip logging - too frequent
+        console.log(`Skipping duplicate error log for user ${userId} (rate limited)`);
+        return;
+      }
+      
+      // Update cache with current timestamp
+      this.errorLogCache.set(cacheKey, now);
+      
+      // Clean old cache entries periodically (prevent memory leak)
+      if (this.errorLogCache.size > 1000) {
+        this.cleanErrorLogCache();
+      }
+
       await this.supabase
         .from('receipt_logs')
         .insert({
           user_id: userId,
           processing_status: 'error',
-          error_message: error.message || error.toString(),
+          error_message: errorMessage,
         });
     } catch (logError) {
       console.error('Failed to log error:', logError);
     }
+  }
+
+  /**
+   * Simple hash function for error message deduplication
+   */
+  hashString(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return hash.toString();
+  }
+
+  /**
+   * Clean old entries from error log cache to prevent memory leaks
+   */
+  cleanErrorLogCache() {
+    const now = Date.now();
+    const cutoff = now - (this.ERROR_LOG_RATE_LIMIT_MS * 2); // Clean entries older than 2x rate limit
+    
+    for (const [key, timestamp] of this.errorLogCache.entries()) {
+      if (timestamp < cutoff) {
+        this.errorLogCache.delete(key);
+      }
+    }
+    
+    console.log(`Cleaned error log cache, ${this.errorLogCache.size} entries remaining`);
   }
 
   /**
