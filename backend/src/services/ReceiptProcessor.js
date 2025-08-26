@@ -16,6 +16,10 @@ class ReceiptProcessor {
     
     // Initialize Gemini AI (will be set per request with user's API key)
     this.genAI = null;
+    
+    // Rate limiting for logs to prevent explosive logging
+    this.logCache = new Map(); // userId_status_errorHash -> lastLogTime
+    this.LOG_RATE_LIMIT_MS = 60000; // 1 minute between identical logs
   }
 
   /**
@@ -399,10 +403,31 @@ Rules:
   // }
 
   /**
-   * Log receipt processing for analytics and debugging
+   * Log receipt processing for analytics and debugging with rate limiting
    */
   async logReceiptProcessing(userId, receiptData, status, errorMessage = null) {
     try {
+      // Create unique cache key for deduplication
+      const errorHash = errorMessage ? this.hashString(errorMessage.substring(0, 100)) : 'none';
+      const cacheKey = `${userId}_${status}_${errorHash}`;
+      const now = Date.now();
+      
+      // Check if we recently logged the same error for this user
+      const lastLogTime = this.logCache.get(cacheKey);
+      if (lastLogTime && (now - lastLogTime) < this.LOG_RATE_LIMIT_MS) {
+        // Skip logging - too frequent
+        console.log(`Skipping duplicate log for ${status} (rate limited)`);
+        return;
+      }
+      
+      // Update cache with current timestamp
+      this.logCache.set(cacheKey, now);
+      
+      // Clean old cache entries periodically (prevent memory leak)
+      if (this.logCache.size > 1000) {
+        this.cleanLogCache();
+      }
+
       const logData = {
         user_id: userId,
         processing_status: status,
@@ -425,6 +450,35 @@ Rules:
     } catch (error) {
       console.error('Error logging receipt processing:', error);
     }
+  }
+
+  /**
+   * Simple hash function for error message deduplication
+   */
+  hashString(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return hash.toString();
+  }
+
+  /**
+   * Clean old entries from log cache to prevent memory leaks
+   */
+  cleanLogCache() {
+    const now = Date.now();
+    const cutoff = now - (this.LOG_RATE_LIMIT_MS * 2); // Clean entries older than 2x rate limit
+    
+    for (const [key, timestamp] of this.logCache.entries()) {
+      if (timestamp < cutoff) {
+        this.logCache.delete(key);
+      }
+    }
+    
+    console.log(`Cleaned log cache, ${this.logCache.size} entries remaining`);
   }
 
   /**
