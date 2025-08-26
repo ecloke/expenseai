@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { createSupabaseClient } from '@/lib/supabase'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -88,7 +88,7 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
     }
   }
 
-  const dailySpendingData = useMemo(() => {
+  const getDailySpendingData = () => {
     if (!expenses || expenses.length === 0) {
       return [];
     }
@@ -108,9 +108,9 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
       }))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .slice(-30) // Last 30 days
-  }, [expenses])
+  }
 
-  const categoryBreakdownData = useMemo(() => {
+  const getCategoryBreakdownData = () => {
     if (!expenses || expenses.length === 0) {
       return [];
     }
@@ -129,9 +129,9 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
         percentage: 0 // Will calculate after total
       }))
       .sort((a, b) => b.amount - a.amount)
-  }, [expenses])
+  }
 
-  const topStoresData = useMemo(() => {
+  const getTopStoresData = () => {
     if (!expenses || expenses.length === 0) {
       return [];
     }
@@ -155,9 +155,9 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
       }))
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 5)
-  }, [expenses])
+  }
 
-  const totalStatsData = useMemo(() => {
+  const getTotalStatsData = () => {
     if (!expenses || expenses.length === 0) {
       return {
         total: 0,
@@ -175,7 +175,7 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
       count,
       avgPerTransaction: parseFloat(avgPerTransaction.toFixed(2))
     }
-  }, [expenses])
+  }
 
   if (loading) {
     return (
@@ -200,19 +200,23 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
     )
   }
 
-  const dailySpending = dailySpendingData
-  const categoryBreakdown = useMemo(() => {
+  const dailySpending = getDailySpendingData()
+  const categoryBreakdownData = getCategoryBreakdownData()
+  const stats = getTotalStatsData()
+  
+  const getCategoryBreakdown = () => {
     // Calculate percentages for category breakdown
-    if (!categoryBreakdownData || !totalStatsData || totalStatsData.total === 0) {
+    if (!categoryBreakdownData || !stats || stats.total === 0) {
       return [];
     }
     return categoryBreakdownData.map(item => ({
       ...item,
-      percentage: parseFloat(((item.amount / totalStatsData.total) * 100).toFixed(1))
+      percentage: parseFloat(((item.amount / stats.total) * 100).toFixed(1))
     }))
-  }, [categoryBreakdownData, totalStatsData])
-  const topStores = topStoresData
-  const stats = totalStatsData
+  }
+  
+  const categoryBreakdown = getCategoryBreakdown()
+  const topStores = getTopStoresData()
 
   return (
     <div className="space-y-6">
