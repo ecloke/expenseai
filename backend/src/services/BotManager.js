@@ -1610,6 +1610,7 @@ Your expense has been saved to the database\\! 💾`;
     };
   }
 
+
   /**
    * Graceful shutdown
    */

@@ -160,3 +160,78 @@ export function formatDateRange(range) {
     return `${getMonthName(range.startMonth)} - ${getMonthName(range.endMonth)} ${range.year}`;
   }
 }
+
+/**
+ * Get today's date as YYYY-MM-DD string
+ * @returns {string} - Today's date
+ */
+export function getTodayString() {
+  return new Date().toISOString().split('T')[0];
+}
+
+/**
+ * Get yesterday's date as YYYY-MM-DD string
+ * @returns {string} - Yesterday's date
+ */
+export function getYesterdayString() {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return yesterday.toISOString().split('T')[0];
+}
+
+/**
+ * Get date N days ago as YYYY-MM-DD string
+ * @param {number} days - Number of days ago
+ * @returns {string} - Date string
+ */
+export function getDaysAgoString(days) {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return date.toISOString().split('T')[0];
+}
+
+/**
+ * Get start of current week (Sunday) as YYYY-MM-DD string
+ * @returns {string} - Week start date
+ */
+export function getWeekStartString() {
+  const today = new Date();
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - today.getDay());
+  return startOfWeek.toISOString().split('T')[0];
+}
+
+/**
+ * Get start of current month as YYYY-MM-DD string
+ * @returns {string} - Month start date
+ */
+export function getMonthStartString() {
+  const today = new Date();
+  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  return startOfMonth.toISOString().split('T')[0];
+}
+
+/**
+ * Get common date ranges
+ * @returns {object} - Object with common date ranges
+ */
+export function getCommonDateRanges() {
+  return {
+    today: {
+      start: getTodayString(),
+      end: getTodayString()
+    },
+    yesterday: {
+      start: getYesterdayString(),
+      end: getYesterdayString()
+    },
+    week: {
+      start: getWeekStartString(),
+      end: getTodayString()
+    },
+    month: {
+      start: getMonthStartString(),
+      end: getTodayString()
+    }
+  };
+}

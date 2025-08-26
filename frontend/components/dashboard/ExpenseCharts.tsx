@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, memo } from 'react'
 import { createSupabaseClient } from '@/lib/supabase'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -28,8 +28,9 @@ import {
   BarChart3,
   Receipt
 } from 'lucide-react'
-import { format, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns'
 import { Expense } from '@/types'
+import { CATEGORY_EMOJIS, CHART_COLORS, TimeRange, getCategoryEmoji } from '@/lib/constants'
+import { getDateRange, formatDateForAPI } from '@/lib/dateUtils'
 
 interface ExpenseChartsProps {
   userId: string
@@ -37,31 +38,10 @@ interface ExpenseChartsProps {
   currency?: string
 }
 
-const COLORS = [
-  '#8884d8',
-  '#82ca9d',
-  '#ffc658',
-  '#ff7300',
-  '#00c49f',
-  '#0088fe',
-  '#ff0062'
-]
-
-const CATEGORY_EMOJIS: { [key: string]: string } = {
-  groceries: '🛒',
-  dining: '🍽️',
-  gas: '⛽',
-  pharmacy: '💊',
-  retail: '🛍️',
-  services: '🔧',
-  entertainment: '🎬',
-  other: '📦'
-}
-
-export default function ExpenseCharts({ userId, projectId, currency = '$' }: ExpenseChartsProps) {
+const ExpenseCharts = memo(function ExpenseCharts({ userId, projectId, currency = '$' }: ExpenseChartsProps) {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
-  const [timeRange, setTimeRange] = useState<'week' | 'month' | 'all'>('month')
+  const [timeRange, setTimeRange] = useState<TimeRange>('month')
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -87,13 +67,9 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
       }
 
       // Apply time range filter
-      const now = new Date()
-      if (timeRange === 'week') {
-        const weekStart = startOfWeek(now)
-        query = query.gte('receipt_date', format(weekStart, 'yyyy-MM-dd'))
-      } else if (timeRange === 'month') {
-        const monthStart = startOfMonth(now)
-        query = query.gte('receipt_date', format(monthStart, 'yyyy-MM-dd'))
+      const dateRange = getDateRange(timeRange)
+      if (dateRange) {
+        query = query.gte('receipt_date', formatDateForAPI(dateRange.start))
       }
 
       const { data, error } = await query.limit(1000)
@@ -112,7 +88,7 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
     }
   }
 
-  const getDailySpending = () => {
+  const dailySpendingData = useMemo(() => {
     const dailyData: { [key: string]: number } = {}
     
     expenses.forEach(expense => {
@@ -124,13 +100,13 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
       .map(([date, amount]) => ({
         date,
         amount: parseFloat(amount.toFixed(2)),
-        formatted_date: format(new Date(date), 'MMM dd')
+        formatted_date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: '2-digit' })
       }))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .slice(-30) // Last 30 days
-  }
+  }, [expenses])
 
-  const getCategoryBreakdown = () => {
+  const categoryBreakdownData = useMemo(() => {
     const categoryData: { [key: string]: number } = {}
     
     expenses.forEach(expense => {
@@ -145,9 +121,9 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
         percentage: 0 // Will calculate after total
       }))
       .sort((a, b) => b.amount - a.amount)
-  }
+  }, [expenses])
 
-  const getTopStores = () => {
+  const topStoresData = useMemo(() => {
     const storeData: { [key: string]: { amount: number, count: number } } = {}
     
     expenses.forEach(expense => {
@@ -167,9 +143,9 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
       }))
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 5)
-  }
+  }, [expenses])
 
-  const getTotalStats = () => {
+  const totalStatsData = useMemo(() => {
     const total = expenses.reduce((sum, expense) => sum + parseFloat(expense.total_amount.toString()), 0)
     const count = expenses.length
     const avgPerTransaction = count > 0 ? total / count : 0
@@ -179,7 +155,7 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
       count,
       avgPerTransaction: parseFloat(avgPerTransaction.toFixed(2))
     }
-  }
+  }, [expenses])
 
   if (loading) {
     return (
@@ -204,15 +180,16 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
     )
   }
 
-  const dailySpending = getDailySpending()
-  const categoryBreakdown = getCategoryBreakdown()
-  const topStores = getTopStores()
-  const stats = getTotalStats()
-
-  // Calculate percentages for category breakdown
-  categoryBreakdown.forEach(item => {
-    item.percentage = parseFloat(((item.amount / stats.total) * 100).toFixed(1))
-  })
+  const dailySpending = dailySpendingData
+  const categoryBreakdown = useMemo(() => {
+    // Calculate percentages for category breakdown
+    return categoryBreakdownData.map(item => ({
+      ...item,
+      percentage: parseFloat(((item.amount / totalStatsData.total) * 100).toFixed(1))
+    }))
+  }, [categoryBreakdownData, totalStatsData])
+  const topStores = topStoresData
+  const stats = totalStatsData
 
   return (
     <div className="space-y-6">
@@ -339,12 +316,12 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
                       dataKey="amount"
                     >
                       {categoryBreakdown.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                       ))}
                     </Pie>
                     <Tooltip 
                       formatter={(value, name, props) => [`${currency}${value}`, 'Amount']}
-                      labelFormatter={(label) => `${CATEGORY_EMOJIS[label] || ''} ${label}`}
+                      labelFormatter={(label) => `${getCategoryEmoji(label)} ${label}`}
                       contentStyle={{ 
                         backgroundColor: '#1F2937', 
                         border: '1px solid #374151', 
@@ -367,10 +344,10 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
                       <div className="flex items-center gap-3">
                         <div 
                           className="w-4 h-4 rounded-full" 
-                          style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                          style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
                         />
                         <span className="font-medium text-gray-200">
-                          {CATEGORY_EMOJIS[category.category]} {category.category}
+                          {getCategoryEmoji(category.category)} {category.category}
                         </span>
                       </div>
                       <div className="text-right">
@@ -432,4 +409,6 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
       </div>
     </div>
   )
-}
+})
+
+export default ExpenseCharts

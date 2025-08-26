@@ -1,4 +1,6 @@
 import { getTopStoresNormalized } from '../utils/storeNormalizer.js';
+import { CATEGORY_EMOJIS, CATEGORIES } from '../constants.js';
+import { getTodayString, getYesterdayString, getWeekStartString, getMonthStartString, getCommonDateRanges } from '../utils/dateUtils.js';
 
 /**
  * Expense Service for database operations
@@ -10,93 +12,77 @@ class ExpenseService {
   }
 
   /**
+   * Get expenses for common time periods
+   */
+  async getExpensesByPeriod(userId, period, withProjects = false) {
+    const ranges = getCommonDateRanges();
+    const range = ranges[period];
+    
+    if (!range) {
+      throw new Error(`Invalid period: ${period}. Valid periods: today, yesterday, week, month`);
+    }
+    
+    if (withProjects) {
+      return this.getExpensesByDateRangeWithProjects(userId, range.start, range.end);
+    } else {
+      return this.getExpensesByDateRange(userId, range.start, range.end);
+    }
+  }
+
+  /**
    * Get expenses for today
    */
   async getTodayExpenses(userId) {
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    return this.getExpensesByDateRange(userId, today, today);
+    return this.getExpensesByPeriod(userId, 'today');
   }
 
   /**
    * Get expenses for yesterday
    */
   async getYesterdayExpenses(userId) {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
-    return this.getExpensesByDateRange(userId, yesterdayStr, yesterdayStr);
+    return this.getExpensesByPeriod(userId, 'yesterday');
   }
 
   /**
    * Get expenses for this week
    */
   async getWeekExpenses(userId) {
-    const today = new Date();
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay()); // Start from Sunday
-    
-    const startDate = startOfWeek.toISOString().split('T')[0];
-    const endDate = today.toISOString().split('T')[0];
-    
-    return this.getExpensesByDateRange(userId, startDate, endDate);
+    return this.getExpensesByPeriod(userId, 'week');
   }
 
   /**
    * Get expenses for this month
    */
   async getMonthExpenses(userId) {
-    const today = new Date();
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    
-    const startDate = startOfMonth.toISOString().split('T')[0];
-    const endDate = today.toISOString().split('T')[0];
-    
-    return this.getExpensesByDateRange(userId, startDate, endDate);
+    return this.getExpensesByPeriod(userId, 'month');
   }
 
   /**
    * Get today's expenses with project separation
    */
   async getTodayExpensesWithProjects(userId) {
-    const today = new Date().toISOString().split('T')[0];
-    return this.getExpensesByDateRangeWithProjects(userId, today, today);
+    return this.getExpensesByPeriod(userId, 'today', true);
   }
 
   /**
    * Get yesterday's expenses with project separation
    */
   async getYesterdayExpensesWithProjects(userId) {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
-    return this.getExpensesByDateRangeWithProjects(userId, yesterdayStr, yesterdayStr);
+    return this.getExpensesByPeriod(userId, 'yesterday', true);
   }
 
   /**
    * Get this week's expenses with project separation
    */
   async getWeekExpensesWithProjects(userId) {
-    const today = new Date();
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay());
-    
-    const startDate = startOfWeek.toISOString().split('T')[0];
-    const endDate = today.toISOString().split('T')[0];
-    
-    return this.getExpensesByDateRangeWithProjects(userId, startDate, endDate);
+    return this.getExpensesByPeriod(userId, 'week', true);
   }
 
   /**
    * Get this month's expenses with project separation
    */
   async getMonthExpensesWithProjects(userId) {
-    const today = new Date();
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    
-    const startDate = startOfMonth.toISOString().split('T')[0];
-    const endDate = today.toISOString().split('T')[0];
-    
-    return this.getExpensesByDateRangeWithProjects(userId, startDate, endDate);
+    return this.getExpensesByPeriod(userId, 'month', true);
   }
 
   /**
@@ -299,17 +285,7 @@ class ExpenseService {
    * Get emoji for category
    */
   getCategoryEmoji(category) {
-    const emojis = {
-      groceries: '🛒',
-      dining: '🍽️',
-      gas: '⛽',
-      pharmacy: '💊',
-      retail: '🛍️',
-      services: '🔧',
-      entertainment: '🎬',
-      other: '📦'
-    };
-    return emojis[category] || '📦';
+    return CATEGORY_EMOJIS[category] || CATEGORY_EMOJIS.other;
   }
 
   /**
@@ -432,16 +408,11 @@ class ExpenseService {
    * Get available categories
    */
   getAvailableCategories() {
-    return [
-      { value: 'groceries', label: '🛒 Groceries', emoji: '🛒' },
-      { value: 'dining', label: '🍽️ Dining', emoji: '🍽️' },
-      { value: 'gas', label: '⛽ Gas', emoji: '⛽' },
-      { value: 'pharmacy', label: '💊 Pharmacy', emoji: '💊' },
-      { value: 'retail', label: '🛍️ Retail', emoji: '🛍️' },
-      { value: 'services', label: '🔧 Services', emoji: '🔧' },
-      { value: 'entertainment', label: '🎬 Entertainment', emoji: '🎬' },
-      { value: 'other', label: '📦 Other', emoji: '📦' }
-    ];
+    return CATEGORIES.map(category => ({
+      value: category,
+      label: `${CATEGORY_EMOJIS[category]} ${this.capitalizeFirst(category)}`,
+      emoji: CATEGORY_EMOJIS[category]
+    }));
   }
 }
 
