@@ -152,22 +152,15 @@ Rules:
       //   await this.logReceiptProcessing(userId, validatedData, 'partial_success', `Sheets save failed: ${sheetsError.message}`);
       // }
 
-      // Save to database (replaces Google Sheets)
-      try {
-        console.log('💾 Saving to database...');
-        await this.saveToDatabase(validatedData, userId);
-        console.log('✅ Successfully saved to database');
-      } catch (dbError) {
-        console.error('❌ CRITICAL: Failed to save to database:', dbError);
-        await this.logReceiptProcessing(userId, validatedData, 'partial_success', `Database save failed: ${dbError.message}`);
-        throw new Error('Failed to save receipt data to database');
-      }
+      // NOTE: Removed automatic database save to prevent double-recording
+      // Saving is now handled by BotManager after user selects project (or for general expenses)
+      console.log('✅ Receipt data extracted and validated successfully');
 
       // Add the calculated category to the receipt data
       validatedData.category = this.categorizeReceipt(validatedData);
 
-      // Log successful processing
-      await this.logReceiptProcessing(userId, validatedData, 'success');
+      // Log successful processing (note: database save happens later in BotManager)
+      await this.logReceiptProcessing(userId, validatedData, 'partial');
 
       return validatedData;
 

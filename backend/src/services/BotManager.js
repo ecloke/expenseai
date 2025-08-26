@@ -859,6 +859,11 @@ ${options.map((option, index) => `${index + 1}. ${option.label}`).join('\n')}`;
         throw new Error(error.message || 'Failed to create expense');
       }
 
+      console.log(`✅ Saved expense to project: $${finalExpenseData.total_amount} at ${finalExpenseData.store_name}`);
+      
+      // Log successful save to database
+      await this.receiptProcessor.logReceiptProcessing(userId, expenseData, 'success');
+
       this.conversationManager.endConversation(userId);
 
       const currency = selectedOption.project_id ? selectedOption.currency : '$';
@@ -968,23 +973,34 @@ Your expense has been saved to the database! 💾`;
    */
 async saveReceiptAsExpense(userId, receiptData, projectId) {
   try {
-    // Since ReceiptProcessor.saveToDatabase already inserted the expense,
-    // we just fetch the latest one for this user
+    // Create expense record (now that ReceiptProcessor doesn't save automatically)
+    const expenseData = {
+      user_id: userId,
+      project_id: projectId,
+      receipt_date: receiptData.receipt_date || receiptData.date,
+      store_name: receiptData.store_name,
+      category: receiptData.category,
+      total_amount: receiptData.total_amount || receiptData.total
+    };
+
     const { data: expense, error } = await this.supabase
       .from('expenses')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(1)
+      .insert([expenseData])
+      .select()
       .single();
 
     if (error) {
-      throw new Error(error.message || 'Failed to fetch saved expense');
+      throw new Error(error.message || 'Failed to save expense');
     }
 
+    console.log(`✅ Saved expense: $${expenseData.total_amount} at ${expenseData.store_name}`);
+    
+    // Log successful save to database
+    await this.receiptProcessor.logReceiptProcessing(userId, receiptData, 'success');
+    
     return expense;
   } catch (error) {
-    console.error('Error fetching saved expense:', error);
+    console.error('Error saving expense:', error);
     throw error;
   }
 }
