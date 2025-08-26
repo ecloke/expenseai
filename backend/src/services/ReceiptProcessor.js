@@ -159,9 +159,7 @@ Rules:
       // Add the calculated category to the receipt data
       validatedData.category = this.categorizeReceipt(validatedData);
 
-      // Log successful processing (note: database save happens later in BotManager)
-      await this.logReceiptProcessing(userId, validatedData, 'partial');
-
+      // No logging needed for successful processing - only log actual saves and errors
       return validatedData;
 
     } catch (error) {
