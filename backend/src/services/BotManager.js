@@ -837,14 +837,14 @@ ${options.map((option, index) => `${index + 1}. ${option.label}`).join('\n')}`;
     
     try {
       // Create expense with project_id (null for general expenses)
-      // Transform field names to match database schema
+      // Transform field names to match database schema - handle both formats defensively
       const finalExpenseData = {
         user_id: userId,
         project_id: selectedOption.project_id,
-        receipt_date: expenseData.date,
+        receipt_date: expenseData.receipt_date || expenseData.date,
         store_name: expenseData.store_name,
         category: expenseData.category,
-        total_amount: expenseData.total
+        total_amount: expenseData.total_amount || expenseData.total
       };
 
       const { data: expense, error } = await this.supabase
@@ -865,10 +865,10 @@ ${options.map((option, index) => `${index + 1}. ${option.label}`).join('\n')}`;
       return `✅ *Expense Saved Successfully!*
 
 📊 *Summary:*
-📅 Date: ${expenseData.date}
-🏪 Store: ${expenseData.store_name}
-🏷️ Category: ${expenseData.category}
-💰 Total: ${currency}${expenseData.total.toFixed(2)}${projectInfo}
+📅 Date: ${expenseData.receipt_date || expenseData.date || 'N/A'}
+🏪 Store: ${expenseData.store_name || 'N/A'}
+🏷️ Category: ${expenseData.category || 'N/A'}
+💰 Total: ${currency}${(expenseData.total_amount || expenseData.total || 0).toFixed(2)}${projectInfo}
 
 Your expense has been saved to the database! 💾`;
 
@@ -899,28 +899,10 @@ Your expense has been saved to the database! 💾`;
   }
 
   /**
-   * Normalize expense data format for consistent handling
-   */
-  normalizeExpenseData(expenseData) {
-    // Handle both formats: receipt processor format (date, total) and database format (receipt_date, total_amount)
-    return {
-      date: expenseData.date || expenseData.receipt_date,
-      store_name: expenseData.store_name,
-      category: expenseData.category,
-      total: expenseData.total || expenseData.total_amount,
-      // Keep original fields for backwards compatibility
-      receipt_date: expenseData.receipt_date || expenseData.date,
-      total_amount: expenseData.total_amount || expenseData.total
-    };
-  }
-
-  /**
    * Show project selection menu for expense
    */
   async showProjectSelection(userId, expenseData) {
     try {
-      // Normalize the expense data format
-      const normalizedExpenseData = this.normalizeExpenseData(expenseData);
       const { data: projects, error } = await this.supabase
         .from('projects')
         .select('id, name, currency')
@@ -949,16 +931,16 @@ Your expense has been saved to the database! 💾`;
       // Start project selection conversation
       this.conversationManager.startConversation(userId, 'project_selection', {
         options: options,
-        expenseData: normalizedExpenseData
+        expenseData: expenseData
       });
 
       let message = `✅ *Receipt Processed Successfully!*
 
 📊 *Extracted Data:*
-📅 Date: ${normalizedExpenseData.date}
-🏪 Store: ${normalizedExpenseData.store_name}
-🏷️ Category: ${normalizedExpenseData.category}
-💰 Total: ${normalizedExpenseData.total.toFixed(2)}
+📅 Date: ${expenseData.date || expenseData.receipt_date || 'N/A'}
+🏪 Store: ${expenseData.store_name || 'N/A'}
+🏷️ Category: ${expenseData.category || 'N/A'}
+💰 Total: ${(expenseData.total || expenseData.total_amount || 0).toFixed(2)}
 
 📁 *Where would you like to save this expense?*
 
