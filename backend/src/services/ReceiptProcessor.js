@@ -159,6 +159,9 @@ Rules:
         throw new Error('Failed to save receipt data to database');
       }
 
+      // Add the calculated category to the receipt data
+      validatedData.category = this.categorizeReceipt(validatedData);
+
       // Log successful processing
       await this.logReceiptProcessing(userId, validatedData, 'success');
 
