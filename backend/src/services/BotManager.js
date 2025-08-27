@@ -1695,6 +1695,219 @@ Your expense has been saved to the database\\! 💾`;
 
 
   /**
+   * Handle webhook message for pilot user
+   */
+  async handleWebhookMessage(message, userId) {
+    if (this.isShuttingDown) return;
+
+    try {
+      console.log(`🧪 PILOT: Handling webhook message for user ${userId}`);
+      
+      // Rate limiting check
+      if (!checkRateLimit(this.rateLimitMap, userId, 60000, 20)) {
+        await this.sendWebhookResponse(userId, message.chat.id, '⏰ Too many requests. Please wait a moment before sending another message.');
+        return;
+      }
+
+      // Update last activity
+      this.updateLastActivity(userId);
+
+      // Skip photo messages (handled separately)
+      if (message.photo) return;
+
+      // Get user config
+      const config = await this.getUserConfig(userId);
+      if (!config) {
+        console.error(`No config found for webhook user ${userId}`);
+        return;
+      }
+
+      // Process text message as command
+      const response = await this.handleTextCommand(message.text, userId);
+      
+      if (response) {
+        await this.sendWebhookResponse(userId, message.chat.id, response);
+      }
+
+    } catch (error) {
+      console.error(`Error handling webhook message for user ${userId}:`, error);
+      await this.logError(userId, error);
+      
+      // Send error message to user
+      await this.sendWebhookResponse(userId, message.chat.id, '❌ Sorry, I encountered an error processing your message. Please try again.');
+    }
+  }
+
+  /**
+   * Handle webhook photo for pilot user
+   */
+  async handleWebhookPhoto(message, userId) {
+    if (this.isShuttingDown) return;
+
+    console.log(`🧪 PILOT: Handling webhook photo for user ${userId}`);
+
+    try {
+      // Rate limiting check
+      if (!checkRateLimit(this.rateLimitMap, userId, 60000, 5)) {
+        await this.sendWebhookResponse(userId, message.chat.id, '⏰ Too many photo uploads. Please wait a moment.');
+        return;
+      }
+
+      // Update last activity
+      this.updateLastActivity(userId);
+
+      // Get user config
+      const config = await this.getUserConfig(userId);
+      if (!config) {
+        console.error(`No config found for webhook user ${userId}`);
+        return;
+      }
+
+      // Validate single photo message
+      if (!message.photo || message.photo.length === 0) {
+        await this.sendWebhookResponse(userId, message.chat.id, '❌ No photo detected. Please send a clear receipt photo.');
+        return;
+      }
+
+      // Send step-by-step processing messages
+      const statusMsg = await this.sendWebhookResponse(userId, message.chat.id, '📸 Receipt received! Starting analysis...');
+
+      try {
+        // Step 1: Download photo
+        await this.editWebhookMessage(userId, message.chat.id, statusMsg.message_id, '📥 Downloading photo...');
+
+        const photos = message.photo;
+        const largestPhoto = photos[photos.length - 1];
+        
+        // Get bot token for file download
+        const botToken = decrypt(config.telegram_bot_token);
+        const fileResponse = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${largestPhoto.file_id}`);
+        const fileData = await fileResponse.json();
+        
+        if (!fileData.ok) {
+          throw new Error('Failed to get file info');
+        }
+        
+        // Download file as buffer
+        const fileUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
+        const photoResponse = await fetch(fileUrl);
+        const photoBuffer = await photoResponse.buffer();
+
+        // Step 2: Check Gemini API
+        if (!config.gemini_api_key) {
+          await this.editWebhookMessage(userId, message.chat.id, statusMsg.message_id, '⚠️ Gemini AI not configured. Please complete setup to process receipts.');
+          return;
+        }
+
+        // Step 3: Process with AI
+        await this.editWebhookMessage(userId, message.chat.id, statusMsg.message_id, '🤖 Analyzing receipt with AI...');
+
+        const receiptData = await this.receiptProcessor.processReceipt(photoBuffer, userId, config);
+        
+        if (!receiptData) {
+          throw new Error('AI failed to extract receipt data');
+        }
+
+        // Step 4: Check for open projects and show selection
+        const hasOpenProjects = await this.hasOpenProjects(userId);
+        
+        if (hasOpenProjects) {
+          const projectSelectionMessage = await this.showProjectSelection(userId, receiptData);
+          await this.editWebhookMessage(userId, message.chat.id, statusMsg.message_id, projectSelectionMessage);
+        } else {
+          // No open projects, save directly as general expense
+          await this.saveReceiptAsExpense(userId, receiptData, null);
+          await this.editWebhookMessage(userId, message.chat.id, statusMsg.message_id, '✅ Receipt processed successfully!\n\n' + this.formatReceiptConfirmation(receiptData, null));
+        }
+
+      } catch (processingError) {
+        // Update message with error
+        await this.editWebhookMessage(userId, message.chat.id, statusMsg.message_id, `❌ Error: ${processingError.message}`);
+        throw processingError;
+      }
+
+    } catch (error) {
+      console.error(`Error handling webhook photo for user ${userId}:`, error);
+      await this.logError(userId, error);
+      
+      await this.sendWebhookResponse(userId, message.chat.id, '❌ Sorry, I couldn\'t process this receipt. Please try again with a clearer photo.');
+    }
+  }
+
+  /**
+   * Send response via webhook (HTTP API)
+   */
+  async sendWebhookResponse(userId, chatId, text, options = {}) {
+    try {
+      const config = await this.getUserConfig(userId);
+      if (!config) {
+        throw new Error('No config found for user');
+      }
+
+      const botToken = decrypt(config.telegram_bot_token);
+      
+      const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: text,
+          parse_mode: 'Markdown',
+          disable_web_page_preview: true,
+          ...options
+        })
+      });
+
+      const result = await response.json();
+      if (!result.ok) {
+        throw new Error(`Failed to send message: ${result.description}`);
+      }
+
+      return result.result;
+    } catch (error) {
+      console.error(`Error sending webhook response for user ${userId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Edit message via webhook (HTTP API)
+   */
+  async editWebhookMessage(userId, chatId, messageId, text, options = {}) {
+    try {
+      const config = await this.getUserConfig(userId);
+      if (!config) {
+        throw new Error('No config found for user');
+      }
+
+      const botToken = decrypt(config.telegram_bot_token);
+      
+      const response = await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          message_id: messageId,
+          text: text,
+          parse_mode: 'Markdown',
+          disable_web_page_preview: true,
+          ...options
+        })
+      });
+
+      const result = await response.json();
+      if (!result.ok) {
+        throw new Error(`Failed to edit message: ${result.description}`);
+      }
+
+      return result.result;
+    } catch (error) {
+      console.error(`Error editing webhook message for user ${userId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
    * Setup webhook for pilot user only
    */
   async setupWebhookForUser(userId, encryptedToken) {

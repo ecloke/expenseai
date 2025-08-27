@@ -25,11 +25,9 @@ router.post('/telegram', async (req, res) => {
     const botManager = req.app.get('botManager');
     
     if (message.photo) {
-      const config = await botManager.getUserConfig(userId);
-      await botManager.handlePhoto(message, userId, config);
+      await botManager.handleWebhookPhoto(message, userId);
     } else {
-      const config = await botManager.getUserConfig(userId);
-      await botManager.handleMessage(message, userId, config);
+      await botManager.handleWebhookMessage(message, userId);
     }
     
     res.status(200).json({ ok: true });
