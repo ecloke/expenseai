@@ -1866,75 +1866,113 @@ Your expense has been saved to the database\\! 💾`;
   }
 
   /**
-   * Send response via webhook (HTTP API)
+   * Send response via webhook (HTTP API) with retry logic
    */
   async sendWebhookResponse(userId, chatId, text, options = {}) {
-    try {
-      const config = await this.getUserConfig(userId);
-      if (!config) {
-        throw new Error('No config found for user');
+    const maxRetries = 3;
+    const retryDelay = 1000; // 1 second
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const config = await this.getUserConfig(userId);
+        if (!config) {
+          throw new Error('No config found for user');
+        }
+
+        const botToken = decrypt(config.telegram_bot_token);
+        
+        const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: text,
+            parse_mode: 'Markdown',
+            disable_web_page_preview: true,
+            ...options
+          }),
+          timeout: 10000 // 10 second timeout
+        });
+
+        const result = await response.json();
+        if (!result.ok) {
+          throw new Error(`Failed to send message: ${result.description}`);
+        }
+
+        return result.result;
+      } catch (error) {
+        if (attempt === maxRetries) {
+          console.error(`❌ Failed to send message after ${maxRetries} attempts for user ${userId}:`, error.message);
+          throw error;
+        }
+        
+        // Only retry on network errors, not API errors
+        if (error.code === 'ETIMEDOUT' || error.type === 'system' || error.name === 'FetchError') {
+          console.warn(`⚠️ Retry ${attempt}/${maxRetries} for user ${userId}: ${error.message}`);
+          await new Promise(resolve => setTimeout(resolve, retryDelay * attempt));
+          continue;
+        } else {
+          // Don't retry API errors (bad requests, etc.)
+          throw error;
+        }
       }
-
-      const botToken = decrypt(config.telegram_bot_token);
-      
-      const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: text,
-          parse_mode: 'Markdown',
-          disable_web_page_preview: true,
-          ...options
-        })
-      });
-
-      const result = await response.json();
-      if (!result.ok) {
-        throw new Error(`Failed to send message: ${result.description}`);
-      }
-
-      return result.result;
-    } catch (error) {
-      console.error(`Error sending webhook response for user ${userId}:`, error);
-      throw error;
     }
   }
 
   /**
-   * Edit message via webhook (HTTP API)
+   * Edit message via webhook (HTTP API) with retry logic
    */
   async editWebhookMessage(userId, chatId, messageId, text, options = {}) {
-    try {
-      const config = await this.getUserConfig(userId);
-      if (!config) {
-        throw new Error('No config found for user');
+    const maxRetries = 3;
+    const retryDelay = 1000; // 1 second
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const config = await this.getUserConfig(userId);
+        if (!config) {
+          throw new Error('No config found for user');
+        }
+
+        const botToken = decrypt(config.telegram_bot_token);
+        
+        const response = await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            message_id: messageId,
+            text: text,
+            parse_mode: 'Markdown',
+            disable_web_page_preview: true,
+            ...options
+          }),
+          timeout: 10000 // 10 second timeout
+        });
+
+        const result = await response.json();
+        if (!result.ok) {
+          throw new Error(`Failed to edit message: ${result.description}`);
+        }
+
+        return result.result;
+      } catch (error) {
+        if (attempt === maxRetries) {
+          console.error(`❌ Failed to edit message after ${maxRetries} attempts for user ${userId}:`, error.message);
+          // Don't throw on edit failures - just log and continue
+          return null;
+        }
+        
+        // Only retry on network errors, not API errors
+        if (error.code === 'ETIMEDOUT' || error.type === 'system' || error.name === 'FetchError') {
+          console.warn(`⚠️ Edit retry ${attempt}/${maxRetries} for user ${userId}: ${error.message}`);
+          await new Promise(resolve => setTimeout(resolve, retryDelay * attempt));
+          continue;
+        } else {
+          // Don't retry API errors, but don't crash either
+          console.warn(`⚠️ Edit message API error for user ${userId}: ${error.message}`);
+          return null;
+        }
       }
-
-      const botToken = decrypt(config.telegram_bot_token);
-      
-      const response = await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          message_id: messageId,
-          text: text,
-          parse_mode: 'Markdown',
-          disable_web_page_preview: true,
-          ...options
-        })
-      });
-
-      const result = await response.json();
-      if (!result.ok) {
-        throw new Error(`Failed to edit message: ${result.description}`);
-      }
-
-      return result.result;
-    } catch (error) {
-      console.error(`Error editing webhook message for user ${userId}:`, error);
-      throw error;
     }
   }
 
