@@ -87,20 +87,24 @@ class BotManager {
 
       console.log(`📊 Found ${configs?.length || 0} user configurations`);
 
-      // Initialize bot for each user (hybrid mode for pilot test)
+      // SECURE MIGRATION: Setup unique webhook URLs for ALL users
+      console.log('🔐 Setting up SECURE webhooks with unique URLs for each user...');
+      
       for (const config of configs || []) {
         try {
-          if (config.user_id === this.PILOT_USER_ID) {
-            // Setup webhook for pilot user
-            console.log(`🧪 PILOT: Setting up webhook for user ${config.user_id}`);
-            await this.setupWebhookForUser(config.user_id, config.telegram_bot_token);
-          } else {
-            // Keep polling for all other users (existing code)
-            await this.createUserBot(config);
-          }
+          console.log(`🔗 Setting up webhook for user ${config.user_id}`);
+          await this.setupWebhookForUser(config.user_id, config.telegram_bot_token);
         } catch (error) {
-          console.error(`Failed to create bot for user ${config.user_id}:`, error.message);
+          console.error(`❌ Webhook setup failed for user ${config.user_id}:`, error.message);
           await this.logError(config.user_id, error);
+          
+          // SAFETY: If webhook fails, fallback to polling for this user
+          console.log(`🔄 Fallback to polling for user ${config.user_id}`);
+          try {
+            await this.createUserBot(config);
+          } catch (pollError) {
+            console.error(`❌ Polling fallback also failed for user ${config.user_id}:`, pollError.message);
+          }
         }
       }
 
@@ -1701,7 +1705,7 @@ Your expense has been saved to the database\\! 💾`;
     if (this.isShuttingDown) return;
 
     try {
-      console.log(`🧪 PILOT: Handling webhook message for user ${userId}`);
+      console.log(`🔗 Handling webhook message for user ${userId}`);
       
       // Rate limiting check
       if (!checkRateLimit(this.rateLimitMap, userId, 60000, 20)) {
@@ -1744,7 +1748,7 @@ Your expense has been saved to the database\\! 💾`;
   async handleWebhookPhoto(message, userId) {
     if (this.isShuttingDown) return;
 
-    console.log(`🧪 PILOT: Handling webhook photo for user ${userId}`);
+    console.log(`📸 Handling webhook photo for user ${userId}`);
 
     try {
       // Rate limiting check
@@ -1913,7 +1917,8 @@ Your expense has been saved to the database\\! 💾`;
   async setupWebhookForUser(userId, encryptedToken) {
     try {
       const botToken = decrypt(encryptedToken);
-      const webhookUrl = `${process.env.RAILWAY_DOMAIN}/api/webhook/telegram`;
+      // SECURE: Each user gets their own unique webhook URL
+      const webhookUrl = `https://${process.env.RAILWAY_DOMAIN}/api/webhook/telegram/${userId}`;
       
       const response = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
         method: 'POST',
@@ -1930,7 +1935,7 @@ Your expense has been saved to the database\\! 💾`;
         throw new Error(`Webhook failed: ${result.description}`);
       }
       
-      console.log(`🧪 PILOT: User ${userId} webhook ready at ${webhookUrl}`);
+      console.log(`🔐 SECURE: User ${userId} webhook ready at ${webhookUrl}`);
       
       // Store webhook config instead of bot instance for pilot user
       this.bots.set(userId, {
