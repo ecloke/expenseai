@@ -25,6 +25,7 @@ class BotManager {
     this.errorLogCache = new Map(); // For error log rate limiting: userId_errorHash -> lastLogTime
     this.ERROR_LOG_RATE_LIMIT_MS = 60000; // 1 minute between identical error logs
     this.isShuttingDown = false;
+    this.PILOT_USER_ID = '149a0ccd-3dd7-44a4-ad2e-42cc2c7e4498'; // Test user
     
     // Bind methods to maintain context
     this.handleMessage = this.handleMessage.bind(this);
@@ -85,10 +86,17 @@ class BotManager {
 
       console.log(`📊 Found ${configs?.length || 0} user configurations`);
 
-      // Initialize bot for each user
+      // Initialize bot for each user (hybrid mode for pilot test)
       for (const config of configs || []) {
         try {
-          await this.createUserBot(config);
+          if (config.user_id === this.PILOT_USER_ID) {
+            // Setup webhook for pilot user
+            console.log(`🧪 PILOT: Setting up webhook for user ${config.user_id}`);
+            await this.setupWebhookForUser(config.user_id, config.telegram_bot_token);
+          } else {
+            // Keep polling for all other users (existing code)
+            await this.createUserBot(config);
+          }
         } catch (error) {
           console.error(`Failed to create bot for user ${config.user_id}:`, error.message);
           await this.logError(config.user_id, error);
@@ -1686,6 +1694,107 @@ Your expense has been saved to the database\\! 💾`;
 
 
   /**
+   * Setup webhook for pilot user only
+   */
+  async setupWebhookForUser(userId, encryptedToken) {
+    try {
+      const botToken = decrypt(encryptedToken);
+      const webhookUrl = `${process.env.RAILWAY_DOMAIN}/api/webhook/telegram`;
+      
+      const response = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: webhookUrl,
+          secret_token: process.env.WEBHOOK_SECRET,
+          allowed_updates: ['message', 'photo']
+        })
+      });
+      
+      const result = await response.json();
+      if (!result.ok) {
+        throw new Error(`Webhook failed: ${result.description}`);
+      }
+      
+      console.log(`🧪 PILOT: User ${userId} webhook ready at ${webhookUrl}`);
+      
+      // Store webhook config instead of bot instance for pilot user
+      this.bots.set(userId, {
+        webhookMode: true,
+        config: await this.getUserConfig(userId),
+        lastActivity: new Date(),
+        isActive: true
+      });
+      
+      // Update session status
+      await this.updateBotSession(userId, 'webhook-pilot', true);
+      
+    } catch (error) {
+      console.error(`❌ PILOT: User ${userId} webhook failed:`, error);
+      // Fallback to polling for pilot user if webhook fails
+      console.log(`🔄 PILOT: Falling back to polling for user ${userId}`);
+      const config = await this.getUserConfig(userId);
+      if (config) {
+        await this.createUserBot(config);
+      }
+    }
+  }
+
+  /**
+   * Rollback method (revert pilot user to polling)
+   */
+  async rollbackPilotUser() {
+    try {
+      const config = await this.getUserConfig(this.PILOT_USER_ID);
+      if (!config) {
+        throw new Error('No config found for pilot user');
+      }
+      
+      const botToken = decrypt(config.telegram_bot_token);
+      
+      // Remove webhook
+      await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: '' }) // Empty URL removes webhook
+      });
+      
+      // Remove webhook config from memory
+      this.bots.delete(this.PILOT_USER_ID);
+      
+      // Start polling for pilot user
+      await this.createUserBot(config);
+      console.log(`🔄 PILOT: User ${this.PILOT_USER_ID} reverted to polling`);
+      
+    } catch (error) {
+      console.error(`❌ PILOT: Failed to rollback user ${this.PILOT_USER_ID}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get user config helper method
+   */
+  async getUserConfig(userId) {
+    try {
+      const { data: config, error } = await this.supabase
+        .from('user_configs')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      return config;
+    } catch (error) {
+      console.error(`Error fetching config for user ${userId}:`, error);
+      return null;
+    }
+  }
+
+  /**
    * Graceful shutdown
    */
   async shutdown() {
@@ -1695,8 +1804,15 @@ Your expense has been saved to the database\\! 💾`;
     // Stop all bots
     const shutdownPromises = Array.from(this.bots.entries()).map(async ([userId, botData]) => {
       try {
-        await botData.bot.stopPolling();
-        await this.updateBotSession(userId, null, false);
+        if (botData.webhookMode) {
+          // Handle webhook cleanup for pilot user
+          console.log(`🧪 PILOT: Cleaning up webhook for user ${userId}`);
+          await this.updateBotSession(userId, null, false);
+        } else {
+          // Handle polling bot cleanup
+          await botData.bot.stopPolling();
+          await this.updateBotSession(userId, null, false);
+        }
       } catch (error) {
         console.warn(`Warning stopping bot for user ${userId}:`, error.message);
       }
