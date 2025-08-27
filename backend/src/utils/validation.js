@@ -56,7 +56,7 @@ export const receiptDataSchema = Joi.object({
         'retail', 'services', 'entertainment', 'other'
       ).default('other')
     })
-  ).min(1).required()
+  ).default([]).required()
 });
 
 /**
