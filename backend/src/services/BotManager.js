@@ -88,22 +88,27 @@ class BotManager {
       console.log(`📊 Found ${configs?.length || 0} user configurations`);
 
       // AUTO-SETUP webhooks for ALL existing users on server startup
-      console.log('🚀 Auto-setting up webhooks for all existing users...');
+      let successCount = 0;
+      let failCount = 0;
       
       for (const config of configs || []) {
         try {
-          console.log(`🔗 Setting up webhook for user ${config.user_id}`);
           await this.setupWebhookForUser(config.user_id, config.telegram_bot_token);
+          successCount++;
         } catch (error) {
-          console.error(`❌ Webhook setup failed for user ${config.user_id}:`, error.message);
+          console.error(`❌ User ${config.user_id} webhook failed: ${error.message}`);
           // Fallback to polling if webhook fails
           try {
             await this.createUserBot(config);
+            successCount++;
           } catch (pollError) {
-            console.error(`❌ Polling fallback also failed for user ${config.user_id}:`, pollError.message);
+            console.error(`❌ User ${config.user_id} polling failed: ${pollError.message}`);
+            failCount++;
           }
         }
       }
+      
+      console.log(`✅ Bots ready: ${successCount} webhook, ${failCount} failed`);
 
       console.log(`✅ Bot Manager initialized with ${this.bots.size} active bots`);
     } catch (error) {
@@ -1528,14 +1533,12 @@ Select which project you want to reopen:
       
       // NEW: Setup webhook instead of polling
       try {
-        console.log(`🔗 Setting up SECURE webhook for user ${userId}`);
         await this.setupWebhookForUser(userId, config.telegram_bot_token);
-        console.log(`✅ Webhook bot started successfully for user ${userId}`);
       } catch (error) {
         console.error(`❌ Webhook setup failed for user ${userId}, falling back to polling:`, error);
         // Fallback to polling if webhook fails
         await this.createUserBot(config);
-        console.log(`✅ Polling bot started successfully for user ${userId}`);
+        // Polling bot started
       }
     } else {
       console.log(`❌ No valid config found for user ${userId}`);
@@ -1729,7 +1732,7 @@ Your expense has been saved to the database\\! 💾`;
     if (this.isShuttingDown) return;
 
     try {
-      console.log(`🔗 Handling webhook message for user ${userId}`);
+      // Removed verbose logging
       
       // Rate limiting check
       if (!checkRateLimit(this.rateLimitMap, userId, 60000, 20)) {
@@ -1772,7 +1775,7 @@ Your expense has been saved to the database\\! 💾`;
   async handleWebhookPhoto(message, userId) {
     if (this.isShuttingDown) return;
 
-    console.log(`📸 Handling webhook photo for user ${userId}`);
+    // Processing receipt photo
 
     try {
       // Rate limiting check
@@ -1959,7 +1962,7 @@ Your expense has been saved to the database\\! 💾`;
         throw new Error(`Webhook failed: ${result.description}`);
       }
       
-      console.log(`🔐 SECURE: User ${userId} webhook ready at ${webhookUrl}`);
+      // Webhook ready (logged in startup summary)
       
       // Get actual bot info for proper username storage
       const botInfo = await this.getBotInfo(botToken);

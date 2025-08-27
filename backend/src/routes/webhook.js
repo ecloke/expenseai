@@ -21,12 +21,9 @@ router.post('/telegram/:userId', async (req, res) => {
     const botData = botManager.bots.get(userId);
     
     if (!botData || !botData.webhookMode) {
-      console.log(`🚫 Webhook received for non-webhook user ${userId} - rejecting`);
       return res.status(403).json({ error: 'User not configured for webhooks' });
     }
 
-    console.log(`🔗 Processing webhook for user ${userId} (chat: ${message.chat?.id})`);
-    
     // SECURE: Process message for ONLY this specific user
     if (message.photo) {
       await botManager.handleWebhookPhoto(message, userId);
