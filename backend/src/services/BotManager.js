@@ -87,9 +87,23 @@ class BotManager {
 
       console.log(`📊 Found ${configs?.length || 0} user configurations`);
 
-      // DON'T auto-setup bots during server initialization
-      // Bots are setup individually when users call /api/bot/start
-      console.log('🔧 Bot Manager ready - bots will be setup individually via /api/bot/start');
+      // AUTO-SETUP webhooks for ALL existing users on server startup
+      console.log('🚀 Auto-setting up webhooks for all existing users...');
+      
+      for (const config of configs || []) {
+        try {
+          console.log(`🔗 Setting up webhook for user ${config.user_id}`);
+          await this.setupWebhookForUser(config.user_id, config.telegram_bot_token);
+        } catch (error) {
+          console.error(`❌ Webhook setup failed for user ${config.user_id}:`, error.message);
+          // Fallback to polling if webhook fails
+          try {
+            await this.createUserBot(config);
+          } catch (pollError) {
+            console.error(`❌ Polling fallback also failed for user ${config.user_id}:`, pollError.message);
+          }
+        }
+      }
 
       console.log(`✅ Bot Manager initialized with ${this.bots.size} active bots`);
     } catch (error) {
