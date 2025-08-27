@@ -116,6 +116,18 @@ router.post('/setup', async (req, res) => {
 
     console.log(`✅ Bot configured for user ${user_id}: @${botInfo.username}`);
 
+    // SIMPLE: Auto-start the bot after setup (no manual start needed)
+    try {
+      const botManager = req.app.get('botManager');
+      if (botManager) {
+        console.log(`🚀 Auto-starting bot for user ${user_id}...`);
+        await botManager.addUserBot(user_id);
+      }
+    } catch (startError) {
+      console.error(`Warning: Auto-start failed for user ${user_id}:`, startError);
+      // Don't fail the setup - user can manually start later
+    }
+
     res.json({
       success: true,
       bot_info: {
@@ -123,7 +135,7 @@ router.post('/setup', async (req, res) => {
         username: botInfo.username,
         first_name: botInfo.first_name
       },
-      message: 'Bot configuration saved successfully'
+      message: 'Bot configuration saved and started successfully!'
     });
 
   } catch (error) {
