@@ -8,6 +8,7 @@ import ConversationStateManager from '../utils/conversationState.js';
 import { parseMonthRange, isValidDateFormat, isValidAmount, formatDateRange } from '../utils/dateUtils.js';
 import { generateCategoryPieChart } from '../utils/chartGenerator.js';
 import https from 'https';
+import fetch from 'node-fetch';
 
 /**
  * Multi-bot manager that maintains separate bot instances for each user

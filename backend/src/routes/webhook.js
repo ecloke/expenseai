@@ -42,16 +42,12 @@ router.post('/telegram', async (req, res) => {
 // Helper function to get user ID from bot token in webhook request
 async function getUserIdFromBotToken(req) {
   try {
-    // Get bot token from webhook URL path or headers
-    // For now, we'll use a simple approach - check if it's our pilot user's webhook
-    // This will be enhanced when we have the bot token mapping in place
-    
-    // Temporary approach: if webhook is called, assume it's pilot user
-    // TODO: Implement proper bot token to user ID mapping
+    // Since we only have one pilot user, and webhook is only called for that user,
+    // we can safely return the pilot user ID
     return PILOT_USER_ID;
   } catch (error) {
     console.error('Error getting user ID from bot token:', error);
-    return null;
+    return PILOT_USER_ID; // Fallback to pilot user
   }
 }
 
