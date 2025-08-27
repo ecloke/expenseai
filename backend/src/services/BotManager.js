@@ -87,26 +87,9 @@ class BotManager {
 
       console.log(`📊 Found ${configs?.length || 0} user configurations`);
 
-      // SECURE MIGRATION: Setup unique webhook URLs for ALL users
-      console.log('🔐 Setting up SECURE webhooks with unique URLs for each user...');
-      
-      for (const config of configs || []) {
-        try {
-          console.log(`🔗 Setting up webhook for user ${config.user_id}`);
-          await this.setupWebhookForUser(config.user_id, config.telegram_bot_token);
-        } catch (error) {
-          console.error(`❌ Webhook setup failed for user ${config.user_id}:`, error.message);
-          await this.logError(config.user_id, error);
-          
-          // SAFETY: If webhook fails, fallback to polling for this user
-          console.log(`🔄 Fallback to polling for user ${config.user_id}`);
-          try {
-            await this.createUserBot(config);
-          } catch (pollError) {
-            console.error(`❌ Polling fallback also failed for user ${config.user_id}:`, pollError.message);
-          }
-        }
-      }
+      // DON'T auto-setup bots during server initialization
+      // Bots are setup individually when users call /api/bot/start
+      console.log('🔧 Bot Manager ready - bots will be setup individually via /api/bot/start');
 
       console.log(`✅ Bot Manager initialized with ${this.bots.size} active bots`);
     } catch (error) {
@@ -1514,7 +1497,7 @@ Select which project you want to reopen:
    * Add a new bot for a user (called when user completes setup)
    */
   async addUserBot(userId) {
-    console.log(`🔄 Adding/restarting bot for user ${userId}`);
+    console.log(`🔄 Starting bot for user ${userId}`);
     
     const { data: config } = await this.supabase
       .from('user_configs')
@@ -1529,8 +1512,17 @@ Select which project you want to reopen:
       // Wait a moment before creating new bot
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      await this.createUserBot(config);
-      console.log(`✅ Bot restarted successfully for user ${userId}`);
+      // NEW: Setup webhook instead of polling
+      try {
+        console.log(`🔗 Setting up SECURE webhook for user ${userId}`);
+        await this.setupWebhookForUser(userId, config.telegram_bot_token);
+        console.log(`✅ Webhook bot started successfully for user ${userId}`);
+      } catch (error) {
+        console.error(`❌ Webhook setup failed for user ${userId}, falling back to polling:`, error);
+        // Fallback to polling if webhook fails
+        await this.createUserBot(config);
+        console.log(`✅ Polling bot started successfully for user ${userId}`);
+      }
     } else {
       console.log(`❌ No valid config found for user ${userId}`);
     }
@@ -1541,11 +1533,29 @@ Select which project you want to reopen:
    */
   async removeUserBot(userId) {
     const botData = this.bots.get(userId);
-    if (botData?.bot) {
+    
+    if (botData?.webhookMode) {
+      // Webhook mode: remove webhook
+      try {
+        console.log(`🔗 Removing webhook for user ${userId}`);
+        const config = await this.getUserConfig(userId);
+        if (config && config.telegram_bot_token) {
+          const botToken = decrypt(config.telegram_bot_token);
+          await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: '' }) // Empty URL removes webhook
+          });
+        }
+      } catch (error) {
+        console.warn(`Warning removing webhook for user ${userId}:`, error.message);
+      }
+    } else if (botData?.bot) {
+      // Polling mode: stop polling
       try {
         await botData.bot.stopPolling();
       } catch (error) {
-        console.warn(`Warning stopping bot for user ${userId}:`, error.message);
+        console.warn(`Warning stopping polling for user ${userId}:`, error.message);
       }
     }
     
@@ -1937,16 +1947,21 @@ Your expense has been saved to the database\\! 💾`;
       
       console.log(`🔐 SECURE: User ${userId} webhook ready at ${webhookUrl}`);
       
-      // Store webhook config instead of bot instance for pilot user
+      // Get actual bot info for proper username storage
+      const botInfo = await this.getBotInfo(botToken);
+      const botUsername = botInfo?.username || 'unknown';
+      
+      // Store webhook config with proper bot username
       this.bots.set(userId, {
         webhookMode: true,
         config: await this.getUserConfig(userId),
         lastActivity: new Date(),
-        isActive: true
+        isActive: true,
+        botUsername: botUsername
       });
       
-      // Update session status
-      await this.updateBotSession(userId, 'webhook-pilot', true);
+      // Update session status with ACTUAL bot username
+      await this.updateBotSession(userId, botUsername, true);
       
     } catch (error) {
       console.error(`❌ PILOT: User ${userId} webhook failed:`, error);
@@ -1988,6 +2003,26 @@ Your expense has been saved to the database\\! 💾`;
     } catch (error) {
       console.error(`❌ PILOT: Failed to rollback user ${this.PILOT_USER_ID}:`, error);
       throw error;
+    }
+  }
+
+  /**
+   * Get bot info from Telegram API
+   */
+  async getBotInfo(botToken) {
+    try {
+      const response = await fetch(`https://api.telegram.org/bot${botToken}/getMe`);
+      const result = await response.json();
+      
+      if (result.ok) {
+        return result.result; // Contains username, first_name, etc.
+      } else {
+        console.error('Failed to get bot info:', result.description);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error getting bot info:', error);
+      return null;
     }
   }
 
