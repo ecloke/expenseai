@@ -2,28 +2,32 @@ import express from 'express';
 import crypto from 'crypto';
 const router = express.Router();
 
-const PILOT_USER_ID = '149a0ccd-3dd7-44a4-ad2e-42cc2c7e4498';
-
-// Webhook endpoint for pilot user
-router.post('/telegram', async (req, res) => {
+// SECURE: Unique webhook endpoint per user - NO MESSAGE CROSS-CONTAMINATION
+router.post('/telegram/:userId', async (req, res) => {
   try {
     const { message } = req.body;
+    const { userId } = req.params;
+
     if (!message) {
       return res.status(400).json({ error: 'No message' });
     }
 
-    // Get user ID from bot token hash
-    const userId = await getUserIdFromBotToken(req);
-    
-    // Only process if this is our pilot user
-    if (userId !== PILOT_USER_ID) {
-      return res.status(200).json({ ok: true }); // Ignore other users
+    if (!userId) {
+      return res.status(400).json({ error: 'No user ID provided' });
     }
 
-    console.log(`🧪 PILOT: Processing webhook for user ${userId}`);
-    
+    // CRITICAL: Validate that this user exists and has webhook configured
     const botManager = req.app.get('botManager');
+    const botData = botManager.bots.get(userId);
     
+    if (!botData || !botData.webhookMode) {
+      console.log(`🚫 Webhook received for non-webhook user ${userId} - rejecting`);
+      return res.status(403).json({ error: 'User not configured for webhooks' });
+    }
+
+    console.log(`🔗 Processing webhook for user ${userId} (chat: ${message.chat?.id})`);
+    
+    // SECURE: Process message for ONLY this specific user
     if (message.photo) {
       await botManager.handleWebhookPhoto(message, userId);
     } else {
@@ -32,21 +36,15 @@ router.post('/telegram', async (req, res) => {
     
     res.status(200).json({ ok: true });
   } catch (error) {
-    console.error('🚨 PILOT: Webhook error:', error);
+    console.error(`🚨 Webhook error for user ${req.params.userId}:`, error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// Helper function to get user ID from bot token in webhook request
-async function getUserIdFromBotToken(req) {
-  try {
-    // Since we only have one pilot user, and webhook is only called for that user,
-    // we can safely return the pilot user ID
-    return PILOT_USER_ID;
-  } catch (error) {
-    console.error('Error getting user ID from bot token:', error);
-    return PILOT_USER_ID; // Fallback to pilot user
-  }
-}
+// Legacy endpoint for backward compatibility (will be removed)
+router.post('/telegram', (req, res) => {
+  console.log('⚠️ Legacy webhook endpoint called - this should not happen');
+  res.status(404).json({ error: 'Use user-specific webhook endpoint' });
+});
 
 export default router;
