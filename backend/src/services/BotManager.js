@@ -18,6 +18,7 @@ class BotManager {
   constructor(supabase) {
     this.supabase = supabase;
     this.bots = new Map(); // userId -> { bot, config, lastActivity }
+    this.chatIdToUserId = new Map(); // chatId -> userId mapping for webhooks
     this.receiptProcessor = new ReceiptProcessor(supabase);
     this.chatProcessor = new ChatProcessor(supabase);
     this.expenseService = new ExpenseService(supabase);
@@ -26,7 +27,6 @@ class BotManager {
     this.errorLogCache = new Map(); // For error log rate limiting: userId_errorHash -> lastLogTime
     this.ERROR_LOG_RATE_LIMIT_MS = 60000; // 1 minute between identical error logs
     this.isShuttingDown = false;
-    this.PILOT_USER_ID = '149a0ccd-3dd7-44a4-ad2e-42cc2c7e4498'; // Test user
     
     // Bind methods to maintain context
     this.handleMessage = this.handleMessage.bind(this);
@@ -87,20 +87,24 @@ class BotManager {
 
       console.log(`📊 Found ${configs?.length || 0} user configurations`);
 
-      // Initialize bot for each user (hybrid mode for pilot test)
+      // Initialize webhooks for ALL users (full migration)
+      console.log('🚀 Setting up webhooks for all users...');
+      
       for (const config of configs || []) {
         try {
-          if (config.user_id === this.PILOT_USER_ID) {
-            // Setup webhook for pilot user
-            console.log(`🧪 PILOT: Setting up webhook for user ${config.user_id}`);
-            await this.setupWebhookForUser(config.user_id, config.telegram_bot_token);
-          } else {
-            // Keep polling for all other users (existing code)
-            await this.createUserBot(config);
-          }
+          console.log(`🔗 Setting up webhook for user ${config.user_id}`);
+          await this.setupWebhookForUser(config.user_id, config.telegram_bot_token);
         } catch (error) {
-          console.error(`Failed to create bot for user ${config.user_id}:`, error.message);
+          console.error(`Failed to setup webhook for user ${config.user_id}:`, error.message);
           await this.logError(config.user_id, error);
+          
+          // Critical: If webhook fails, still create polling bot as fallback
+          console.log(`🔄 Fallback to polling for user ${config.user_id}`);
+          try {
+            await this.createUserBot(config);
+          } catch (pollError) {
+            console.error(`Fallback polling also failed for user ${config.user_id}:`, pollError.message);
+          }
         }
       }
 
@@ -1701,7 +1705,7 @@ Your expense has been saved to the database\\! 💾`;
     if (this.isShuttingDown) return;
 
     try {
-      console.log(`🧪 PILOT: Handling webhook message for user ${userId}`);
+      console.log(`🔗 Handling webhook message for user ${userId}`);
       
       // Rate limiting check
       if (!checkRateLimit(this.rateLimitMap, userId, 60000, 20)) {
@@ -1744,7 +1748,7 @@ Your expense has been saved to the database\\! 💾`;
   async handleWebhookPhoto(message, userId) {
     if (this.isShuttingDown) return;
 
-    console.log(`🧪 PILOT: Handling webhook photo for user ${userId}`);
+    console.log(`📸 Handling webhook photo for user ${userId}`);
 
     try {
       // Rate limiting check
@@ -1930,7 +1934,7 @@ Your expense has been saved to the database\\! 💾`;
         throw new Error(`Webhook failed: ${result.description}`);
       }
       
-      console.log(`🧪 PILOT: User ${userId} webhook ready at ${webhookUrl}`);
+      console.log(`✅ User ${userId} webhook ready at ${webhookUrl}`);
       
       // Store webhook config instead of bot instance for pilot user
       this.bots.set(userId, {
@@ -1944,9 +1948,9 @@ Your expense has been saved to the database\\! 💾`;
       await this.updateBotSession(userId, 'webhook-pilot', true);
       
     } catch (error) {
-      console.error(`❌ PILOT: User ${userId} webhook failed:`, error);
-      // Fallback to polling for pilot user if webhook fails
-      console.log(`🔄 PILOT: Falling back to polling for user ${userId}`);
+      console.error(`❌ User ${userId} webhook failed:`, error);
+      // Fallback to polling for user if webhook fails
+      console.log(`🔄 Falling back to polling for user ${userId}`);
       const config = await this.getUserConfig(userId);
       if (config) {
         await this.createUserBot(config);
@@ -1987,6 +1991,40 @@ Your expense has been saved to the database\\! 💾`;
   }
 
   /**
+   * Get user ID from chat ID (for webhook routing)
+   */
+  getUserIdFromChatId(chatId) {
+    return this.chatIdToUserId.get(chatId.toString());
+  }
+
+  /**
+   * Store chat ID to user ID mapping (called when setting up webhook)
+   */
+  async storeChatIdMapping(userId, botToken) {
+    try {
+      // Get the bot's info to find the chat ID
+      const response = await fetch(`https://api.telegram.org/bot${botToken}/getMe`);
+      const result = await response.json();
+      
+      if (result.ok) {
+        // For now, we'll create the mapping when we first receive a message
+        // This is a limitation of the current approach - we need the user to send a message first
+        console.log(`📝 Bot info for user ${userId}:`, result.result.username);
+      }
+    } catch (error) {
+      console.error(`Error getting bot info for user ${userId}:`, error);
+    }
+  }
+
+  /**
+   * Register chat ID for user (called when processing first message)
+   */
+  registerChatId(chatId, userId) {
+    this.chatIdToUserId.set(chatId.toString(), userId);
+    console.log(`📝 Registered chat ${chatId} for user ${userId}`);
+  }
+
+  /**
    * Get user config helper method
    */
   async getUserConfig(userId) {
@@ -2019,8 +2057,8 @@ Your expense has been saved to the database\\! 💾`;
     const shutdownPromises = Array.from(this.bots.entries()).map(async ([userId, botData]) => {
       try {
         if (botData.webhookMode) {
-          // Handle webhook cleanup for pilot user
-          console.log(`🧪 PILOT: Cleaning up webhook for user ${userId}`);
+          // Handle webhook cleanup
+          console.log(`🔗 Cleaning up webhook for user ${userId}`);
           await this.updateBotSession(userId, null, false);
         } else {
           // Handle polling bot cleanup
