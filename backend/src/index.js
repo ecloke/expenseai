@@ -31,12 +31,6 @@ const supabase = createClient(
 // Middleware
 app.use(helmet());
 
-// Debug CORS
-app.use((req, res, next) => {
-  console.log(`CORS Debug - Origin: ${req.headers.origin}, Method: ${req.method}`);
-  next();
-});
-
 app.use(cors({
   origin: function (origin, callback) {
     const allowedOrigins = [
@@ -44,7 +38,6 @@ app.use(cors({
       'http://localhost:3000',
       'https://wodebi.netlify.app'
     ];
-    console.log(`CORS Check - Request origin: ${origin}, Allowed: ${allowedOrigins.join(', ')}`);
     
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
@@ -53,7 +46,8 @@ app.use(cors({
       return callback(null, true);
     }
     
-    console.log(`CORS BLOCKED - Origin ${origin} not in allowed list`);
+    // Only log actual CORS blocks (rare)
+    console.log(`🚫 CORS BLOCKED: ${origin}`);
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true,

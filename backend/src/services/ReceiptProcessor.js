@@ -59,7 +59,7 @@ class ReceiptProcessor {
         day: "2-digit"
       });
 
-      // Structured prompt for receipt extraction
+      // Simplified prompt for receipt extraction (no individual items)
       const prompt = `Analyze this receipt image and return ONLY valid JSON with the following structure:
 {
   "store_name": "string",
@@ -68,21 +68,10 @@ class ReceiptProcessor {
   "service_charge": number,
   "tax": number,
   "discount": number,
-  "items": [
-    {
-      "name": "string", 
-      "total": number,
-      "quantity": number,
-      "category": "groceries|dining|gas|pharmacy|retail|services|entertainment|other"
-    }
-  ]
+  "items": []
 }
 
 Rules:
-- Use logical categorization for items
-- If unclear, use reasonable defaults
-- For items, use "total" not "price" - this is the total amount for that line item (not unit price)
-- If quantity is 3 and total shown is 7.8, then total should be 7.8 (not 7.8/3 per unit)
 - Ensure all amounts are numbers (not strings)
 - Date should be in YYYY-MM-DD format, extracted exactly from the receipt
 - Look carefully for dates in format DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY and convert to YYYY-MM-DD
@@ -91,11 +80,11 @@ Rules:
 - If date is unclear or missing, use ${malaysiaTime}
 - Use Malaysia Kuala Lumpur timezone context
 - Date must be reasonable (not future dates, not older than 1 year)
-- Extract ALL items visible on the receipt
 - Look for service charge, service tax, GST, or similar fees (set to 0 if not found)
 - Look for discounts, vouchers, promotions (use negative number like -20.00, set to 0 if none)
 - service_charge, tax, and discount should be numbers (0 if not present)
 - discount should be negative for actual discounts (e.g., -20.00 for 20 dollar discount)
+- Always set items to empty array []
 - Return ONLY the JSON object, no additional text`;
 
       // Generate content with Gemini Vision
@@ -103,7 +92,7 @@ Rules:
       const response = await result.response;
       const text = response.text();
 
-      console.log(`🤖 Gemini Vision response: ${text.substring(0, 200)}...`);
+      // Gemini AI analysis complete
 
       // Parse and validate response
       let receiptData;
@@ -131,7 +120,7 @@ Rules:
       }
 
       const validatedData = validation.value;
-      console.log(`✅ Receipt data validated: ${validatedData.items.length} items, total $${validatedData.total}`);
+      // Receipt validated successfully
 
       // COMMENTED OUT - Google Sheets Integration (preserved for future use)
       // Save to Google Sheets
@@ -154,7 +143,7 @@ Rules:
 
       // NOTE: Removed automatic database save to prevent double-recording
       // Saving is now handled by BotManager after user selects project (or for general expenses)
-      console.log('✅ Receipt data extracted and validated successfully');
+      // Data extracted and validated
 
       // Add the calculated category to the receipt data
       validatedData.category = this.categorizeReceipt(validatedData);
@@ -300,7 +289,7 @@ Rules:
       const formattedDate = parsedDate.toISOString().split('T')[0];
       receiptData.date = formattedDate;
       
-      console.log(`📅 Receipt date validated: ${formattedDate}`);
+      // Date validated
       return receiptData;
 
     } catch (error) {
