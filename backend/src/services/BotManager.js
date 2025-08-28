@@ -1209,18 +1209,6 @@ Your expense has been saved to the database! 💾`;
    */
   async handleMultiReceiptConfirmation(userId, input, conversation) {
     const { mediaGroupId, photoCount } = conversation.data;
-    const bot = this.bots.get(userId)?.bot;
-    if (!bot) return '❌ Bot connection lost. Please try again.';
-
-    // Remove keyboard first
-    try {
-      await bot.editMessageReplyMarkup({ inline_keyboard: [] }, {
-        chat_id: conversation.data.chatId || userId,
-        message_id: conversation.data.confirmationMessageId
-      });
-    } catch (error) {
-      // Ignore keyboard removal errors
-    }
 
     this.conversationManager.endConversation(userId);
 
@@ -1239,24 +1227,11 @@ Your expense has been saved to the database! 💾`;
 
 Your ${photoCount} receipt photos were not processed. You can upload them again anytime!`;
     } else {
-      // Invalid input - ask again
-      await bot.sendMessage(userId, `❌ Please choose:
+      // Invalid input - return error message like other conversation handlers
+      return `❌ Please choose:
 
 1️⃣ **Yes** - Process all ${photoCount} receipts
-2️⃣ **No** - Cancel processing`, {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          keyboard: [
-            [{ text: '1' }, { text: '2' }]
-          ],
-          one_time_keyboard: true,
-          resize_keyboard: true
-        }
-      });
-
-      // Restart conversation
-      this.conversationManager.startConversation(userId, 'multi_receipt_confirmation', conversation.data);
-      return null;
+2️⃣ **No** - Cancel processing`;
     }
   }
 
@@ -1265,40 +1240,18 @@ Your ${photoCount} receipt photos were not processed. You can upload them again 
    */
   async handleMultiReceiptProjectSelection(userId, input, conversation) {
     const { results, openProjects, mediaGroupId } = conversation.data;
-    const bot = this.bots.get(userId)?.bot;
-    if (!bot) return '❌ Bot connection lost. Please try again.';
 
     const selectionIndex = parseInt(input.trim()) - 1;
     const totalOptions = openProjects.length + 1; // +1 for general expenses
 
     if (isNaN(selectionIndex) || selectionIndex < 0 || selectionIndex >= totalOptions) {
-      // Invalid selection - show options again
-      const projectKeyboard = [];
+      // Invalid selection - return error message like other conversation handlers
+      let optionsText = `❌ Invalid selection. Please choose a number from 1 to ${totalOptions}:\n\n`;
       openProjects.forEach((project, index) => {
-        projectKeyboard.push([{ text: `${index + 1}️⃣ ${project.name}` }]);
+        optionsText += `${index + 1}️⃣ ${project.name}\n`;
       });
-      projectKeyboard.push([{ text: `${openProjects.length + 1}️⃣ General Expenses (no project)` }]);
-
-      await bot.sendMessage(userId, `❌ Invalid selection. Please choose a number from 1 to ${totalOptions}:
-
-**Choose project for all ${results.length} receipts:**`, {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          keyboard: projectKeyboard,
-          one_time_keyboard: true,
-          resize_keyboard: true
-        }
-      });
-      return null;
-    }
-
-    // Remove keyboard
-    try {
-      await bot.editMessageReplyMarkup({ inline_keyboard: [] }, {
-        chat_id: userId
-      });
-    } catch (error) {
-      // Ignore keyboard removal errors
+      optionsText += `${openProjects.length + 1}️⃣ General Expenses (no project)`;
+      return optionsText;
     }
 
     this.conversationManager.endConversation(userId);
@@ -1322,7 +1275,10 @@ Your ${photoCount} receipt photos were not processed. You can upload them again 
         // Calculate total
         const totalAmount = results.reduce((sum, result) => sum + result.data.total, 0);
         
-        const successMessage = `✅ **All ${results.length} receipts saved successfully!**
+        // Clean up media group
+        this.mediaGroups.delete(mediaGroupId);
+
+        return `✅ **All ${results.length} receipts saved successfully!**
 
 📁 **Project:** ${selectedProjectName}
 💰 **Total Amount:** $${totalAmount.toFixed(2)}
@@ -1336,35 +1292,19 @@ ${results.map((result, index) => {
 
 All expenses have been saved to your database! 💾`;
 
-        if (conversation.data.isWebhook) {
-          await this.sendWebhookResponse(userId, userId, successMessage);
-        } else {
-          await bot.sendMessage(userId, successMessage, {
-            parse_mode: 'Markdown'
-          });
-        }
-
       } else {
-        const errorMessage = '❌ Error saving receipts to database. Please try again.';
-        if (conversation.data.isWebhook) {
-          await this.sendWebhookResponse(userId, userId, errorMessage);
-        } else {
-          await bot.sendMessage(userId, errorMessage);
-        }
+        // Clean up media group
+        this.mediaGroups.delete(mediaGroupId);
+        return '❌ Error saving receipts to database. Please try again.';
       }
-
-      // Clean up media group
-      this.mediaGroups.delete(mediaGroupId);
 
     } catch (error) {
       console.error(`Error saving batch receipts for user ${userId}:`, error);
-      await bot.sendMessage(userId, '❌ Error saving receipts. Please try again.');
       
       // Clean up media group
       this.mediaGroups.delete(mediaGroupId);
+      return '❌ Error saving receipts. Please try again.';
     }
-
-    return null; // Response already sent via bot.sendMessage
   }
 
   /**
