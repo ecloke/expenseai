@@ -412,6 +412,31 @@ Please wait ${Math.ceil((10000 - timeSinceLastPhoto) / 1000)} seconds before sen
     const mediaGroup = this.mediaGroups.get(media_group_id);
     mediaGroup.photos.push(msg);
 
+    // Check immediately if more than 5 photos - reject without waiting
+    if (mediaGroup.photos.length > 5) {
+      // Clear any existing timeout
+      if (mediaGroup.timeout) {
+        clearTimeout(mediaGroup.timeout);
+      }
+
+      await bot.sendMessage(msg.chat.id, `📸 **More than 5 photos detected!**
+
+I can only process up to 5 receipt photos at once.
+
+📋 **Please:**
+• Choose your 5 most important receipts
+• Upload them again (up to 5 photos)
+• I'll process all 5 together
+
+💡 *This ensures accurate AI processing and manages costs effectively.*`, {
+        parse_mode: 'Markdown'
+      });
+      
+      // Clean up media group
+      this.mediaGroups.delete(media_group_id);
+      return;
+    }
+
     // Clear existing timeout and set new one
     if (mediaGroup.timeout) {
       clearTimeout(mediaGroup.timeout);
@@ -435,26 +460,6 @@ Please wait ${Math.ceil((10000 - timeSinceLastPhoto) / 1000)} seconds before sen
 
     try {
       const photoCount = photos.length;
-
-      // Check if more than 5 photos - reject and ask to reupload
-      if (photoCount > 5) {
-        await bot.sendMessage(chatId, `📸 **Too Many Photos!**
-
-I can process up to **5 receipt photos** at once, but you sent ${photoCount} photos.
-
-📋 **Please:**
-• Choose the 5 most important receipts
-• Upload them again (up to 5 photos)
-• I'll process all 5 together
-
-💡 *Tip:* This helps ensure accurate AI processing and manage costs effectively.`, {
-          parse_mode: 'Markdown'
-        });
-        
-        // Clean up
-        this.mediaGroups.delete(mediaGroupId);
-        return;
-      }
 
       // Ask user for confirmation to proceed
       const confirmationMsg = await bot.sendMessage(chatId, `📸 **${photoCount} Receipt Photos Detected!**
@@ -2328,6 +2333,29 @@ Your expense has been saved to the database\\! 💾`;
     const mediaGroup = this.mediaGroups.get(media_group_id);
     mediaGroup.photos.push(message);
 
+    // Check immediately if more than 5 photos - reject without waiting
+    if (mediaGroup.photos.length > 5) {
+      // Clear any existing timeout
+      if (mediaGroup.timeout) {
+        clearTimeout(mediaGroup.timeout);
+      }
+
+      await this.sendWebhookResponse(userId, message.chat.id, `📸 **More than 5 photos detected!**
+
+I can only process up to 5 receipt photos at once.
+
+📋 **Please:**
+• Choose your 5 most important receipts
+• Upload them again (up to 5 photos)
+• I'll process all 5 together
+
+💡 *This ensures accurate AI processing and manages costs effectively.*`);
+      
+      // Clean up media group
+      this.mediaGroups.delete(media_group_id);
+      return;
+    }
+
     // Clear existing timeout and set new one
     if (mediaGroup.timeout) {
       clearTimeout(mediaGroup.timeout);
@@ -2349,24 +2377,6 @@ Your expense has been saved to the database\\! 💾`;
 
     try {
       const photoCount = photos.length;
-
-      // Check if more than 5 photos - reject and ask to reupload
-      if (photoCount > 5) {
-        await this.sendWebhookResponse(userId, chatId, `📸 **Too Many Photos!**
-
-I can process up to **5 receipt photos** at once, but you sent ${photoCount} photos.
-
-📋 **Please:**
-• Choose the 5 most important receipts
-• Upload them again (up to 5 photos)
-• I'll process all 5 together
-
-💡 *Tip:* This helps ensure accurate AI processing and manage costs effectively.`);
-        
-        // Clean up
-        this.mediaGroups.delete(mediaGroupId);
-        return;
-      }
 
       // Ask user for confirmation to proceed
       const confirmationMsg = await this.sendWebhookResponse(userId, chatId, `📸 **${photoCount} Receipt Photos Detected!**
