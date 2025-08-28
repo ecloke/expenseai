@@ -399,11 +399,18 @@ Please wait ${Math.ceil((10000 - timeSinceLastPhoto) / 1000)} seconds before sen
         userId: userId,
         config: config,
         chatId: msg.chat.id,
-        timeout: null
+        timeout: null,
+        rejected: false
       });
     }
 
     const mediaGroup = this.mediaGroups.get(media_group_id);
+
+    // If this media group was already rejected, silently ignore remaining photos
+    if (mediaGroup.rejected) {
+      return;
+    }
+
     mediaGroup.photos.push(msg);
 
     // Check immediately if more than 5 photos - reject without waiting
@@ -426,8 +433,8 @@ I can only process up to 5 receipt photos at once.
         parse_mode: 'Markdown'
       });
       
-      // Clean up media group
-      this.mediaGroups.delete(media_group_id);
+      // Mark as rejected instead of deleting - let timeout clean it up naturally
+      mediaGroup.rejected = true;
       return;
     }
 
@@ -2319,11 +2326,18 @@ Your expense has been saved to the database\\! 💾`;
         config: config,
         chatId: message.chat.id,
         timeout: null,
+        rejected: false,
         isWebhook: true // Flag to identify webhook processing
       });
     }
 
     const mediaGroup = this.mediaGroups.get(media_group_id);
+    
+    // Check for already rejected groups - silently ignore remaining photos
+    if (mediaGroup.rejected) {
+      return;
+    }
+    
     mediaGroup.photos.push(message);
 
     // Check immediately if more than 5 photos - reject without waiting
@@ -2344,8 +2358,8 @@ I can only process up to 5 receipt photos at once.
 
 💡 *This ensures accurate AI processing and manages costs effectively.*`);
       
-      // Clean up media group
-      this.mediaGroups.delete(media_group_id);
+      // Mark as rejected instead of deleting
+      mediaGroup.rejected = true;
       return;
     }
 
