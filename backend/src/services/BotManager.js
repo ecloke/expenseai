@@ -101,14 +101,8 @@ class BotManager {
           successCount++;
         } catch (error) {
           console.error(`❌ User ${config.user_id} webhook failed: ${error.message}`);
-          // Fallback to polling if webhook fails
-          try {
-            await this.createUserBot(config);
-            successCount++;
-          } catch (pollError) {
-            console.error(`❌ User ${config.user_id} polling failed: ${pollError.message}`);
-            failCount++;
-          }
+          // No fallback to polling - webhook failures should be debugged and fixed
+          failCount++;
         }
       }
       
@@ -1976,10 +1970,9 @@ Select which project you want to reopen:
       try {
         await this.setupWebhookForUser(userId, config.telegram_bot_token);
       } catch (error) {
-        console.error(`❌ Webhook setup failed for user ${userId}, falling back to polling:`, error);
-        // Fallback to polling if webhook fails
-        await this.createUserBot(config);
-        // Polling bot started
+        console.error(`❌ Webhook setup failed for user ${userId}:`, error);
+        // No fallback to polling - webhook failures should be debugged and fixed
+        throw error;
       }
     } else {
       console.log(`❌ No valid config found for user ${userId}`);
@@ -2717,13 +2710,9 @@ Sorry, I couldn't process any of the ${photoCount} receipt photos. Please try ag
       await this.updateBotSession(userId, botUsername, true);
       
     } catch (error) {
-      console.error(`❌ PILOT: User ${userId} webhook failed:`, error);
-      // Fallback to polling for pilot user if webhook fails
-      console.log(`🔄 PILOT: Falling back to polling for user ${userId}`);
-      const config = await this.getUserConfig(userId);
-      if (config) {
-        await this.createUserBot(config);
-      }
+      console.error(`❌ User ${userId} webhook setup failed:`, error);
+      // No fallback to polling - webhook failures should be debugged and fixed
+      throw error;
     }
   }
 
