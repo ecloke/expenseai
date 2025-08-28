@@ -187,16 +187,14 @@ export default function SetupPage() {
         {/* Progress Section */}
         <Card className="mb-6 sm:mb-8 border-0 shadow-lg bg-gray-800/80 backdrop-blur-sm">
           <CardHeader className="pb-4 sm:pb-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 space-y-2 sm:space-y-0">
-              <div>
-                <CardTitle className="text-xl sm:text-2xl text-white">Setup Your Enhanced Expense Tracker</CardTitle>
-                <CardDescription className="text-gray-300 text-sm sm:text-base">
-                  Simplified setup - now with database storage and instant commands (no Google Sheets needed!)
-                </CardDescription>
-              </div>
-              <Badge variant="secondary" className="text-sm self-start sm:self-center">
+            <div className="text-center mb-4">
+              <Badge variant="secondary" className="text-sm mb-3">
                 Step {currentStep} of {SETUP_STEPS.length}
               </Badge>
+              <CardTitle className="text-xl sm:text-2xl text-white mb-2">Setup Your Enhanced Expense Tracker</CardTitle>
+              <CardDescription className="text-gray-300 text-sm sm:text-base">
+                Simplified setup - now with database storage and instant commands (no Google Sheets needed!)
+              </CardDescription>
             </div>
             <Progress value={progressPercentage} className="h-2" />
           </CardHeader>
