@@ -243,7 +243,25 @@ class BotManager {
         return;
       }
 
-      // Check for multiple photos in quick succession (prevent AI token waste)
+      // Update last activity
+      this.updateLastActivity(userId);
+
+      const bot = this.bots.get(userId)?.bot;
+      if (!bot) return;
+
+      // Validate photo message
+      if (!msg.photo || msg.photo.length === 0) {
+        await bot.sendMessage(msg.chat.id, '❌ No photo detected. Please send a clear receipt photo.');
+        return;
+      }
+
+      // Handle media group (multiple photos) - Skip rate limiting for media groups
+      if (msg.media_group_id) {
+        await this.handleMediaGroup(msg, userId, config);
+        return;
+      }
+
+      // Check for multiple photos in quick succession (prevent AI token waste) - Only for single photos
       const now = Date.now();
       const lastPhotoTime = this.rateLimitMap.get(`photo_${userId}`) || 0;
       const timeSinceLastPhoto = now - lastPhotoTime;
@@ -264,24 +282,6 @@ Please wait ${Math.ceil((10000 - timeSinceLastPhoto) / 1000)} seconds before sen
 
       // Update last photo time
       this.rateLimitMap.set(`photo_${userId}`, now);
-
-      // Update last activity
-      this.updateLastActivity(userId);
-
-      const bot = this.bots.get(userId)?.bot;
-      if (!bot) return;
-
-      // Validate photo message
-      if (!msg.photo || msg.photo.length === 0) {
-        await bot.sendMessage(msg.chat.id, '❌ No photo detected. Please send a clear receipt photo.');
-        return;
-      }
-
-      // Handle media group (multiple photos)
-      if (msg.media_group_id) {
-        await this.handleMediaGroup(msg, userId, config);
-        return;
-      }
 
       // Send step-by-step processing messages
       const statusMsg = await bot.sendMessage(msg.chat.id, '📸 Receipt received! Starting analysis...');
@@ -2219,12 +2219,6 @@ Your expense has been saved to the database\\! 💾`;
     // Processing receipt photo
 
     try {
-      // Rate limiting check
-      if (!checkRateLimit(this.rateLimitMap, userId, 60000, 5)) {
-        await this.sendWebhookResponse(userId, message.chat.id, '⏰ Too many photo uploads. Please wait a moment.');
-        return;
-      }
-
       // Update last activity
       this.updateLastActivity(userId);
 
@@ -2241,9 +2235,15 @@ Your expense has been saved to the database\\! 💾`;
         return;
       }
 
-      // Handle media group (multiple photos)
+      // Handle media group (multiple photos) - Skip rate limiting for media groups
       if (message.media_group_id) {
         await this.handleWebhookMediaGroup(message, userId, config);
+        return;
+      }
+
+      // Rate limiting check - Only for single photos
+      if (!checkRateLimit(this.rateLimitMap, userId, 60000, 5)) {
+        await this.sendWebhookResponse(userId, message.chat.id, '⏰ Too many photo uploads. Please wait a moment.');
         return;
       }
 
