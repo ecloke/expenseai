@@ -688,24 +688,35 @@ Sorry, I couldn't process any of the ${photoCount} receipt photos. Please try ag
   }
 
   /**
-   * Save batch of receipts to database
+   * Save batch of receipts to database (using same pattern as single receipt processing)
    */
   async saveBatchReceipts(successfulResults, userId, projectId) {
     try {
       for (const result of successfulResults) {
         const receiptData = result.data;
         
-        const expense = {
+        // Use same field names as single receipt processing (line 1180-1187)
+        const finalExpenseData = {
           user_id: userId,
           project_id: projectId,
-          date: receiptData.date,
+          receipt_date: receiptData.date,
           store_name: receiptData.store_name,
           category: receiptData.category || 'other',
-          total: receiptData.total,
-          description: receiptData.description || ''
+          total_amount: receiptData.total
         };
 
-        await this.expenseService.addExpense(expense);
+        // Use same direct Supabase insertion as single receipt processing (line 1189-1193)
+        const { data: expense, error } = await this.supabase
+          .from('expenses')
+          .insert([finalExpenseData])
+          .select()
+          .single();
+
+        if (error) {
+          throw new Error(`Failed to save receipt ${result.index}: ${error.message}`);
+        }
+
+        console.log(`✅ Saved batch receipt ${result.index}: $${finalExpenseData.total_amount} at ${finalExpenseData.store_name}`);
       }
       
       return true;
