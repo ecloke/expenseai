@@ -613,40 +613,59 @@ Sorry, I couldn't process any of the ${photoCount} receipt photos. Please try ag
       }
 
       // Check for open projects
-      const openProjects = await this.expenseService.getOpenProjects(userId);
+      const hasOpenProjects = await this.hasOpenProjects(userId);
       
-      if (openProjects.length > 0) {
-        // Show project selection
-        resultText += `\n\n**Where should I save ${successCount === 1 ? 'this receipt' : 'these receipts'}?**`;
-        
-        await bot.editMessageText(resultText, {
-          chat_id: chatId,
-          message_id: statusMsg.message_id,
-          parse_mode: 'Markdown'
-        });
+      if (hasOpenProjects) {
+        // Get projects for selection - reuse existing logic from showProjectSelection
+        const { data: projects, error } = await this.supabase
+          .from('projects')
+          .select('id, name, currency')
+          .eq('user_id', userId)
+          .eq('status', 'open')
+          .order('name');
 
-        // Create project selection keyboard
-        const projectKeyboard = [];
-        openProjects.forEach((project, index) => {
-          projectKeyboard.push([{ text: `${index + 1}️⃣ ${project.name}` }]);
-        });
-        projectKeyboard.push([{ text: `${openProjects.length + 1}️⃣ General Expenses (no project)` }]);
+        if (error || !projects) {
+          console.error('Error fetching projects for batch selection:', error);
+          // Fall back to saving as general expenses
+          await this.saveBatchReceipts(results.filter(r => r.success), userId, null);
+          await bot.editMessageText(resultText + `\n\n✅ **All receipts saved to General Expenses!**`, {
+            chat_id: chatId,
+            message_id: statusMsg.message_id,
+            parse_mode: 'Markdown'
+          });
+        } else {
+          // Show project selection
+          resultText += `\n\n**Where should I save ${successCount === 1 ? 'this receipt' : 'these receipts'}?**`;
+          
+          await bot.editMessageText(resultText, {
+            chat_id: chatId,
+            message_id: statusMsg.message_id,
+            parse_mode: 'Markdown'
+          });
 
-        await bot.sendMessage(chatId, `**Choose project for all ${successCount} receipts:**`, {
-          parse_mode: 'Markdown',
-          reply_markup: {
-            keyboard: projectKeyboard,
-            one_time_keyboard: true,
-            resize_keyboard: true
-          }
-        });
+          // Create project selection keyboard
+          const projectKeyboard = [];
+          projects.forEach((project, index) => {
+            projectKeyboard.push([{ text: `${index + 1}️⃣ ${project.name}` }]);
+          });
+          projectKeyboard.push([{ text: `${projects.length + 1}️⃣ General Expenses (no project)` }]);
 
-        // Set up conversation for project selection
-        this.conversationManager.startConversation(userId, 'multi_receipt_project_selection', {
-          results: results.filter(r => r.success),
-          openProjects: openProjects,
-          mediaGroupId: mediaGroupId
-        });
+          await bot.sendMessage(chatId, `**Choose project for all ${successCount} receipts:**`, {
+            parse_mode: 'Markdown',
+            reply_markup: {
+              keyboard: projectKeyboard,
+              one_time_keyboard: true,
+              resize_keyboard: true
+            }
+          });
+
+          // Set up conversation for project selection
+          this.conversationManager.startConversation(userId, 'multi_receipt_project_selection', {
+            results: results.filter(r => r.success),
+            openProjects: projects,
+            mediaGroupId: mediaGroupId
+          });
+        }
 
       } else {
         // No projects, save all to general expenses
@@ -2467,30 +2486,45 @@ Sorry, I couldn't process any of the ${photoCount} receipt photos. Please try ag
       }
 
       // Check for open projects
-      const openProjects = await this.expenseService.getOpenProjects(userId);
+      const hasOpenProjects = await this.hasOpenProjects(userId);
       
-      if (openProjects.length > 0) {
-        // Show project selection
-        resultText += `\n\n**Where should I save ${successCount === 1 ? 'this receipt' : 'these receipts'}?**`;
-        
-        await this.editWebhookMessage(userId, chatId, statusMsg.message_id, resultText);
+      if (hasOpenProjects) {
+        // Get projects for selection - reuse existing logic from showProjectSelection
+        const { data: projects, error } = await this.supabase
+          .from('projects')
+          .select('id, name, currency')
+          .eq('user_id', userId)
+          .eq('status', 'open')
+          .order('name');
 
-        // Create project selection response
-        let projectText = `**Choose project for all ${successCount} receipts:**\n\n`;
-        openProjects.forEach((project, index) => {
-          projectText += `${index + 1}️⃣ ${project.name}\n`;
-        });
-        projectText += `${openProjects.length + 1}️⃣ General Expenses (no project)`;
+        if (error || !projects) {
+          console.error('Error fetching projects for webhook batch selection:', error);
+          // Fall back to saving as general expenses
+          await this.saveBatchReceipts(results.filter(r => r.success), userId, null);
+          await this.editWebhookMessage(userId, chatId, statusMsg.message_id, resultText + `\n\n✅ **All receipts saved to General Expenses!**`);
+        } else {
+          // Show project selection
+          resultText += `\n\n**Where should I save ${successCount === 1 ? 'this receipt' : 'these receipts'}?**`;
+          
+          await this.editWebhookMessage(userId, chatId, statusMsg.message_id, resultText);
 
-        await this.sendWebhookResponse(userId, chatId, projectText);
+          // Create project selection response
+          let projectText = `**Choose project for all ${successCount} receipts:**\n\n`;
+          projects.forEach((project, index) => {
+            projectText += `${index + 1}️⃣ ${project.name}\n`;
+          });
+          projectText += `${projects.length + 1}️⃣ General Expenses (no project)`;
 
-        // Set up conversation for project selection
-        this.conversationManager.startConversation(userId, 'multi_receipt_project_selection', {
-          results: results.filter(r => r.success),
-          openProjects: openProjects,
-          mediaGroupId: mediaGroupId,
-          isWebhook: true
-        });
+          await this.sendWebhookResponse(userId, chatId, projectText);
+
+          // Set up conversation for project selection
+          this.conversationManager.startConversation(userId, 'multi_receipt_project_selection', {
+            results: results.filter(r => r.success),
+            openProjects: projects,
+            mediaGroupId: mediaGroupId,
+            isWebhook: true
+          });
+        }
 
       } else {
         // No projects, save all to general expenses
