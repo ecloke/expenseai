@@ -28,6 +28,10 @@ class BotManager {
     this.isShuttingDown = false;
     this.PILOT_USER_ID = '149a0ccd-3dd7-44a4-ad2e-42cc2c7e4498'; // Test user
     
+    // Media group collection for batch processing
+    this.mediaGroups = new Map(); // media_group_id -> { photos: [], userId: string, timeout: NodeJS.Timeout }
+    this.MEDIA_GROUP_TIMEOUT = 3000; // 3 seconds to collect all photos in a group
+    
     // Bind methods to maintain context
     this.handleMessage = this.handleMessage.bind(this);
     this.handlePhoto = this.handlePhoto.bind(this);
@@ -267,26 +271,15 @@ Please wait ${Math.ceil((10000 - timeSinceLastPhoto) / 1000)} seconds before sen
       const bot = this.bots.get(userId)?.bot;
       if (!bot) return;
 
-      // Validate single photo message
+      // Validate photo message
       if (!msg.photo || msg.photo.length === 0) {
         await bot.sendMessage(msg.chat.id, '❌ No photo detected. Please send a clear receipt photo.');
         return;
       }
 
-      // Check for media group (multiple photos sent at once)
+      // Handle media group (multiple photos)
       if (msg.media_group_id) {
-        await bot.sendMessage(msg.chat.id, `⚠️ *Multiple Photos Not Allowed*
-
-I can only process **one receipt photo at a time** to ensure accurate AI analysis and control processing costs.
-
-📋 *Please:*
-• Send individual receipt photos one by one
-• Wait for processing to complete before sending the next
-• Ensure each photo shows a complete receipt
-
-💡 *Tip:* Single photos get better AI recognition results!`, {
-          parse_mode: 'Markdown'
-        });
+        await this.handleMediaGroup(msg, userId, config);
         return;
       }
 
@@ -394,6 +387,312 @@ I can only process **one receipt photo at a time** to ensure accurate AI analysi
       if (bot) {
         await bot.sendMessage(msg.chat.id, '❌ Sorry, I couldn\'t process this receipt. Please try again with a clearer photo.');
       }
+    }
+  }
+
+  /**
+   * Handle media group (multiple photos) with batch processing
+   */
+  async handleMediaGroup(msg, userId, config) {
+    const { media_group_id } = msg;
+    const bot = this.bots.get(userId)?.bot;
+    if (!bot) return;
+
+    // Initialize or update media group collection
+    if (!this.mediaGroups.has(media_group_id)) {
+      this.mediaGroups.set(media_group_id, {
+        photos: [],
+        userId: userId,
+        config: config,
+        chatId: msg.chat.id,
+        timeout: null
+      });
+    }
+
+    const mediaGroup = this.mediaGroups.get(media_group_id);
+    mediaGroup.photos.push(msg);
+
+    // Clear existing timeout and set new one
+    if (mediaGroup.timeout) {
+      clearTimeout(mediaGroup.timeout);
+    }
+
+    mediaGroup.timeout = setTimeout(async () => {
+      await this.processMediaGroup(media_group_id);
+    }, this.MEDIA_GROUP_TIMEOUT);
+  }
+
+  /**
+   * Process collected media group photos
+   */
+  async processMediaGroup(mediaGroupId) {
+    const mediaGroup = this.mediaGroups.get(mediaGroupId);
+    if (!mediaGroup) return;
+
+    const { photos, userId, config, chatId } = mediaGroup;
+    const bot = this.bots.get(userId)?.bot;
+    if (!bot) return;
+
+    try {
+      const photoCount = photos.length;
+
+      // Check if more than 5 photos - reject and ask to reupload
+      if (photoCount > 5) {
+        await bot.sendMessage(chatId, `📸 **Too Many Photos!**
+
+I can process up to **5 receipt photos** at once, but you sent ${photoCount} photos.
+
+📋 **Please:**
+• Choose the 5 most important receipts
+• Upload them again (up to 5 photos)
+• I'll process all 5 together
+
+💡 *Tip:* This helps ensure accurate AI processing and manage costs effectively.`, {
+          parse_mode: 'Markdown'
+        });
+        
+        // Clean up
+        this.mediaGroups.delete(mediaGroupId);
+        return;
+      }
+
+      // Ask user for confirmation to proceed
+      const confirmationMsg = await bot.sendMessage(chatId, `📸 **${photoCount} Receipt Photos Detected!**
+
+Process all ${photoCount} receipts together?
+
+1️⃣ **Yes** - Process all ${photoCount} receipts
+2️⃣ **No** - Cancel processing
+
+⏱️ *I'll wait for your choice...*`, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          keyboard: [
+            [{ text: '1' }, { text: '2' }]
+          ],
+          one_time_keyboard: true,
+          resize_keyboard: true
+        }
+      });
+
+      // Set up conversation state for confirmation
+      this.conversationManager.startConversation(userId, 'multi_receipt_confirmation', {
+        mediaGroupId: mediaGroupId,
+        photoCount: photoCount,
+        confirmationMessageId: confirmationMsg.message_id
+      });
+
+    } catch (error) {
+      console.error(`Error processing media group ${mediaGroupId}:`, error);
+      await bot.sendMessage(chatId, '❌ Error processing multiple photos. Please try uploading them again.');
+      
+      // Clean up
+      this.mediaGroups.delete(mediaGroupId);
+    }
+  }
+
+  /**
+   * Process multiple receipts after user confirmation
+   */
+  async processBatchReceipts(mediaGroupId, userId) {
+    const mediaGroup = this.mediaGroups.get(mediaGroupId);
+    if (!mediaGroup) return;
+
+    const { photos, config, chatId } = mediaGroup;
+    const bot = this.bots.get(userId)?.bot;
+    if (!bot) return;
+
+    const photoCount = photos.length;
+    const results = [];
+    let successCount = 0;
+
+    try {
+      // Remove keyboard from confirmation message
+      await bot.editMessageReplyMarkup({ inline_keyboard: [] }, {
+        chat_id: chatId,
+        message_id: mediaGroup.confirmationMessageId
+      });
+
+      // Processing status message
+      const statusMsg = await bot.sendMessage(chatId, `🤖 **Processing ${photoCount} receipts...** 
+
+Please wait while I analyze all photos with AI...`, {
+        parse_mode: 'Markdown'
+      });
+
+      // Process each photo
+      for (let i = 0; i < photos.length; i++) {
+        const photoMsg = photos[i];
+        const photoNumber = i + 1;
+
+        try {
+          // Update status
+          await bot.editMessageText(`🤖 **Processing Receipt ${photoNumber} of ${photoCount}...**
+
+📥 Analyzing with AI...`, {
+            chat_id: chatId,
+            message_id: statusMsg.message_id,
+            parse_mode: 'Markdown'
+          });
+
+          // Download photo
+          const photoData = photoMsg.photo;
+          const largestPhoto = photoData[photoData.length - 1];
+          const file = await bot.getFile(largestPhoto.file_id);
+          const fileUrl = `https://api.telegram.org/file/bot${bot.token}/${file.file_path}`;
+          
+          const photoBuffer = await new Promise((resolve, reject) => {
+            https.get(fileUrl, (response) => {
+              if (response.statusCode !== 200) {
+                reject(new Error(`Failed to download photo: ${response.statusCode}`));
+                return;
+              }
+              
+              const chunks = [];
+              response.on('data', (chunk) => chunks.push(chunk));
+              response.on('end', () => resolve(Buffer.concat(chunks)));
+              response.on('error', reject);
+            });
+          });
+
+          // Process with AI
+          const receiptData = await this.receiptProcessor.processReceipt(photoBuffer, userId, config);
+          
+          if (receiptData && receiptData.store_name) {
+            results.push({
+              success: true,
+              data: receiptData,
+              index: photoNumber
+            });
+            successCount++;
+          } else {
+            results.push({
+              success: false,
+              error: 'Failed to extract receipt data',
+              index: photoNumber
+            });
+          }
+
+        } catch (error) {
+          console.error(`Error processing receipt ${photoNumber}:`, error);
+          results.push({
+            success: false,
+            error: error.message || 'Unknown error',
+            index: photoNumber
+          });
+        }
+      }
+
+      // Show results to user
+      if (successCount === 0) {
+        await bot.editMessageText(`❌ **Processing Failed**
+
+Sorry, I couldn't process any of the ${photoCount} receipt photos. Please try again with clearer images.`, {
+          chat_id: chatId,
+          message_id: statusMsg.message_id,
+          parse_mode: 'Markdown'
+        });
+        return;
+      }
+
+      // Display successful receipts
+      let resultText = `✅ **Processed ${successCount} of ${photoCount} receipts:**\n\n`;
+      
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        if (result.success) {
+          const data = result.data;
+          const date = new Date(data.date).toLocaleDateString();
+          resultText += `${result.index}. ${date} ${data.store_name} $${data.total.toFixed(2)}\n`;
+        }
+      }
+
+      if (successCount < photoCount) {
+        const failedCount = photoCount - successCount;
+        resultText += `\n⚠️ ${failedCount} receipt${failedCount > 1 ? 's' : ''} failed to process - please try uploading clearer images.`;
+      }
+
+      // Check for open projects
+      const openProjects = await this.expenseService.getOpenProjects(userId);
+      
+      if (openProjects.length > 0) {
+        // Show project selection
+        resultText += `\n\n**Where should I save ${successCount === 1 ? 'this receipt' : 'these receipts'}?**`;
+        
+        await bot.editMessageText(resultText, {
+          chat_id: chatId,
+          message_id: statusMsg.message_id,
+          parse_mode: 'Markdown'
+        });
+
+        // Create project selection keyboard
+        const projectKeyboard = [];
+        openProjects.forEach((project, index) => {
+          projectKeyboard.push([{ text: `${index + 1}️⃣ ${project.name}` }]);
+        });
+        projectKeyboard.push([{ text: `${openProjects.length + 1}️⃣ General Expenses (no project)` }]);
+
+        await bot.sendMessage(chatId, `**Choose project for all ${successCount} receipts:**`, {
+          parse_mode: 'Markdown',
+          reply_markup: {
+            keyboard: projectKeyboard,
+            one_time_keyboard: true,
+            resize_keyboard: true
+          }
+        });
+
+        // Set up conversation for project selection
+        this.conversationManager.startConversation(userId, 'multi_receipt_project_selection', {
+          results: results.filter(r => r.success),
+          openProjects: openProjects,
+          mediaGroupId: mediaGroupId
+        });
+
+      } else {
+        // No projects, save all to general expenses
+        await this.saveBatchReceipts(results.filter(r => r.success), userId, null);
+        
+        await bot.editMessageText(resultText + `\n\n✅ **All receipts saved to General Expenses!**`, {
+          chat_id: chatId,
+          message_id: statusMsg.message_id,
+          parse_mode: 'Markdown'
+        });
+
+        // Clean up
+        this.mediaGroups.delete(mediaGroupId);
+      }
+
+    } catch (error) {
+      console.error(`Error in batch processing for user ${userId}:`, error);
+      await bot.sendMessage(chatId, '❌ Error processing receipts. Please try again.');
+    }
+  }
+
+  /**
+   * Save batch of receipts to database
+   */
+  async saveBatchReceipts(successfulResults, userId, projectId) {
+    try {
+      for (const result of successfulResults) {
+        const receiptData = result.data;
+        
+        const expense = {
+          user_id: userId,
+          project_id: projectId,
+          date: receiptData.date,
+          store_name: receiptData.store_name,
+          category: receiptData.category || 'other',
+          total: receiptData.total,
+          description: receiptData.description || ''
+        };
+
+        await this.expenseService.addExpense(expense);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error saving batch receipts:', error);
+      return false;
     }
   }
 
@@ -551,6 +850,10 @@ Type the date or /cancel to stop:`;
         return this.handleOpenProjectFlow(userId, input, conversation);
       case 'project_selection':
         return this.handleProjectSelectionFlow(userId, input, conversation);
+      case 'multi_receipt_confirmation':
+        return this.handleMultiReceiptConfirmation(userId, input, conversation);
+      case 'multi_receipt_project_selection':
+        return this.handleMultiReceiptProjectSelection(userId, input, conversation);
       default:
         this.conversationManager.endConversation(userId);
         return '❌ Unknown conversation type. Please try again.';
@@ -899,6 +1202,169 @@ Your expense has been saved to the database! 💾`;
       this.conversationManager.endConversation(userId);
       return '❌ Sorry, there was an error saving your expense. Please try again.';
     }
+  }
+
+  /**
+   * Handle multi-receipt confirmation conversation
+   */
+  async handleMultiReceiptConfirmation(userId, input, conversation) {
+    const { mediaGroupId, photoCount } = conversation.data;
+    const bot = this.bots.get(userId)?.bot;
+    if (!bot) return '❌ Bot connection lost. Please try again.';
+
+    // Remove keyboard first
+    try {
+      await bot.editMessageReplyMarkup({ inline_keyboard: [] }, {
+        chat_id: conversation.data.chatId || userId,
+        message_id: conversation.data.confirmationMessageId
+      });
+    } catch (error) {
+      // Ignore keyboard removal errors
+    }
+
+    this.conversationManager.endConversation(userId);
+
+    if (input.trim() === '1') {
+      // User chose to proceed - start batch processing
+      if (conversation.data.isWebhook) {
+        await this.processWebhookBatchReceipts(mediaGroupId, userId);
+      } else {
+        await this.processBatchReceipts(mediaGroupId, userId);
+      }
+      return null; // Response handled in processing methods
+    } else if (input.trim() === '2') {
+      // User chose to cancel
+      this.mediaGroups.delete(mediaGroupId);
+      return `❌ **Processing Cancelled**
+
+Your ${photoCount} receipt photos were not processed. You can upload them again anytime!`;
+    } else {
+      // Invalid input - ask again
+      await bot.sendMessage(userId, `❌ Please choose:
+
+1️⃣ **Yes** - Process all ${photoCount} receipts
+2️⃣ **No** - Cancel processing`, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          keyboard: [
+            [{ text: '1' }, { text: '2' }]
+          ],
+          one_time_keyboard: true,
+          resize_keyboard: true
+        }
+      });
+
+      // Restart conversation
+      this.conversationManager.startConversation(userId, 'multi_receipt_confirmation', conversation.data);
+      return null;
+    }
+  }
+
+  /**
+   * Handle multi-receipt project selection conversation
+   */
+  async handleMultiReceiptProjectSelection(userId, input, conversation) {
+    const { results, openProjects, mediaGroupId } = conversation.data;
+    const bot = this.bots.get(userId)?.bot;
+    if (!bot) return '❌ Bot connection lost. Please try again.';
+
+    const selectionIndex = parseInt(input.trim()) - 1;
+    const totalOptions = openProjects.length + 1; // +1 for general expenses
+
+    if (isNaN(selectionIndex) || selectionIndex < 0 || selectionIndex >= totalOptions) {
+      // Invalid selection - show options again
+      const projectKeyboard = [];
+      openProjects.forEach((project, index) => {
+        projectKeyboard.push([{ text: `${index + 1}️⃣ ${project.name}` }]);
+      });
+      projectKeyboard.push([{ text: `${openProjects.length + 1}️⃣ General Expenses (no project)` }]);
+
+      await bot.sendMessage(userId, `❌ Invalid selection. Please choose a number from 1 to ${totalOptions}:
+
+**Choose project for all ${results.length} receipts:**`, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          keyboard: projectKeyboard,
+          one_time_keyboard: true,
+          resize_keyboard: true
+        }
+      });
+      return null;
+    }
+
+    // Remove keyboard
+    try {
+      await bot.editMessageReplyMarkup({ inline_keyboard: [] }, {
+        chat_id: userId
+      });
+    } catch (error) {
+      // Ignore keyboard removal errors
+    }
+
+    this.conversationManager.endConversation(userId);
+
+    try {
+      // Determine project selection
+      let selectedProjectId = null;
+      let selectedProjectName = 'General Expenses';
+      
+      if (selectionIndex < openProjects.length) {
+        // User selected a specific project
+        selectedProjectId = openProjects[selectionIndex].id;
+        selectedProjectName = openProjects[selectionIndex].name;
+      }
+      // else: User selected general expenses (projectId remains null)
+
+      // Save all receipts to the selected project
+      const success = await this.saveBatchReceipts(results, userId, selectedProjectId);
+
+      if (success) {
+        // Calculate total
+        const totalAmount = results.reduce((sum, result) => sum + result.data.total, 0);
+        
+        const successMessage = `✅ **All ${results.length} receipts saved successfully!**
+
+📁 **Project:** ${selectedProjectName}
+💰 **Total Amount:** $${totalAmount.toFixed(2)}
+
+**Receipts saved:**
+${results.map((result, index) => {
+          const data = result.data;
+          const date = new Date(data.date).toLocaleDateString();
+          return `${index + 1}. ${date} ${data.store_name} $${data.total.toFixed(2)}`;
+        }).join('\n')}
+
+All expenses have been saved to your database! 💾`;
+
+        if (conversation.data.isWebhook) {
+          await this.sendWebhookResponse(userId, userId, successMessage);
+        } else {
+          await bot.sendMessage(userId, successMessage, {
+            parse_mode: 'Markdown'
+          });
+        }
+
+      } else {
+        const errorMessage = '❌ Error saving receipts to database. Please try again.';
+        if (conversation.data.isWebhook) {
+          await this.sendWebhookResponse(userId, userId, errorMessage);
+        } else {
+          await bot.sendMessage(userId, errorMessage);
+        }
+      }
+
+      // Clean up media group
+      this.mediaGroups.delete(mediaGroupId);
+
+    } catch (error) {
+      console.error(`Error saving batch receipts for user ${userId}:`, error);
+      await bot.sendMessage(userId, '❌ Error saving receipts. Please try again.');
+      
+      // Clean up media group
+      this.mediaGroups.delete(mediaGroupId);
+    }
+
+    return null; // Response already sent via bot.sendMessage
   }
 
   /**
@@ -1794,9 +2260,15 @@ Your expense has been saved to the database\\! 💾`;
         return;
       }
 
-      // Validate single photo message
+      // Validate photo message
       if (!message.photo || message.photo.length === 0) {
         await this.sendWebhookResponse(userId, message.chat.id, '❌ No photo detected. Please send a clear receipt photo.');
+        return;
+      }
+
+      // Handle media group (multiple photos)
+      if (message.media_group_id) {
+        await this.handleWebhookMediaGroup(message, userId, config);
         return;
       }
 
@@ -1862,6 +2334,237 @@ Your expense has been saved to the database\\! 💾`;
       await this.logError(userId, error);
       
       await this.sendWebhookResponse(userId, message.chat.id, '❌ Sorry, I couldn\'t process this receipt. Please try again with a clearer photo.');
+    }
+  }
+
+  /**
+   * Handle webhook media group (multiple photos) with batch processing
+   */
+  async handleWebhookMediaGroup(message, userId, config) {
+    const { media_group_id } = message;
+
+    // Initialize or update media group collection
+    if (!this.mediaGroups.has(media_group_id)) {
+      this.mediaGroups.set(media_group_id, {
+        photos: [],
+        userId: userId,
+        config: config,
+        chatId: message.chat.id,
+        timeout: null,
+        isWebhook: true // Flag to identify webhook processing
+      });
+    }
+
+    const mediaGroup = this.mediaGroups.get(media_group_id);
+    mediaGroup.photos.push(message);
+
+    // Clear existing timeout and set new one
+    if (mediaGroup.timeout) {
+      clearTimeout(mediaGroup.timeout);
+    }
+
+    mediaGroup.timeout = setTimeout(async () => {
+      await this.processWebhookMediaGroup(media_group_id);
+    }, this.MEDIA_GROUP_TIMEOUT);
+  }
+
+  /**
+   * Process collected webhook media group photos
+   */
+  async processWebhookMediaGroup(mediaGroupId) {
+    const mediaGroup = this.mediaGroups.get(mediaGroupId);
+    if (!mediaGroup) return;
+
+    const { photos, userId, config, chatId } = mediaGroup;
+
+    try {
+      const photoCount = photos.length;
+
+      // Check if more than 5 photos - reject and ask to reupload
+      if (photoCount > 5) {
+        await this.sendWebhookResponse(userId, chatId, `📸 **Too Many Photos!**
+
+I can process up to **5 receipt photos** at once, but you sent ${photoCount} photos.
+
+📋 **Please:**
+• Choose the 5 most important receipts
+• Upload them again (up to 5 photos)
+• I'll process all 5 together
+
+💡 *Tip:* This helps ensure accurate AI processing and manage costs effectively.`);
+        
+        // Clean up
+        this.mediaGroups.delete(mediaGroupId);
+        return;
+      }
+
+      // Ask user for confirmation to proceed
+      const confirmationMsg = await this.sendWebhookResponse(userId, chatId, `📸 **${photoCount} Receipt Photos Detected!**
+
+Process all ${photoCount} receipts together?
+
+1️⃣ **Yes** - Process all ${photoCount} receipts
+2️⃣ **No** - Cancel processing
+
+⏱️ *I'll wait for your choice...*`);
+
+      // Set up conversation state for confirmation
+      this.conversationManager.startConversation(userId, 'multi_receipt_confirmation', {
+        mediaGroupId: mediaGroupId,
+        photoCount: photoCount,
+        confirmationMessageId: confirmationMsg.message_id,
+        chatId: chatId,
+        isWebhook: true
+      });
+
+    } catch (error) {
+      console.error(`Error processing webhook media group ${mediaGroupId}:`, error);
+      await this.sendWebhookResponse(userId, chatId, '❌ Error processing multiple photos. Please try uploading them again.');
+      
+      // Clean up
+      this.mediaGroups.delete(mediaGroupId);
+    }
+  }
+
+  /**
+   * Process webhook batch receipts (similar to regular batch processing but uses webhook responses)
+   */
+  async processWebhookBatchReceipts(mediaGroupId, userId) {
+    const mediaGroup = this.mediaGroups.get(mediaGroupId);
+    if (!mediaGroup) return;
+
+    const { photos, config, chatId } = mediaGroup;
+    const photoCount = photos.length;
+    const results = [];
+    let successCount = 0;
+
+    try {
+      // Processing status message
+      const statusMsg = await this.sendWebhookResponse(userId, chatId, `🤖 **Processing ${photoCount} receipts...** 
+
+Please wait while I analyze all photos with AI...`);
+
+      // Process each photo
+      for (let i = 0; i < photos.length; i++) {
+        const photoMsg = photos[i];
+        const photoNumber = i + 1;
+
+        try {
+          // Update status
+          await this.editWebhookMessage(userId, chatId, statusMsg.message_id, `🤖 **Processing Receipt ${photoNumber} of ${photoCount}...**
+
+📥 Analyzing with AI...`);
+
+          // Download photo
+          const photoData = photoMsg.photo;
+          const largestPhoto = photoData[photoData.length - 1];
+          
+          // Get bot token for file download
+          const botToken = decrypt(config.telegram_bot_token);
+          const fileResponse = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${largestPhoto.file_id}`);
+          const fileData = await fileResponse.json();
+          
+          if (!fileData.ok) {
+            throw new Error('Failed to get file info');
+          }
+          
+          // Download file as buffer
+          const fileUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
+          const photoResponse = await fetch(fileUrl);
+          const photoBuffer = await photoResponse.buffer();
+
+          // Process with AI
+          const receiptData = await this.receiptProcessor.processReceipt(photoBuffer, userId, config);
+          
+          if (receiptData && receiptData.store_name) {
+            results.push({
+              success: true,
+              data: receiptData,
+              index: photoNumber
+            });
+            successCount++;
+          } else {
+            results.push({
+              success: false,
+              error: 'Failed to extract receipt data',
+              index: photoNumber
+            });
+          }
+
+        } catch (error) {
+          console.error(`Error processing webhook receipt ${photoNumber}:`, error);
+          results.push({
+            success: false,
+            error: error.message || 'Unknown error',
+            index: photoNumber
+          });
+        }
+      }
+
+      // Show results to user
+      if (successCount === 0) {
+        await this.editWebhookMessage(userId, chatId, statusMsg.message_id, `❌ **Processing Failed**
+
+Sorry, I couldn't process any of the ${photoCount} receipt photos. Please try again with clearer images.`);
+        return;
+      }
+
+      // Display successful receipts
+      let resultText = `✅ **Processed ${successCount} of ${photoCount} receipts:**\n\n`;
+      
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        if (result.success) {
+          const data = result.data;
+          const date = new Date(data.date).toLocaleDateString();
+          resultText += `${result.index}. ${date} ${data.store_name} $${data.total.toFixed(2)}\n`;
+        }
+      }
+
+      if (successCount < photoCount) {
+        const failedCount = photoCount - successCount;
+        resultText += `\n⚠️ ${failedCount} receipt${failedCount > 1 ? 's' : ''} failed to process - please try uploading clearer images.`;
+      }
+
+      // Check for open projects
+      const openProjects = await this.expenseService.getOpenProjects(userId);
+      
+      if (openProjects.length > 0) {
+        // Show project selection
+        resultText += `\n\n**Where should I save ${successCount === 1 ? 'this receipt' : 'these receipts'}?**`;
+        
+        await this.editWebhookMessage(userId, chatId, statusMsg.message_id, resultText);
+
+        // Create project selection response
+        let projectText = `**Choose project for all ${successCount} receipts:**\n\n`;
+        openProjects.forEach((project, index) => {
+          projectText += `${index + 1}️⃣ ${project.name}\n`;
+        });
+        projectText += `${openProjects.length + 1}️⃣ General Expenses (no project)`;
+
+        await this.sendWebhookResponse(userId, chatId, projectText);
+
+        // Set up conversation for project selection
+        this.conversationManager.startConversation(userId, 'multi_receipt_project_selection', {
+          results: results.filter(r => r.success),
+          openProjects: openProjects,
+          mediaGroupId: mediaGroupId,
+          isWebhook: true
+        });
+
+      } else {
+        // No projects, save all to general expenses
+        await this.saveBatchReceipts(results.filter(r => r.success), userId, null);
+        
+        await this.editWebhookMessage(userId, chatId, statusMsg.message_id, resultText + `\n\n✅ **All receipts saved to General Expenses!**`);
+
+        // Clean up
+        this.mediaGroups.delete(mediaGroupId);
+      }
+
+    } catch (error) {
+      console.error(`Error in webhook batch processing for user ${userId}:`, error);
+      await this.sendWebhookResponse(userId, chatId, '❌ Error processing receipts. Please try again.');
     }
   }
 
