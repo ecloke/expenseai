@@ -16,7 +16,8 @@ import {
   HelpCircle,
   FolderOpen,
   Menu,
-  X
+  X,
+  Calculator
 } from 'lucide-react'
 import { createSupabaseClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
@@ -76,6 +77,12 @@ export default function Sidebar({ userConfig, botSession }: SidebarProps) {
       href: '/projects',
       icon: FolderOpen,
       current: pathname === '/projects'
+    },
+    {
+      name: 'Investment Calculator',
+      href: '/investment',
+      icon: Calculator,
+      current: pathname === '/investment'
     },
     {
       name: 'Tutorial',
