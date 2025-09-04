@@ -4,6 +4,7 @@ import './globals.css'
 import { Toaster } from '@/components/ui/toaster'
 import QueryProvider from '@/components/providers/QueryProvider'
 import ErrorBoundary from '@/components/error/ErrorBoundary'
+import { ThemeProvider } from '@/components/theme/ThemeProvider'
 // Temporarily commented out performance monitoring to debug
 // import { initPerformanceMonitoring } from '@/lib/performance'
 
@@ -29,14 +30,16 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <ErrorBoundary>
-          {/* <QueryProvider> */}
-            <div className="min-h-screen bg-gray-900">
-              {children}
-            </div>
-            <Toaster />
-          {/* </QueryProvider> */}
-        </ErrorBoundary>
+        <ThemeProvider defaultTheme="dark" storageKey="expense-tracker-theme">
+          <ErrorBoundary>
+            {/* <QueryProvider> */}
+              <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+                {children}
+              </div>
+              <Toaster />
+            {/* </QueryProvider> */}
+          </ErrorBoundary>
+        </ThemeProvider>
       </body>
     </html>
   )
