@@ -12,6 +12,7 @@ import analyticsRoutes from './routes/analytics.js';
 import healthRoutes from './routes/health.js';
 import projectRoutes from './routes/projects.js';
 import webhookRoutes from './routes/webhook.js';
+import fortuneRoutes from './routes/fortune.js';
 
 // Import services
 import BotManager from './services/BotManager.js';
@@ -84,6 +85,7 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/health', healthRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/webhook', webhookRoutes);
+app.use('/api/fortune', fortuneRoutes);
 
 // Test endpoints for validation
 app.use('/api/test', (req, res) => {

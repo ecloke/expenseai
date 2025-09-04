@@ -400,7 +400,49 @@ export class AuthAPI {
   }
 }
 
+/**
+ * HTTP Client for backend API endpoints
+ */
+class HTTPClient {
+  private baseUrl: string
+
+  constructor() {
+    this.baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
+  }
+
+  async post(endpoint: string, data: any) {
+    const response = await fetch(`${this.baseUrl}/api${endpoint}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data)
+    })
+
+    const result = await response.json()
+    
+    if (!response.ok) {
+      throw new Error(result.error || 'API request failed')
+    }
+
+    return result
+  }
+
+  async get(endpoint: string) {
+    const response = await fetch(`${this.baseUrl}/api${endpoint}`)
+    
+    const result = await response.json()
+    
+    if (!response.ok) {
+      throw new Error(result.error || 'API request failed')
+    }
+
+    return result
+  }
+}
+
 // Export singleton instances
 export const expenseAPI = new ExpenseAPI()
 export const projectAPI = new ProjectAPI()
 export const authAPI = new AuthAPI()
+export const apiClient = new HTTPClient()
