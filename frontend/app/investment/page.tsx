@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Calculator, TrendingUp, BarChart3 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface InvestmentResult {
   year: number;
@@ -121,8 +120,8 @@ export default function InvestmentCalculator() {
   };
 
   return (
-    <DashboardLayout>
-      <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8 pt-16 lg:pt-0">
+    <div className="min-h-screen bg-gray-900 py-8 px-4">
+      <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white mb-2 flex items-center justify-center gap-3">
             <Calculator className="h-8 w-8 text-blue-400" />
@@ -403,6 +402,6 @@ export default function InvestmentCalculator() {
           </Card>
         )}
       </div>
-    </DashboardLayout>
+    </div>
   );
 }
