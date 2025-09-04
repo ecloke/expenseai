@@ -233,10 +233,20 @@ export default function InvestmentCalculator() {
                   </p>
                 </div>
 
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
+                  <p className="text-sm text-blue-700 dark:text-blue-300 mb-2 font-medium">
+                    💡 Investment Tip
+                  </p>
+                  <p className="text-sm text-blue-600 dark:text-blue-400 leading-relaxed">
+                    This amount represents your total monthly investment needed. If you have EPF or other retirement contributions, 
+                    subtract those amounts to find your additional personal investment required.
+                  </p>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-gray-600 dark:text-gray-400">Total Contributions</p>
-                    <p className="font-semibold">
+                    <p className="font-semibold text-gray-900 dark:text-gray-100">
                       {formatCurrency(monthlyContribution * parseInt(inputs.years) * 12 + parseFloat(inputs.startingAmount))}
                     </p>
                   </div>
@@ -247,6 +257,35 @@ export default function InvestmentCalculator() {
                         formatCurrency(parseFloat(inputs.targetAmount) - (monthlyContribution * parseInt(inputs.years) * 12 + parseFloat(inputs.startingAmount)))
                       }
                     </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          {/* Guidance when no results yet */}
+          {monthlyContribution === null && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-gray-400" />
+                  Getting Started
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <Calculator className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    Enter your investment parameters to calculate your monthly contribution goal
+                  </p>
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg text-left">
+                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-2 font-medium">💡 Quick Tips:</p>
+                    <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                      <li>• Set realistic target amounts based on your goals</li>
+                      <li>• Consider historical market returns (typically 6-8% annually)</li>
+                      <li>• Factor in inflation when setting long-term targets</li>
+                      <li>• Start with what you can afford and increase over time</li>
+                    </ul>
                   </div>
                 </div>
               </CardContent>
