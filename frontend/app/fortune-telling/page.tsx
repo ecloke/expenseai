@@ -250,10 +250,10 @@ export default function FortuneTelling() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Input Form */}
+          <div className="flex justify-center">
+            {/* Centered Input Form */}
             {!fortune && (
-              <Card className="bg-gradient-to-br from-red-800/80 to-yellow-800/60 border-2 border-yellow-500/50 shadow-2xl backdrop-blur-sm">
+              <Card className="w-full max-w-2xl bg-gradient-to-br from-red-800/90 to-yellow-800/70 border-2 border-yellow-400/70 shadow-2xl backdrop-blur-sm">
                 <CardHeader className="text-center">
                   <CardTitle className="text-2xl text-yellow-300 font-serif flex items-center justify-center gap-3">
                     <Calendar className="h-6 w-6" />
@@ -352,46 +352,11 @@ export default function FortuneTelling() {
               </Card>
             )}
 
-            {/* Guidance Card - When no results yet */}
-            {!fortune && !isLoading && (
-              <Card className="bg-gradient-to-br from-yellow-800/60 to-red-800/80 border-2 border-red-500/50 shadow-2xl backdrop-blur-sm">
-                <CardHeader className="text-center">
-                  <CardTitle className="text-2xl text-red-200 font-serif flex items-center justify-center gap-3">
-                    <Zap className="h-6 w-6 text-yellow-400" />
-                    Ancient Wisdom Awaits
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-6">
-                    <div className="mb-6">
-                      <div className="w-24 h-24 mx-auto bg-gradient-to-br from-yellow-400 to-red-500 rounded-full flex items-center justify-center animate-pulse">
-                        <Sparkles className="h-12 w-12 text-red-900" />
-                      </div>
-                    </div>
-                    <p className="text-yellow-200 mb-6 leading-relaxed">
-                      The cosmic energies are aligned and ready to reveal your destiny. 
-                      Provide your birth details to unlock the secrets written in the stars.
-                    </p>
-                    <div className="bg-red-900/50 p-4 rounded-lg border border-yellow-500/30">
-                      <p className="text-yellow-300 text-sm mb-2 font-semibold">✨ Your Reading Will Include:</p>
-                      <ul className="text-red-200 text-sm space-y-1 text-left">
-                        <li>• Personality & Core Traits Analysis</li>
-                        <li>• Career Path Guidance</li>
-                        <li>• Wealth & Financial Outlook</li>
-                        <li>• Relationships & Family Destiny</li>
-                        <li>• Health Tendencies & Warnings</li>
-                        <li>• Key Life Periods & Turning Points</li>
-                        <li>• Practical Wisdom for Your Journey</li>
-                      </ul>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+          </div>
 
-            {/* Fortune Results */}
+            {/* Fortune Results - Full Width */}
             {fortune && (
-              <div className="lg:col-span-2">
+              <div className="mt-12">
                 <FortuneScroll fortune={fortune} onTryAgain={handleTryAgain} canTryAgain={canUseFortuneTelling} />
               </div>
             )}
@@ -403,66 +368,95 @@ export default function FortuneTelling() {
   );
 }
 
-// Interactive Loading Component
+// Oriental Loading Bar Component
 function MysticalLoadingState() {
+  const [progress, setProgress] = useState(0);
   const [loadingText, setLoadingText] = useState(0);
   const messages = [
     "正在连接天庭... Connecting to Heaven...",
-    "神谕降临中... Divine Oracle Descending...",
+    "神谕降临中... Divine Oracle Descending...", 
     "星象对齐中... Aligning the Stars...",
     "解析命运... Decoding Your Destiny...",
     "天机即将显现... Celestial Secrets Revealing..."
   ];
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    // Progress bar animation
+    const progressInterval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 100) return 100;
+        return prev + 2;
+      });
+    }, 80);
+
+    // Text rotation
+    const textInterval = setInterval(() => {
       setLoadingText((prev) => (prev + 1) % messages.length);
-    }, 800);
-    return () => clearInterval(interval);
+    }, 1200);
+
+    return () => {
+      clearInterval(progressInterval);
+      clearInterval(textInterval);
+    };
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center gap-6 py-8 relative z-10">
-      {/* Animated Oracle Circle */}
-      <div className="relative w-20 h-20">
-        <div className="absolute inset-0 border-4 border-red-300 border-t-yellow-400 rounded-full animate-spin"></div>
-        <div className="absolute inset-2 border-3 border-yellow-300 border-b-red-400 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
-        <div className="absolute inset-4 border-2 border-red-400 border-l-yellow-300 rounded-full animate-spin" style={{ animationDuration: '0.8s' }}></div>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Sparkles className="h-8 w-8 text-yellow-400 animate-pulse" />
+    <div className="flex flex-col items-center justify-center gap-8 py-12 relative z-10">
+      {/* Oriental Loading Bar */}
+      <div className="w-full max-w-md">
+        {/* Decorative Dragons */}
+        <div className="flex justify-between items-center mb-4">
+          <div className="text-yellow-400 text-2xl animate-pulse">🐲</div>
+          <div className="text-yellow-400 text-2xl animate-pulse" style={{ animationDelay: '0.5s' }}>🐲</div>
         </div>
-      </div>
-
-      {/* Dynamic Loading Text */}
-      <div className="text-center">
-        <p className="text-yellow-200 font-medium text-lg animate-pulse mb-2">
-          {messages[loadingText]}
-        </p>
-        <div className="flex justify-center gap-1">
+        
+        {/* Progress Bar Container */}
+        <div className="relative bg-red-900/30 rounded-full h-4 border-2 border-yellow-500/50 overflow-hidden">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 bg-gradient-to-r from-red-800/20 via-yellow-800/20 to-red-800/20"></div>
+          
+          {/* Progress Fill */}
+          <div 
+            className="h-full bg-gradient-to-r from-yellow-500 via-red-500 to-yellow-600 transition-all duration-200 ease-out relative overflow-hidden"
+            style={{ width: `${progress}%` }}
+          >
+            {/* Shimmer Effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12 animate-shimmer"></div>
+          </div>
+          
+          {/* Decorative Elements */}
+          <div className="absolute inset-0 flex justify-center items-center">
+            <div className="text-yellow-300 text-xs font-bold drop-shadow">{Math.round(progress)}%</div>
+          </div>
+        </div>
+        
+        {/* Mystical Orbs */}
+        <div className="flex justify-center gap-4 mt-4">
           {[0, 1, 2].map((i) => (
             <div
               key={i}
-              className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce"
-              style={{ animationDelay: `${i * 0.2}s` }}
+              className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse"
+              style={{ animationDelay: `${i * 0.3}s` }}
             />
           ))}
         </div>
       </div>
 
-      {/* Mystical Elements */}
+      {/* Loading Message */}
+      <div className="text-center">
+        <p className="text-yellow-200 font-medium text-lg mb-2">
+          {messages[loadingText]}
+        </p>
+        <p className="text-red-200 text-sm opacity-80">
+          请耐心等候，神谕正在显现... Please wait patiently...
+        </p>
+      </div>
+
+      {/* Floating Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-yellow-300 rounded-full animate-ping"
-            style={{
-              top: `${20 + Math.random() * 60}%`,
-              left: `${20 + Math.random() * 60}%`,
-              animationDelay: `${Math.random() * 2}s`,
-              animationDuration: `${1 + Math.random() * 2}s`
-            }}
-          />
-        ))}
+        <Sparkles className="absolute top-4 right-8 h-5 w-5 text-yellow-400 animate-ping" />
+        <Star className="absolute bottom-8 left-12 h-4 w-4 text-red-400 animate-pulse" />
+        <Zap className="absolute top-12 left-6 h-6 w-6 text-yellow-300 animate-bounce" />
       </div>
     </div>
   );
@@ -476,13 +470,13 @@ interface FortuneScrollProps {
 
 function FortuneScroll({ fortune, onTryAgain, canTryAgain }: FortuneScrollProps) {
   const sections = [
-    { key: 'personality', title: '性格特质', subtitle: 'Personality & Core Traits', icon: Star, content: fortune.personality, color: 'from-red-600 to-pink-500' },
-    { key: 'career', title: '事业前程', subtitle: 'Career Path & Success', icon: Zap, content: fortune.career, color: 'from-yellow-600 to-orange-500' },
-    { key: 'wealth', title: '财运机遇', subtitle: 'Wealth & Financial Fortune', icon: Sparkles, content: fortune.wealth, color: 'from-green-600 to-emerald-500' },
-    { key: 'relationships', title: '情感姻缘', subtitle: 'Love & Relationships', icon: Star, content: fortune.relationships, color: 'from-purple-600 to-violet-500' },
-    { key: 'health', title: '健康运势', subtitle: 'Health & Vitality', icon: Zap, content: fortune.health, color: 'from-blue-600 to-cyan-500' },
-    { key: 'lifePeriods', title: '人生转机', subtitle: 'Life Turning Points', icon: Sparkles, content: fortune.lifePeriods, color: 'from-indigo-600 to-purple-500' },
-    { key: 'advice', title: '神谕指引', subtitle: 'Divine Guidance & Wisdom', icon: Star, content: fortune.advice, color: 'from-amber-600 to-yellow-500' }
+    { key: 'personality', title: '性格特质', subtitle: 'Personality & Core Traits', icon: Star, content: fortune.personality },
+    { key: 'career', title: '事业前程', subtitle: 'Career Path & Success', icon: Zap, content: fortune.career },
+    { key: 'wealth', title: '财运机遇', subtitle: 'Wealth & Financial Fortune', icon: Sparkles, content: fortune.wealth },
+    { key: 'relationships', title: '情感姻缘', subtitle: 'Love & Relationships', icon: Star, content: fortune.relationships },
+    { key: 'health', title: '健康运势', subtitle: 'Health & Vitality', icon: Zap, content: fortune.health },
+    { key: 'lifePeriods', title: '人生转机', subtitle: 'Life Turning Points', icon: Sparkles, content: fortune.lifePeriods },
+    { key: 'advice', title: '神谕指引', subtitle: 'Divine Guidance & Wisdom', icon: Star, content: fortune.advice }
   ];
 
   const cleanContent = (content: string) => {
@@ -502,11 +496,11 @@ function FortuneScroll({ fortune, onTryAgain, canTryAgain }: FortuneScrollProps)
       if (paragraph.includes('• ')) {
         const items = paragraph.split('• ').filter(item => item.trim());
         return (
-          <div key={idx} className="space-y-3 mb-4">
+          <div key={idx} className="space-y-3 mb-6">
             {items.map((item, itemIdx) => (
-              <div key={itemIdx} className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-gradient-to-r from-red-500 to-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
-                <p className="text-gray-800 text-base md:text-lg leading-relaxed">{item.trim()}</p>
+              <div key={itemIdx} className="flex items-start gap-4">
+                <div className="w-2 h-2 bg-red-600 rounded-full mt-3 flex-shrink-0"></div>
+                <p className="text-red-900 text-lg md:text-xl leading-relaxed font-medium">{item.trim()}</p>
               </div>
             ))}
           </div>
@@ -514,7 +508,7 @@ function FortuneScroll({ fortune, onTryAgain, canTryAgain }: FortuneScrollProps)
       }
       
       return (
-        <p key={idx} className="text-gray-800 text-base md:text-lg leading-relaxed mb-4">
+        <p key={idx} className="text-red-900 text-lg md:text-xl leading-relaxed mb-6 font-medium">
           {paragraph}
         </p>
       );
@@ -522,107 +516,122 @@ function FortuneScroll({ fortune, onTryAgain, canTryAgain }: FortuneScrollProps)
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      {/* Mystical Header */}
-      <div className="text-center mb-8 px-4">
-        <div className="relative inline-block">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold bg-gradient-to-r from-red-600 via-yellow-500 to-red-600 bg-clip-text text-transparent mb-2">
-            天命神谕
-          </h2>
-          <h3 className="text-xl md:text-2xl lg:text-3xl text-yellow-600 font-serif">
-            Your Celestial Destiny
-          </h3>
-          <div className="absolute -top-2 -right-2">
-            <Sparkles className="h-4 w-4 md:h-6 md:w-6 text-yellow-400 animate-pulse" />
-          </div>
-          <div className="absolute -bottom-2 -left-2">
-            <Star className="h-3 w-3 md:h-4 md:w-4 text-red-400 animate-ping" />
-          </div>
-        </div>
-        <div className="mt-4 w-24 md:w-32 h-1 bg-gradient-to-r from-red-500 via-yellow-400 to-red-500 mx-auto rounded-full"></div>
-      </div>
-
-      {/* Scrollable Fortune Sections */}
-      <div className="space-y-6 px-4">
-        {sections.map((section, index) => {
-          if (!section.content) return null;
-          
-          const Icon = section.icon;
-          
-          return (
-            <div key={section.key} className="mb-8">
-              {/* Section Header */}
-              <div className="flex items-center gap-3 mb-6">
-                <div className={`bg-gradient-to-r ${section.color} p-3 rounded-full shadow-lg flex-shrink-0`}>
-                  <Icon className="h-5 w-5 md:h-6 md:w-6 text-white" />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-xl md:text-2xl font-serif font-bold text-red-800 mb-1">
-                    {section.title}
-                  </h3>
-                  <p className="text-red-600 text-sm md:text-base opacity-90">
-                    {section.subtitle}
-                  </p>
-                </div>
-              </div>
-              
-              {/* Section Content - Always Visible, No Clicking Required */}
-              <div className="bg-gradient-to-br from-white/95 to-yellow-50/90 rounded-xl p-4 md:p-6 border-l-4 border-red-500 shadow-lg mb-8">
-                <div className="space-y-4">
-                  {formatContent(section.content)}
-                </div>
-              </div>
-              
-              {/* Decorative Divider */}
-              {index < sections.filter(s => s.content).length - 1 && (
-                <div className="flex justify-center my-8">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-0.5 bg-gradient-to-r from-transparent to-red-400"></div>
-                    <div className="text-red-400">✦</div>
-                    <div className="w-8 h-0.5 bg-gradient-to-r from-red-400 to-transparent"></div>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Action Footer */}
-      <div className="bg-gradient-to-r from-red-800/95 to-yellow-800/95 rounded-xl border-2 border-yellow-400 shadow-xl relative overflow-hidden mx-4 mt-8">
-        {/* Mystical Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-red-900/20 to-yellow-900/20"></div>
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-400 via-yellow-300 to-red-400"></div>
-        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-red-400 via-yellow-300 to-red-400"></div>
+    <div className="w-full max-w-5xl mx-auto px-4">
+      {/* Oriental Scroll Container */}
+      <div className="relative bg-gradient-to-br from-yellow-100 via-amber-50 to-yellow-100 border-8 border-amber-600 rounded-3xl shadow-2xl overflow-hidden">
+        {/* Decorative Oriental Border Pattern */}
+        <div className="absolute inset-0 border-4 border-red-700 rounded-2xl m-2"></div>
+        <div className="absolute top-4 left-4 right-4 h-2 bg-gradient-to-r from-red-600 via-yellow-500 to-red-600 rounded-full"></div>
+        <div className="absolute bottom-4 left-4 right-4 h-2 bg-gradient-to-r from-red-600 via-yellow-500 to-red-600 rounded-full"></div>
         
-        <div className="text-center py-6 md:py-8 px-4 relative z-10">
-          <div className="mb-4 md:mb-6">
-            <h4 className="text-lg md:text-xl font-serif text-yellow-200 mb-2">
-              愿此神谕指引您的人生之路
-            </h4>
-            <p className="text-red-200 text-sm md:text-base opacity-90">
-              May this divine reading guide your life's journey
-            </p>
-          </div>
+        {/* Corner Decorations - Responsive */}
+        <div className="absolute top-4 left-4 md:top-6 md:left-6 text-xl md:text-3xl text-red-600">🐲</div>
+        <div className="absolute top-4 right-4 md:top-6 md:right-6 text-xl md:text-3xl text-red-600">🐲</div>
+        <div className="absolute bottom-4 left-4 md:bottom-6 md:left-6 text-xl md:text-3xl text-red-600">🐉</div>
+        <div className="absolute bottom-4 right-4 md:bottom-6 md:right-6 text-xl md:text-3xl text-red-600">🐉</div>
+        
+        {/* Main Content Area */}
+        <div className="relative z-10 p-4 md:p-8 lg:p-12 pt-12 md:pt-16 pb-12 md:pb-16">
           
-          <Button 
-            onClick={onTryAgain}
-            disabled={!canTryAgain}
-            className="bg-gradient-to-r from-yellow-500 to-red-500 hover:from-yellow-400 hover:to-red-400 text-red-900 font-bold px-6 md:px-8 py-3 md:py-4 text-base md:text-lg disabled:opacity-50 disabled:cursor-not-allowed border-2 border-yellow-300 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:scale-105 relative overflow-hidden w-full max-w-sm"
-          >
-            {/* Shimmer effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12 animate-shimmer"></div>
+          {/* Scroll Header with High Contrast */}
+          <div className="text-center mb-12">
+            <div className="bg-red-800 text-white px-8 py-4 rounded-full inline-block shadow-lg mb-6">
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-serif font-bold">
+                天命神谕
+              </h2>
+            </div>
+            <div className="bg-amber-600 text-white px-6 py-2 rounded-full inline-block shadow-md">
+              <h3 className="text-lg md:text-xl lg:text-2xl font-serif">
+                Your Celestial Destiny
+              </h3>
+            </div>
             
-            {canTryAgain ? (
-              <div className="flex items-center justify-center gap-2 md:gap-3 relative z-10">
-                <Sparkles className="h-4 w-4 md:h-5 md:w-5" />
-                <span className="text-sm md:text-base">再求一卦 • Seek Another Reading</span>
-                <Star className="h-4 w-4 md:h-5 md:w-5" />
+            {/* Decorative Elements */}
+            <div className="flex justify-center gap-4 mt-6">
+              <Star className="h-6 w-6 text-red-600 animate-pulse" />
+              <Sparkles className="h-8 w-8 text-amber-600 animate-bounce" />
+              <Star className="h-6 w-6 text-red-600 animate-pulse" />
+            </div>
+          </div>
+
+          {/* Fortune Content Sections */}
+          <div className="space-y-12">
+            {sections.map((section, index) => {
+              if (!section.content) return null;
+              
+              const Icon = section.icon;
+              
+              return (
+                <div key={section.key}>
+                  {/* Section Header */}
+                  <div className="flex items-center justify-center gap-4 mb-8">
+                    <div className="bg-red-600 p-3 rounded-full shadow-lg">
+                      <Icon className="h-6 w-6 md:h-8 md:w-8 text-white" />
+                    </div>
+                    <div className="text-center">
+                      <h3 className="text-2xl md:text-3xl font-serif font-bold text-red-800 mb-1">
+                        {section.title}
+                      </h3>
+                      <p className="text-amber-700 text-base md:text-lg font-medium">
+                        {section.subtitle}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Section Content with High Contrast */}
+                  <div className="bg-white/95 rounded-2xl p-4 md:p-6 lg:p-8 shadow-lg border-2 border-amber-300">
+                    <div className="space-y-4">
+                      {formatContent(section.content)}
+                    </div>
+                  </div>
+                  
+                  {/* Decorative Divider */}
+                  {index < sections.filter(s => s.content).length - 1 && (
+                    <div className="flex justify-center my-12">
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-1 bg-gradient-to-r from-transparent to-red-500"></div>
+                        <div className="text-red-600 text-2xl">❋</div>
+                        <div className="w-16 h-1 bg-gradient-to-r from-red-500 to-transparent"></div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Action Footer */}
+          <div className="text-center mt-16">
+            <div className="bg-red-800 text-white px-8 py-6 rounded-2xl shadow-xl inline-block">
+              <div className="mb-4">
+                <h4 className="text-xl md:text-2xl font-serif mb-2">
+                  愿此神谕指引您的人生之路
+                </h4>
+                <p className="text-red-200 text-base md:text-lg opacity-90">
+                  May this divine reading guide your life's journey
+                </p>
               </div>
-            ) : (
-              <span className="relative z-10 text-sm md:text-base">今日已达上限 • Daily Limit Reached</span>
-            )}
-          </Button>
+              
+              <Button 
+                onClick={onTryAgain}
+                disabled={!canTryAgain}
+                className="bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-red-900 font-bold px-8 py-4 text-lg disabled:opacity-50 disabled:cursor-not-allowed border-2 border-yellow-300 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:scale-105 relative overflow-hidden"
+              >
+                {/* Shimmer effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12 animate-shimmer"></div>
+                
+                {canTryAgain ? (
+                  <div className="flex items-center justify-center gap-3 relative z-10">
+                    <Sparkles className="h-5 w-5" />
+                    <span>再求一卦 • Seek Another Reading</span>
+                    <Star className="h-5 w-5" />
+                  </div>
+                ) : (
+                  <span className="relative z-10">今日已达上限 • Daily Limit Reached</span>
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
