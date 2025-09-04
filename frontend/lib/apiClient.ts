@@ -407,7 +407,7 @@ class HTTPClient {
   private baseUrl: string
 
   constructor() {
-    this.baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
+    this.baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://expenseai-production.up.railway.app'
   }
 
   async post(endpoint: string, data: any) {
