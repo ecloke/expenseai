@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Calculator, TrendingUp, BarChart3 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface InvestmentResult {
   year: number;
@@ -120,30 +121,30 @@ export default function InvestmentCalculator() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4">
-      <div className="max-w-6xl mx-auto">
+    <DashboardLayout>
+      <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8 pt-16 lg:pt-0">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center justify-center gap-3">
-            <Calculator className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+          <h1 className="text-3xl font-bold text-white mb-2 flex items-center justify-center gap-3">
+            <Calculator className="h-8 w-8 text-blue-400" />
             Investment Calculator
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-gray-400">
             Calculate how much you need to invest monthly to reach your financial goals
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Input Form */}
-          <Card>
+          <Card className="bg-gray-800 border-gray-700">
             <CardHeader>
-              <CardTitle>Investment Parameters</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-white">Investment Parameters</CardTitle>
+              <CardDescription className="text-gray-400">
                 Enter your financial goals and timeline
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="targetAmount">Target Amount ($)</Label>
+                <Label htmlFor="targetAmount" className="text-gray-300">Target Amount ($)</Label>
                 <Input
                   id="targetAmount"
                   type="number"
@@ -158,7 +159,7 @@ export default function InvestmentCalculator() {
               </div>
 
               <div>
-                <Label htmlFor="startingAmount">Starting Amount ($)</Label>
+                <Label htmlFor="startingAmount" className="text-gray-300">Starting Amount ($)</Label>
                 <Input
                   id="startingAmount"
                   type="number"
@@ -173,7 +174,7 @@ export default function InvestmentCalculator() {
               </div>
 
               <div>
-                <Label htmlFor="years">Time Period (Years)</Label>
+                <Label htmlFor="years" className="text-gray-300">Time Period (Years)</Label>
                 <Input
                   id="years"
                   type="number"
@@ -188,7 +189,7 @@ export default function InvestmentCalculator() {
               </div>
 
               <div>
-                <Label htmlFor="returnRate">Expected Annual Return Rate (%)</Label>
+                <Label htmlFor="returnRate" className="text-gray-300">Expected Annual Return Rate (%)</Label>
                 <Input
                   id="returnRate"
                   type="number"
@@ -216,43 +217,43 @@ export default function InvestmentCalculator() {
 
           {/* Results */}
           {monthlyContribution !== null && (
-            <Card>
+            <Card className="bg-gray-800 border-gray-700">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <TrendingUp className="h-5 w-5 text-green-400" />
                   Results
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg mb-4">
-                  <p className="text-sm text-green-700 dark:text-green-300 mb-1">
+                <div className="bg-green-900/20 p-4 rounded-lg mb-4">
+                  <p className="text-sm text-green-300 mb-1">
                     Required Monthly Contribution
                   </p>
-                  <p className="text-2xl font-bold text-green-800 dark:text-green-200">
+                  <p className="text-2xl font-bold text-green-200">
                     {formatCurrency(monthlyContribution)}
                   </p>
                 </div>
 
-                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
-                  <p className="text-sm text-blue-700 dark:text-blue-300 mb-2 font-medium">
+                <div className="bg-blue-900/20 p-4 rounded-lg mb-4">
+                  <p className="text-sm text-blue-300 mb-2 font-medium">
                     💡 Investment Tip
                   </p>
-                  <p className="text-sm text-blue-600 dark:text-blue-400 leading-relaxed">
+                  <p className="text-sm text-blue-400 leading-relaxed">
                     This amount represents your total monthly investment needed. If you have EPF or other retirement contributions, 
-                    subtract those amounts to find your additional personal investment required.
+                    subtract those amounts to calculate your exact required contribution.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-gray-600 dark:text-gray-400">Total Contributions</p>
-                    <p className="font-semibold text-gray-900 dark:text-gray-100">
+                    <p className="text-gray-400">Total Contributions</p>
+                    <p className="font-semibold text-gray-100">
                       {formatCurrency(monthlyContribution * parseInt(inputs.years) * 12 + parseFloat(inputs.startingAmount))}
                     </p>
                   </div>
                   <div>
-                    <p className="text-gray-600 dark:text-gray-400">Total Interest Earned</p>
-                    <p className="font-semibold text-green-600 dark:text-green-400">
+                    <p className="text-gray-400">Total Interest Earned</p>
+                    <p className="font-semibold text-green-400">
                       {yearlyBreakdown.length > 0 && 
                         formatCurrency(parseFloat(inputs.targetAmount) - (monthlyContribution * parseInt(inputs.years) * 12 + parseFloat(inputs.startingAmount)))
                       }
@@ -265,9 +266,9 @@ export default function InvestmentCalculator() {
           
           {/* Guidance when no results yet */}
           {monthlyContribution === null && (
-            <Card>
+            <Card className="bg-gray-800 border-gray-700">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-white">
                   <TrendingUp className="h-5 w-5 text-gray-400" />
                   Getting Started
                 </CardTitle>
@@ -275,12 +276,12 @@ export default function InvestmentCalculator() {
               <CardContent>
                 <div className="text-center py-8">
                   <Calculator className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  <p className="text-gray-400 mb-4">
                     Enter your investment parameters to calculate your monthly contribution goal
                   </p>
-                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg text-left">
-                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-2 font-medium">💡 Quick Tips:</p>
-                    <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                  <div className="bg-gray-700 p-4 rounded-lg text-left">
+                    <p className="text-sm text-gray-300 mb-2 font-medium">💡 Quick Tips:</p>
+                    <ul className="text-sm text-gray-400 space-y-1">
                       <li>• Set realistic target amounts based on your goals</li>
                       <li>• Consider historical market returns (typically 6-8% annually)</li>
                       <li>• Factor in inflation when setting long-term targets</li>
@@ -295,13 +296,13 @@ export default function InvestmentCalculator() {
 
         {/* Investment Growth Chart */}
         {yearlyBreakdown.length > 0 && (
-          <Card className="mt-8">
+          <Card className="mt-8 bg-gray-800 border-gray-700">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <CardTitle className="flex items-center gap-2 text-white">
+                <BarChart3 className="h-5 w-5 text-blue-400" />
                 Investment Growth Over Time
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-gray-400">
                 Visualize how your investment will grow year by year
               </CardDescription>
             </CardHeader>
@@ -362,10 +363,10 @@ export default function InvestmentCalculator() {
 
         {/* Yearly Breakdown Table */}
         {yearlyBreakdown.length > 0 && (
-          <Card className="mt-8">
+          <Card className="mt-8 bg-gray-800 border-gray-700">
             <CardHeader>
-              <CardTitle>Yearly Breakdown</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-white">Yearly Breakdown</CardTitle>
+              <CardDescription className="text-gray-400">
                 Detailed year-by-year growth of your investment
               </CardDescription>
             </CardHeader>
@@ -384,13 +385,13 @@ export default function InvestmentCalculator() {
                   <TableBody>
                     {yearlyBreakdown.map((row) => (
                       <TableRow key={row.year}>
-                        <TableCell className="font-medium">{row.year}</TableCell>
-                        <TableCell>{formatCurrency(row.startingBalance)}</TableCell>
-                        <TableCell>{formatCurrency(row.monthlyContributions)}</TableCell>
-                        <TableCell className="text-green-600 dark:text-green-400">
+                        <TableCell className="font-medium text-gray-300">{row.year}</TableCell>
+                        <TableCell className="text-gray-300">{formatCurrency(row.startingBalance)}</TableCell>
+                        <TableCell className="text-gray-300">{formatCurrency(row.monthlyContributions)}</TableCell>
+                        <TableCell className="text-green-400">
                           {formatCurrency(row.interestEarned)}
                         </TableCell>
-                        <TableCell className="font-semibold">
+                        <TableCell className="font-semibold text-white">
                           {formatCurrency(row.endingBalance)}
                         </TableCell>
                       </TableRow>
@@ -402,6 +403,6 @@ export default function InvestmentCalculator() {
           </Card>
         )}
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
