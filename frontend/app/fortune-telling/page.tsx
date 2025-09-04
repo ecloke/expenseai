@@ -417,85 +417,180 @@ interface FortuneScrollProps {
 }
 
 function FortuneScroll({ fortune, onTryAgain, canTryAgain }: FortuneScrollProps) {
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+
   const sections = [
-    { key: 'personality', title: '性格 Personality & Core Traits', icon: Star, content: fortune.personality },
-    { key: 'career', title: '事业 Career Path', icon: Zap, content: fortune.career },
-    { key: 'wealth', title: '财富 Wealth & Financial Outlook', icon: Sparkles, content: fortune.wealth },
-    { key: 'relationships', title: '关系 Relationships & Family', icon: Star, content: fortune.relationships },
-    { key: 'health', title: '健康 Health Tendencies', icon: Zap, content: fortune.health },
-    { key: 'lifePeriods', title: '转机 Key Life Periods', icon: Sparkles, content: fortune.lifePeriods },
-    { key: 'advice', title: '忠告 Practical Advice', icon: Star, content: fortune.advice }
+    { key: 'personality', title: '性格特质', subtitle: 'Personality & Core Traits', icon: Star, content: fortune.personality, color: 'from-red-600 to-pink-500', bgColor: 'from-red-50 to-pink-50' },
+    { key: 'career', title: '事业前程', subtitle: 'Career Path & Success', icon: Zap, content: fortune.career, color: 'from-yellow-600 to-orange-500', bgColor: 'from-yellow-50 to-orange-50' },
+    { key: 'wealth', title: '财运机遇', subtitle: 'Wealth & Financial Fortune', icon: Sparkles, content: fortune.wealth, color: 'from-green-600 to-emerald-500', bgColor: 'from-green-50 to-emerald-50' },
+    { key: 'relationships', title: '情感姻缘', subtitle: 'Love & Relationships', icon: Star, content: fortune.relationships, color: 'from-purple-600 to-violet-500', bgColor: 'from-purple-50 to-violet-50' },
+    { key: 'health', title: '健康运势', subtitle: 'Health & Vitality', icon: Zap, content: fortune.health, color: 'from-blue-600 to-cyan-500', bgColor: 'from-blue-50 to-cyan-50' },
+    { key: 'lifePeriods', title: '人生转机', subtitle: 'Life Turning Points', icon: Sparkles, content: fortune.lifePeriods, color: 'from-indigo-600 to-purple-500', bgColor: 'from-indigo-50 to-purple-50' },
+    { key: 'advice', title: '神谕指引', subtitle: 'Divine Guidance & Wisdom', icon: Star, content: fortune.advice, color: 'from-amber-600 to-yellow-500', bgColor: 'from-amber-50 to-yellow-50' }
   ];
 
-  return (
-    <Card className="bg-gradient-to-br from-yellow-50 to-red-50 border-4 border-red-600 shadow-2xl backdrop-blur-sm relative overflow-hidden">
-      {/* Decorative Elements */}
-      <div className="absolute top-0 left-0 w-full h-8 bg-gradient-to-r from-red-600 via-yellow-500 to-red-600"></div>
-      <div className="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-r from-red-600 via-yellow-500 to-red-600"></div>
-      
-      <CardHeader className="text-center pt-12 pb-6 bg-gradient-to-br from-red-800/10 to-yellow-600/20">
-        <CardTitle className="text-3xl md:text-4xl text-red-800 font-serif mb-2">
-          Your Celestial Scroll
-        </CardTitle>
-        <CardDescription className="text-red-600 text-lg">
-          The cosmos has spoken - here is your divine reading
-        </CardDescription>
-      </CardHeader>
+  const cleanContent = (content: string) => {
+    return content
+      .replace(/\*+/g, '') // Remove all asterisks
+      .replace(/^\s*[-•]\s*/gm, '• ') // Normalize bullet points
+      .replace(/\n\s*\n/g, '\n\n') // Clean up extra newlines
+      .trim();
+  };
 
-      <CardContent className="p-6 md:p-8 space-y-8">
+  const formatContent = (content: string) => {
+    const cleaned = cleanContent(content);
+    const paragraphs = cleaned.split('\n\n').filter(p => p.trim());
+    
+    return paragraphs.map((paragraph, idx) => {
+      // Check if paragraph contains bullet points
+      if (paragraph.includes('• ')) {
+        const items = paragraph.split('• ').filter(item => item.trim());
+        return (
+          <div key={idx} className="space-y-2">
+            {items.map((item, itemIdx) => (
+              <div key={itemIdx} className="flex items-start gap-3">
+                <div className="w-2 h-2 bg-gradient-to-r from-red-500 to-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
+                <p className="text-red-900 leading-relaxed">{item.trim()}</p>
+              </div>
+            ))}
+          </div>
+        );
+      }
+      
+      return (
+        <p key={idx} className="text-red-900 leading-relaxed mb-3">
+          {paragraph}
+        </p>
+      );
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Mystical Header */}
+      <div className="text-center mb-8">
+        <div className="relative inline-block">
+          <h2 className="text-4xl md:text-5xl font-serif font-bold bg-gradient-to-r from-red-600 via-yellow-500 to-red-600 bg-clip-text text-transparent mb-2">
+            天命神谕
+          </h2>
+          <h3 className="text-2xl md:text-3xl text-yellow-600 font-serif">
+            Your Celestial Destiny
+          </h3>
+          <div className="absolute -top-2 -right-2">
+            <Sparkles className="h-6 w-6 text-yellow-400 animate-pulse" />
+          </div>
+          <div className="absolute -bottom-2 -left-2">
+            <Star className="h-4 w-4 text-red-400 animate-ping" />
+          </div>
+        </div>
+        <div className="mt-4 w-32 h-1 bg-gradient-to-r from-red-500 via-yellow-400 to-red-500 mx-auto rounded-full"></div>
+      </div>
+
+      {/* Fortune Sections */}
+      <div className="grid gap-6">
         {sections.map((section, index) => {
           if (!section.content) return null;
           
           const Icon = section.icon;
+          const isExpanded = expandedSection === section.key;
           
           return (
-            <div key={section.key} className="relative">
+            <Card 
+              key={section.key} 
+              className="bg-gradient-to-br from-white/90 to-yellow-50/80 border-2 border-yellow-300/50 shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden relative group cursor-pointer"
+              onClick={() => setExpandedSection(isExpanded ? null : section.key)}
+            >
+              {/* Mystical Background Pattern */}
+              <div className="absolute inset-0 opacity-5">
+                <div className="absolute top-4 right-4 text-6xl">✦</div>
+                <div className="absolute bottom-4 left-4 text-4xl">❋</div>
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-8xl">☯</div>
+              </div>
+              
               {/* Section Header */}
-              <div className="flex items-center gap-3 mb-4">
-                <div className="bg-gradient-to-r from-red-600 to-yellow-500 p-2 rounded-full">
-                  <Icon className="h-5 w-5 text-white" />
+              <CardHeader className="relative z-10">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className={`bg-gradient-to-r ${section.color} p-3 rounded-full shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                      <Icon className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-serif font-bold text-red-800 mb-1">
+                        {section.title}
+                      </h3>
+                      <p className="text-red-600 opacity-80">
+                        {section.subtitle}
+                      </p>
+                    </div>
+                  </div>
+                  <div className={`transform transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+                    <ChevronDown className="h-5 w-5 text-red-600" />
+                  </div>
                 </div>
-                <h3 className="text-xl font-serif font-bold text-red-800">
-                  {section.title}
-                </h3>
+              </CardHeader>
+
+              {/* Expandable Content */}
+              <div className={`overflow-hidden transition-all duration-500 ${isExpanded ? 'max-h-[2000px] pb-6' : 'max-h-0'}`}>
+                <CardContent className="pt-0 px-6 relative z-10">
+                  <div className={`bg-gradient-to-br ${section.bgColor} p-6 rounded-xl border border-red-200/50 shadow-inner`}>
+                    <div className="space-y-4">
+                      {formatContent(section.content)}
+                    </div>
+                  </div>
+                </CardContent>
               </div>
               
-              {/* Section Content */}
-              <div className="bg-gradient-to-br from-yellow-50/50 to-red-50/30 p-4 md:p-6 rounded-lg border-l-4 border-red-500 shadow-inner">
-                <p className="text-red-900 leading-relaxed whitespace-pre-wrap">
-                  {section.content}
-                </p>
-              </div>
-              
-              {/* Decorative Divider */}
-              {index < sections.filter(s => s.content).length - 1 && (
-                <div className="flex justify-center my-6">
-                  <div className="w-16 h-1 bg-gradient-to-r from-transparent via-red-400 to-transparent"></div>
-                </div>
+              {/* Preview when collapsed */}
+              {!isExpanded && (
+                <CardContent className="pt-0 px-6 pb-4 relative z-10">
+                  <p className="text-red-700 opacity-70 text-sm line-clamp-2">
+                    {cleanContent(section.content).substring(0, 120)}...
+                  </p>
+                </CardContent>
               )}
-            </div>
+            </Card>
           );
         })}
+      </div>
 
-        {/* Try Again Button */}
-        <div className="text-center pt-6 border-t-2 border-red-300">
+      {/* Interactive Footer */}
+      <Card className="bg-gradient-to-r from-red-800/90 to-yellow-800/90 border-2 border-yellow-400 shadow-2xl relative overflow-hidden">
+        {/* Mystical Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-red-900/20 to-yellow-900/20"></div>
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-400 via-yellow-300 to-red-400"></div>
+        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-red-400 via-yellow-300 to-red-400"></div>
+        
+        <CardContent className="text-center py-8 relative z-10">
+          <div className="mb-6">
+            <h4 className="text-xl font-serif text-yellow-200 mb-2">
+              愿此神谕指引您的人生之路
+            </h4>
+            <p className="text-red-200 opacity-90">
+              May this divine reading guide your life's journey
+            </p>
+          </div>
+          
           <Button 
             onClick={onTryAgain}
             disabled={!canTryAgain}
-            className="bg-gradient-to-r from-red-600 to-yellow-500 hover:from-red-500 hover:to-yellow-400 text-white font-bold px-8 py-3 disabled:opacity-50 disabled:cursor-not-allowed border border-red-400 shadow-lg hover:shadow-xl transition-all duration-300"
+            className="bg-gradient-to-r from-yellow-500 to-red-500 hover:from-yellow-400 hover:to-red-400 text-red-900 font-bold px-8 py-4 text-lg disabled:opacity-50 disabled:cursor-not-allowed border-2 border-yellow-300 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:scale-105 relative overflow-hidden"
           >
+            {/* Shimmer effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12 animate-shimmer"></div>
+            
             {canTryAgain ? (
-              <>
-                <Sparkles className="h-4 w-4 mr-2" />
-                Seek Another Reading
-              </>
+              <div className="flex items-center gap-3 relative z-10">
+                <Sparkles className="h-5 w-5" />
+                <span>再求一卦 • Seek Another Reading</span>
+                <Star className="h-5 w-5" />
+              </div>
             ) : (
-              "Daily Limit Reached"
+              <span className="relative z-10">今日已达上限 • Daily Limit Reached</span>
             )}
           </Button>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
@@ -509,6 +604,7 @@ function OrientalDatePicker({ value, onChange }: OrientalDatePickerProps) {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedDay, setSelectedDay] = useState(new Date().getDate());
+  const [isEditingYear, setIsEditingYear] = useState(false);
 
   useEffect(() => {
     if (value) {
@@ -558,9 +654,31 @@ function OrientalDatePicker({ value, onChange }: OrientalDatePickerProps) {
           >
             <ChevronLeft className="h-4 w-4 text-yellow-300" />
           </button>
-          <div className="bg-gradient-to-r from-yellow-600 to-red-600 px-6 py-3 rounded-lg text-white font-bold text-xl min-w-[100px]">
-            {selectedYear}
-          </div>
+          
+          {isEditingYear ? (
+            <input
+              type="number"
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(parseInt(e.target.value) || new Date().getFullYear())}
+              onBlur={() => setIsEditingYear(false)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  setIsEditingYear(false);
+                }
+              }}
+              autoFocus
+              className="bg-gradient-to-r from-yellow-600 to-red-600 px-6 py-3 rounded-lg text-white font-bold text-xl min-w-[100px] text-center border-2 border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-300"
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsEditingYear(true)}
+              className="bg-gradient-to-r from-yellow-600 to-red-600 px-6 py-3 rounded-lg text-white font-bold text-xl min-w-[100px] hover:from-yellow-500 hover:to-red-500 transition-all cursor-pointer"
+            >
+              {selectedYear}
+            </button>
+          )}
+          
           <button
             type="button"
             onClick={() => setSelectedYear(prev => prev + 1)}
@@ -569,6 +687,7 @@ function OrientalDatePicker({ value, onChange }: OrientalDatePickerProps) {
             <ChevronRight className="h-4 w-4 text-yellow-300" />
           </button>
         </div>
+        <p className="text-yellow-200/60 text-xs">点击年份直接编辑 • Click year to edit directly</p>
       </div>
 
       {/* Month Selector */}
@@ -634,6 +753,8 @@ interface OrientalTimePickerProps {
 function OrientalTimePicker({ value, onChange }: OrientalTimePickerProps) {
   const [selectedHour, setSelectedHour] = useState(12);
   const [selectedMinute, setSelectedMinute] = useState(0);
+  const [isEditingHour, setIsEditingHour] = useState(false);
+  const [isEditingMinute, setIsEditingMinute] = useState(false);
 
   useEffect(() => {
     if (value) {
@@ -692,9 +813,38 @@ function OrientalTimePicker({ value, onChange }: OrientalTimePickerProps) {
               >
                 <ChevronUp className="h-4 w-4 text-yellow-300" />
               </button>
-              <div className="bg-gradient-to-r from-yellow-600 to-red-600 px-4 py-3 rounded-lg text-white font-bold text-xl min-w-[60px]">
-                {selectedHour.toString().padStart(2, '0')}
-              </div>
+              
+              {isEditingHour ? (
+                <input
+                  type="number"
+                  min="0"
+                  max="23"
+                  value={selectedHour}
+                  onChange={(e) => {
+                    const hour = parseInt(e.target.value);
+                    if (hour >= 0 && hour <= 23) {
+                      setSelectedHour(hour);
+                    }
+                  }}
+                  onBlur={() => setIsEditingHour(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      setIsEditingHour(false);
+                    }
+                  }}
+                  autoFocus
+                  className="bg-gradient-to-r from-yellow-600 to-red-600 px-4 py-3 rounded-lg text-white font-bold text-xl min-w-[60px] text-center border-2 border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-300"
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsEditingHour(true)}
+                  className="bg-gradient-to-r from-yellow-600 to-red-600 px-4 py-3 rounded-lg text-white font-bold text-xl min-w-[60px] hover:from-yellow-500 hover:to-red-500 transition-all cursor-pointer"
+                >
+                  {selectedHour.toString().padStart(2, '0')}
+                </button>
+              )}
+              
               <button
                 type="button"
                 onClick={() => setSelectedHour(prev => prev === 23 ? 0 : prev + 1)}
@@ -718,9 +868,38 @@ function OrientalTimePicker({ value, onChange }: OrientalTimePickerProps) {
               >
                 <ChevronUp className="h-4 w-4 text-yellow-300" />
               </button>
-              <div className="bg-gradient-to-r from-yellow-600 to-red-600 px-4 py-3 rounded-lg text-white font-bold text-xl min-w-[60px]">
-                {selectedMinute.toString().padStart(2, '0')}
-              </div>
+              
+              {isEditingMinute ? (
+                <input
+                  type="number"
+                  min="0"
+                  max="59"
+                  value={selectedMinute}
+                  onChange={(e) => {
+                    const minute = parseInt(e.target.value);
+                    if (minute >= 0 && minute <= 59) {
+                      setSelectedMinute(minute);
+                    }
+                  }}
+                  onBlur={() => setIsEditingMinute(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      setIsEditingMinute(false);
+                    }
+                  }}
+                  autoFocus
+                  className="bg-gradient-to-r from-yellow-600 to-red-600 px-4 py-3 rounded-lg text-white font-bold text-xl min-w-[60px] text-center border-2 border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-300"
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsEditingMinute(true)}
+                  className="bg-gradient-to-r from-yellow-600 to-red-600 px-4 py-3 rounded-lg text-white font-bold text-xl min-w-[60px] hover:from-yellow-500 hover:to-red-500 transition-all cursor-pointer"
+                >
+                  {selectedMinute.toString().padStart(2, '0')}
+                </button>
+              )}
+              
               <button
                 type="button"
                 onClick={() => setSelectedMinute(prev => prev === 59 ? 0 : prev + 1)}
@@ -731,6 +910,7 @@ function OrientalTimePicker({ value, onChange }: OrientalTimePickerProps) {
             </div>
           </div>
         </div>
+        <p className="text-yellow-200/60 text-xs text-center">点击时间直接编辑 • Click time to edit directly</p>
       </div>
 
       {/* Quick Time Buttons */}
