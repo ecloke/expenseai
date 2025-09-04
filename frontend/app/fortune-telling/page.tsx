@@ -354,13 +354,12 @@ export default function FortuneTelling() {
 
           </div>
 
-            {/* Fortune Results - Full Width */}
-            {fortune && (
-              <div className="mt-12">
-                <FortuneScroll fortune={fortune} onTryAgain={handleTryAgain} canTryAgain={canUseFortuneTelling} />
-              </div>
-            )}
-          </div>
+          {/* Fortune Results - Full Width */}
+          {fortune && (
+            <div className="mt-12">
+              <FortuneScroll fortune={fortune} onTryAgain={handleTryAgain} canTryAgain={canUseFortuneTelling} />
+            </div>
+          )}
         </div>
       </div>
       </DashboardLayout>
