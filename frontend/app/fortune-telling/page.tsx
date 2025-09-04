@@ -331,14 +331,7 @@ export default function FortuneTelling() {
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 animate-shimmer"></div>
                       
                       {isLoading ? (
-                        <div className="flex items-center justify-center gap-3 relative z-10">
-                          <div className="relative">
-                            <div className="w-6 h-6 border-3 border-red-900 border-t-transparent rounded-full animate-spin"></div>
-                            <div className="absolute inset-0 w-6 h-6 border-3 border-yellow-300 border-b-transparent rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDelay: '0.5s' }}></div>
-                          </div>
-                          <span className="animate-pulse">正在咨询神谕... Consulting the Oracle...</span>
-                          <Sparkles className="h-5 w-5 animate-pulse" />
-                        </div>
+                        <MysticalLoadingState />
                       ) : !canUseFortuneTelling ? (
                         <div className="flex items-center justify-center gap-2 relative z-10">
                           <Star className="h-5 w-5" />
@@ -410,6 +403,71 @@ export default function FortuneTelling() {
   );
 }
 
+// Interactive Loading Component
+function MysticalLoadingState() {
+  const [loadingText, setLoadingText] = useState(0);
+  const messages = [
+    "正在连接天庭... Connecting to Heaven...",
+    "神谕降临中... Divine Oracle Descending...",
+    "星象对齐中... Aligning the Stars...",
+    "解析命运... Decoding Your Destiny...",
+    "天机即将显现... Celestial Secrets Revealing..."
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLoadingText((prev) => (prev + 1) % messages.length);
+    }, 800);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="flex flex-col items-center justify-center gap-6 py-8 relative z-10">
+      {/* Animated Oracle Circle */}
+      <div className="relative w-20 h-20">
+        <div className="absolute inset-0 border-4 border-red-300 border-t-yellow-400 rounded-full animate-spin"></div>
+        <div className="absolute inset-2 border-3 border-yellow-300 border-b-red-400 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+        <div className="absolute inset-4 border-2 border-red-400 border-l-yellow-300 rounded-full animate-spin" style={{ animationDuration: '0.8s' }}></div>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Sparkles className="h-8 w-8 text-yellow-400 animate-pulse" />
+        </div>
+      </div>
+
+      {/* Dynamic Loading Text */}
+      <div className="text-center">
+        <p className="text-yellow-200 font-medium text-lg animate-pulse mb-2">
+          {messages[loadingText]}
+        </p>
+        <div className="flex justify-center gap-1">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce"
+              style={{ animationDelay: `${i * 0.2}s` }}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Mystical Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 bg-yellow-300 rounded-full animate-ping"
+            style={{
+              top: `${20 + Math.random() * 60}%`,
+              left: `${20 + Math.random() * 60}%`,
+              animationDelay: `${Math.random() * 2}s`,
+              animationDuration: `${1 + Math.random() * 2}s`
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 interface FortuneScrollProps {
   fortune: FortuneReading;
   onTryAgain: () => void;
@@ -417,16 +475,14 @@ interface FortuneScrollProps {
 }
 
 function FortuneScroll({ fortune, onTryAgain, canTryAgain }: FortuneScrollProps) {
-  const [expandedSection, setExpandedSection] = useState<string | null>(null);
-
   const sections = [
-    { key: 'personality', title: '性格特质', subtitle: 'Personality & Core Traits', icon: Star, content: fortune.personality, color: 'from-red-600 to-pink-500', bgColor: 'from-red-50 to-pink-50' },
-    { key: 'career', title: '事业前程', subtitle: 'Career Path & Success', icon: Zap, content: fortune.career, color: 'from-yellow-600 to-orange-500', bgColor: 'from-yellow-50 to-orange-50' },
-    { key: 'wealth', title: '财运机遇', subtitle: 'Wealth & Financial Fortune', icon: Sparkles, content: fortune.wealth, color: 'from-green-600 to-emerald-500', bgColor: 'from-green-50 to-emerald-50' },
-    { key: 'relationships', title: '情感姻缘', subtitle: 'Love & Relationships', icon: Star, content: fortune.relationships, color: 'from-purple-600 to-violet-500', bgColor: 'from-purple-50 to-violet-50' },
-    { key: 'health', title: '健康运势', subtitle: 'Health & Vitality', icon: Zap, content: fortune.health, color: 'from-blue-600 to-cyan-500', bgColor: 'from-blue-50 to-cyan-50' },
-    { key: 'lifePeriods', title: '人生转机', subtitle: 'Life Turning Points', icon: Sparkles, content: fortune.lifePeriods, color: 'from-indigo-600 to-purple-500', bgColor: 'from-indigo-50 to-purple-50' },
-    { key: 'advice', title: '神谕指引', subtitle: 'Divine Guidance & Wisdom', icon: Star, content: fortune.advice, color: 'from-amber-600 to-yellow-500', bgColor: 'from-amber-50 to-yellow-50' }
+    { key: 'personality', title: '性格特质', subtitle: 'Personality & Core Traits', icon: Star, content: fortune.personality, color: 'from-red-600 to-pink-500' },
+    { key: 'career', title: '事业前程', subtitle: 'Career Path & Success', icon: Zap, content: fortune.career, color: 'from-yellow-600 to-orange-500' },
+    { key: 'wealth', title: '财运机遇', subtitle: 'Wealth & Financial Fortune', icon: Sparkles, content: fortune.wealth, color: 'from-green-600 to-emerald-500' },
+    { key: 'relationships', title: '情感姻缘', subtitle: 'Love & Relationships', icon: Star, content: fortune.relationships, color: 'from-purple-600 to-violet-500' },
+    { key: 'health', title: '健康运势', subtitle: 'Health & Vitality', icon: Zap, content: fortune.health, color: 'from-blue-600 to-cyan-500' },
+    { key: 'lifePeriods', title: '人生转机', subtitle: 'Life Turning Points', icon: Sparkles, content: fortune.lifePeriods, color: 'from-indigo-600 to-purple-500' },
+    { key: 'advice', title: '神谕指引', subtitle: 'Divine Guidance & Wisdom', icon: Star, content: fortune.advice, color: 'from-amber-600 to-yellow-500' }
   ];
 
   const cleanContent = (content: string) => {
@@ -446,11 +502,11 @@ function FortuneScroll({ fortune, onTryAgain, canTryAgain }: FortuneScrollProps)
       if (paragraph.includes('• ')) {
         const items = paragraph.split('• ').filter(item => item.trim());
         return (
-          <div key={idx} className="space-y-2">
+          <div key={idx} className="space-y-3 mb-4">
             {items.map((item, itemIdx) => (
               <div key={itemIdx} className="flex items-start gap-3">
                 <div className="w-2 h-2 bg-gradient-to-r from-red-500 to-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
-                <p className="text-red-900 leading-relaxed">{item.trim()}</p>
+                <p className="text-gray-800 text-base md:text-lg leading-relaxed">{item.trim()}</p>
               </div>
             ))}
           </div>
@@ -458,7 +514,7 @@ function FortuneScroll({ fortune, onTryAgain, canTryAgain }: FortuneScrollProps)
       }
       
       return (
-        <p key={idx} className="text-red-900 leading-relaxed mb-3">
+        <p key={idx} className="text-gray-800 text-base md:text-lg leading-relaxed mb-4">
           {paragraph}
         </p>
       );
@@ -466,106 +522,85 @@ function FortuneScroll({ fortune, onTryAgain, canTryAgain }: FortuneScrollProps)
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-4xl mx-auto">
       {/* Mystical Header */}
-      <div className="text-center mb-8">
+      <div className="text-center mb-8 px-4">
         <div className="relative inline-block">
-          <h2 className="text-4xl md:text-5xl font-serif font-bold bg-gradient-to-r from-red-600 via-yellow-500 to-red-600 bg-clip-text text-transparent mb-2">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold bg-gradient-to-r from-red-600 via-yellow-500 to-red-600 bg-clip-text text-transparent mb-2">
             天命神谕
           </h2>
-          <h3 className="text-2xl md:text-3xl text-yellow-600 font-serif">
+          <h3 className="text-xl md:text-2xl lg:text-3xl text-yellow-600 font-serif">
             Your Celestial Destiny
           </h3>
           <div className="absolute -top-2 -right-2">
-            <Sparkles className="h-6 w-6 text-yellow-400 animate-pulse" />
+            <Sparkles className="h-4 w-4 md:h-6 md:w-6 text-yellow-400 animate-pulse" />
           </div>
           <div className="absolute -bottom-2 -left-2">
-            <Star className="h-4 w-4 text-red-400 animate-ping" />
+            <Star className="h-3 w-3 md:h-4 md:w-4 text-red-400 animate-ping" />
           </div>
         </div>
-        <div className="mt-4 w-32 h-1 bg-gradient-to-r from-red-500 via-yellow-400 to-red-500 mx-auto rounded-full"></div>
+        <div className="mt-4 w-24 md:w-32 h-1 bg-gradient-to-r from-red-500 via-yellow-400 to-red-500 mx-auto rounded-full"></div>
       </div>
 
-      {/* Fortune Sections */}
-      <div className="grid gap-6">
+      {/* Scrollable Fortune Sections */}
+      <div className="space-y-6 px-4">
         {sections.map((section, index) => {
           if (!section.content) return null;
           
           const Icon = section.icon;
-          const isExpanded = expandedSection === section.key;
           
           return (
-            <Card 
-              key={section.key} 
-              className="bg-gradient-to-br from-white/90 to-yellow-50/80 border-2 border-yellow-300/50 shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden relative group cursor-pointer"
-              onClick={() => setExpandedSection(isExpanded ? null : section.key)}
-            >
-              {/* Mystical Background Pattern */}
-              <div className="absolute inset-0 opacity-5">
-                <div className="absolute top-4 right-4 text-6xl">✦</div>
-                <div className="absolute bottom-4 left-4 text-4xl">❋</div>
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-8xl">☯</div>
+            <div key={section.key} className="mb-8">
+              {/* Section Header */}
+              <div className="flex items-center gap-3 mb-6">
+                <div className={`bg-gradient-to-r ${section.color} p-3 rounded-full shadow-lg flex-shrink-0`}>
+                  <Icon className="h-5 w-5 md:h-6 md:w-6 text-white" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-xl md:text-2xl font-serif font-bold text-red-800 mb-1">
+                    {section.title}
+                  </h3>
+                  <p className="text-red-600 text-sm md:text-base opacity-90">
+                    {section.subtitle}
+                  </p>
+                </div>
               </div>
               
-              {/* Section Header */}
-              <CardHeader className="relative z-10">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className={`bg-gradient-to-r ${section.color} p-3 rounded-full shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                      <Icon className="h-6 w-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-serif font-bold text-red-800 mb-1">
-                        {section.title}
-                      </h3>
-                      <p className="text-red-600 opacity-80">
-                        {section.subtitle}
-                      </p>
-                    </div>
-                  </div>
-                  <div className={`transform transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
-                    <ChevronDown className="h-5 w-5 text-red-600" />
+              {/* Section Content - Always Visible, No Clicking Required */}
+              <div className="bg-gradient-to-br from-white/95 to-yellow-50/90 rounded-xl p-4 md:p-6 border-l-4 border-red-500 shadow-lg mb-8">
+                <div className="space-y-4">
+                  {formatContent(section.content)}
+                </div>
+              </div>
+              
+              {/* Decorative Divider */}
+              {index < sections.filter(s => s.content).length - 1 && (
+                <div className="flex justify-center my-8">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-0.5 bg-gradient-to-r from-transparent to-red-400"></div>
+                    <div className="text-red-400">✦</div>
+                    <div className="w-8 h-0.5 bg-gradient-to-r from-red-400 to-transparent"></div>
                   </div>
                 </div>
-              </CardHeader>
-
-              {/* Expandable Content */}
-              <div className={`overflow-hidden transition-all duration-500 ${isExpanded ? 'max-h-[2000px] pb-6' : 'max-h-0'}`}>
-                <CardContent className="pt-0 px-6 relative z-10">
-                  <div className={`bg-gradient-to-br ${section.bgColor} p-6 rounded-xl border border-red-200/50 shadow-inner`}>
-                    <div className="space-y-4">
-                      {formatContent(section.content)}
-                    </div>
-                  </div>
-                </CardContent>
-              </div>
-              
-              {/* Preview when collapsed */}
-              {!isExpanded && (
-                <CardContent className="pt-0 px-6 pb-4 relative z-10">
-                  <p className="text-red-700 opacity-70 text-sm line-clamp-2">
-                    {cleanContent(section.content).substring(0, 120)}...
-                  </p>
-                </CardContent>
               )}
-            </Card>
+            </div>
           );
         })}
       </div>
 
-      {/* Interactive Footer */}
-      <Card className="bg-gradient-to-r from-red-800/90 to-yellow-800/90 border-2 border-yellow-400 shadow-2xl relative overflow-hidden">
+      {/* Action Footer */}
+      <div className="bg-gradient-to-r from-red-800/95 to-yellow-800/95 rounded-xl border-2 border-yellow-400 shadow-xl relative overflow-hidden mx-4 mt-8">
         {/* Mystical Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-red-900/20 to-yellow-900/20"></div>
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-400 via-yellow-300 to-red-400"></div>
         <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-red-400 via-yellow-300 to-red-400"></div>
         
-        <CardContent className="text-center py-8 relative z-10">
-          <div className="mb-6">
-            <h4 className="text-xl font-serif text-yellow-200 mb-2">
+        <div className="text-center py-6 md:py-8 px-4 relative z-10">
+          <div className="mb-4 md:mb-6">
+            <h4 className="text-lg md:text-xl font-serif text-yellow-200 mb-2">
               愿此神谕指引您的人生之路
             </h4>
-            <p className="text-red-200 opacity-90">
+            <p className="text-red-200 text-sm md:text-base opacity-90">
               May this divine reading guide your life's journey
             </p>
           </div>
@@ -573,23 +608,23 @@ function FortuneScroll({ fortune, onTryAgain, canTryAgain }: FortuneScrollProps)
           <Button 
             onClick={onTryAgain}
             disabled={!canTryAgain}
-            className="bg-gradient-to-r from-yellow-500 to-red-500 hover:from-yellow-400 hover:to-red-400 text-red-900 font-bold px-8 py-4 text-lg disabled:opacity-50 disabled:cursor-not-allowed border-2 border-yellow-300 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:scale-105 relative overflow-hidden"
+            className="bg-gradient-to-r from-yellow-500 to-red-500 hover:from-yellow-400 hover:to-red-400 text-red-900 font-bold px-6 md:px-8 py-3 md:py-4 text-base md:text-lg disabled:opacity-50 disabled:cursor-not-allowed border-2 border-yellow-300 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:scale-105 relative overflow-hidden w-full max-w-sm"
           >
             {/* Shimmer effect */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12 animate-shimmer"></div>
             
             {canTryAgain ? (
-              <div className="flex items-center gap-3 relative z-10">
-                <Sparkles className="h-5 w-5" />
-                <span>再求一卦 • Seek Another Reading</span>
-                <Star className="h-5 w-5" />
+              <div className="flex items-center justify-center gap-2 md:gap-3 relative z-10">
+                <Sparkles className="h-4 w-4 md:h-5 md:w-5" />
+                <span className="text-sm md:text-base">再求一卦 • Seek Another Reading</span>
+                <Star className="h-4 w-4 md:h-5 md:w-5" />
               </div>
             ) : (
-              <span className="relative z-10">今日已达上限 • Daily Limit Reached</span>
+              <span className="relative z-10 text-sm md:text-base">今日已达上限 • Daily Limit Reached</span>
             )}
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -642,32 +677,38 @@ function OrientalDatePicker({ value, onChange }: OrientalDatePickerProps) {
   const daysInMonth = getDaysInMonth(selectedYear, selectedMonth);
 
   return (
-    <div className="bg-gradient-to-br from-red-800/40 to-yellow-800/30 border-2 border-yellow-500/60 rounded-xl p-6 space-y-6">
+    <div className="bg-gradient-to-br from-red-800/40 to-yellow-800/30 border-2 border-yellow-500/60 rounded-xl p-4 md:p-6 space-y-4 md:space-y-6">
       {/* Year Selector */}
       <div className="text-center space-y-3">
         <p className="text-yellow-300 text-sm font-medium">年份 Year</p>
-        <div className="flex items-center justify-center gap-4">
+        <div className="flex items-center justify-center gap-2 md:gap-4">
           <button
             type="button"
             onClick={() => setSelectedYear(prev => prev - 1)}
-            className="p-2 bg-red-700/50 hover:bg-red-600/70 border border-yellow-500/30 rounded-full transition-colors"
+            className="p-2 bg-red-700/50 hover:bg-red-600/70 border border-yellow-500/30 rounded-full transition-colors flex-shrink-0"
           >
             <ChevronLeft className="h-4 w-4 text-yellow-300" />
           </button>
           
           {isEditingYear ? (
             <input
-              type="number"
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(parseInt(e.target.value) || new Date().getFullYear())}
+              type="text"
+              value={selectedYear.toString()}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d{1,4}$/.test(value)) {
+                  setSelectedYear(value === '' ? new Date().getFullYear() : parseInt(value) || new Date().getFullYear());
+                }
+              }}
               onBlur={() => setIsEditingYear(false)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   setIsEditingYear(false);
                 }
               }}
+              onFocus={(e) => e.target.select()}
               autoFocus
-              className="bg-gradient-to-r from-yellow-600 to-red-600 px-6 py-3 rounded-lg text-white font-bold text-xl min-w-[100px] text-center border-2 border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-300"
+              className="bg-gradient-to-r from-yellow-600 to-red-600 px-4 md:px-6 py-2 md:py-3 rounded-lg text-white font-bold text-lg md:text-xl min-w-[80px] md:min-w-[100px] text-center border-2 border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-300"
             />
           ) : (
             <button
@@ -816,14 +857,12 @@ function OrientalTimePicker({ value, onChange }: OrientalTimePickerProps) {
               
               {isEditingHour ? (
                 <input
-                  type="number"
-                  min="0"
-                  max="23"
-                  value={selectedHour}
+                  type="text"
+                  value={selectedHour.toString().padStart(2, '0')}
                   onChange={(e) => {
-                    const hour = parseInt(e.target.value);
-                    if (hour >= 0 && hour <= 23) {
-                      setSelectedHour(hour);
+                    const value = e.target.value;
+                    if (value === '' || (/^\d{1,2}$/.test(value) && parseInt(value) <= 23)) {
+                      setSelectedHour(value === '' ? 0 : parseInt(value));
                     }
                   }}
                   onBlur={() => setIsEditingHour(false)}
@@ -832,6 +871,7 @@ function OrientalTimePicker({ value, onChange }: OrientalTimePickerProps) {
                       setIsEditingHour(false);
                     }
                   }}
+                  onFocus={(e) => e.target.select()}
                   autoFocus
                   className="bg-gradient-to-r from-yellow-600 to-red-600 px-4 py-3 rounded-lg text-white font-bold text-xl min-w-[60px] text-center border-2 border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-300"
                 />
@@ -871,14 +911,12 @@ function OrientalTimePicker({ value, onChange }: OrientalTimePickerProps) {
               
               {isEditingMinute ? (
                 <input
-                  type="number"
-                  min="0"
-                  max="59"
-                  value={selectedMinute}
+                  type="text"
+                  value={selectedMinute.toString().padStart(2, '0')}
                   onChange={(e) => {
-                    const minute = parseInt(e.target.value);
-                    if (minute >= 0 && minute <= 59) {
-                      setSelectedMinute(minute);
+                    const value = e.target.value;
+                    if (value === '' || (/^\d{1,2}$/.test(value) && parseInt(value) <= 59)) {
+                      setSelectedMinute(value === '' ? 0 : parseInt(value));
                     }
                   }}
                   onBlur={() => setIsEditingMinute(false)}
@@ -887,6 +925,7 @@ function OrientalTimePicker({ value, onChange }: OrientalTimePickerProps) {
                       setIsEditingMinute(false);
                     }
                   }}
+                  onFocus={(e) => e.target.select()}
                   autoFocus
                   className="bg-gradient-to-r from-yellow-600 to-red-600 px-4 py-3 rounded-lg text-white font-bold text-xl min-w-[60px] text-center border-2 border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-300"
                 />
