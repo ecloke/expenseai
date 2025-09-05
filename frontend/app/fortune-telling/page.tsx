@@ -33,7 +33,8 @@ export default function FortuneTelling() {
   const [formData, setFormData] = useState({
     birthDate: '',
     birthTime: '',
-    birthPlace: ''
+    birthPlace: '',
+    gender: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [fortune, setFortune] = useState<FortuneReading | null>(null);
@@ -116,6 +117,11 @@ export default function FortuneTelling() {
       return;
     }
 
+    if (!formData.gender) {
+      setError('Please select your gender for accurate Zi Wei Dou Shu reading.');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
 
@@ -124,7 +130,8 @@ export default function FortuneTelling() {
         userId: user.id,
         birthDate: formData.birthDate,
         birthTime: formData.birthTime,
-        birthPlace: formData.birthPlace
+        birthPlace: formData.birthPlace,
+        gender: formData.gender
       });
 
       if (response.success) {
@@ -309,6 +316,53 @@ export default function FortuneTelling() {
                       </div>
                       <p className="text-red-200/80 text-sm italic">
                         例如: Kuala Lumpur, Malaysia • Singapore • Hong Kong • London, UK
+                      </p>
+                    </div>
+
+                    {/* Gender Selection */}
+                    <div className="space-y-4">
+                      <Label className="text-yellow-300 font-medium flex items-center gap-2 text-lg">
+                        <Star className="h-5 w-5" />
+                        性别 • Gender
+                      </Label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <button
+                          type="button"
+                          onClick={() => handleInputChange('gender', 'male')}
+                          className={`p-4 rounded-xl border-2 transition-all text-lg font-medium ${
+                            formData.gender === 'male'
+                              ? 'bg-gradient-to-r from-blue-600 to-cyan-600 border-blue-400 text-white shadow-lg scale-105'
+                              : 'bg-gradient-to-r from-red-900/40 to-yellow-900/30 border-yellow-500/50 text-yellow-200 hover:border-yellow-400/70 hover:bg-red-800/50'
+                          }`}
+                        >
+                          <div className="flex items-center justify-center gap-2">
+                            <span className="text-2xl">♂</span>
+                            <div>
+                              <div className="font-bold">男性</div>
+                              <div className="text-sm opacity-80">Male</div>
+                            </div>
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleInputChange('gender', 'female')}
+                          className={`p-4 rounded-xl border-2 transition-all text-lg font-medium ${
+                            formData.gender === 'female'
+                              ? 'bg-gradient-to-r from-pink-600 to-rose-600 border-pink-400 text-white shadow-lg scale-105'
+                              : 'bg-gradient-to-r from-red-900/40 to-yellow-900/30 border-yellow-500/50 text-yellow-200 hover:border-yellow-400/70 hover:bg-red-800/50'
+                          }`}
+                        >
+                          <div className="flex items-center justify-center gap-2">
+                            <span className="text-2xl">♀</span>
+                            <div>
+                              <div className="font-bold">女性</div>
+                              <div className="text-sm opacity-80">Female</div>
+                            </div>
+                          </div>
+                        </button>
+                      </div>
+                      <p className="text-red-200/80 text-sm italic text-center">
+                        性别对紫微斗数解读很重要 • Gender is essential for accurate Zi Wei readings
                       </p>
                     </div>
 
