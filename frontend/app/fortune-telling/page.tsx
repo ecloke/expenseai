@@ -191,15 +191,15 @@ export default function FortuneTelling() {
       <DashboardLayout>
       <div className="min-h-screen bg-gradient-to-br from-red-900 via-red-800 to-yellow-900 relative">
         {/* Enhanced Oriental Background Elements */}
-        <div className="absolute inset-0 opacity-15">
-          <div className="absolute top-10 left-10 w-32 h-32 rounded-full bg-gradient-to-br from-yellow-400 to-red-500 animate-pulse blur-sm"></div>
-          <div className="absolute top-40 right-20 w-24 h-24 rounded-full bg-gradient-to-br from-red-400 to-yellow-500 animate-pulse delay-1000 blur-sm"></div>
-          <div className="absolute bottom-20 left-1/4 w-20 h-20 rounded-full bg-gradient-to-br from-yellow-300 to-red-400 animate-pulse delay-2000 blur-sm"></div>
-          <div className="absolute bottom-40 right-1/3 w-28 h-28 rounded-full bg-gradient-to-br from-red-300 to-yellow-400 animate-pulse delay-3000 blur-sm"></div>
+        <div className="absolute inset-0 opacity-15 pointer-events-none">
+          <div className="absolute top-10 left-10 w-32 h-32 rounded-full bg-gradient-to-br from-yellow-400 to-red-500 animate-pulse blur-sm pointer-events-none"></div>
+          <div className="absolute top-40 right-20 w-24 h-24 rounded-full bg-gradient-to-br from-red-400 to-yellow-500 animate-pulse delay-1000 blur-sm pointer-events-none"></div>
+          <div className="absolute bottom-20 left-1/4 w-20 h-20 rounded-full bg-gradient-to-br from-yellow-300 to-red-400 animate-pulse delay-2000 blur-sm pointer-events-none"></div>
+          <div className="absolute bottom-40 right-1/3 w-28 h-28 rounded-full bg-gradient-to-br from-red-300 to-yellow-400 animate-pulse delay-3000 blur-sm pointer-events-none"></div>
           
           {/* Additional mystical orbs */}
-          <div className="absolute top-1/2 left-5 w-16 h-16 rounded-full bg-gradient-to-br from-yellow-500 to-red-600 animate-pulse delay-500 blur-sm"></div>
-          <div className="absolute top-1/4 right-5 w-12 h-12 rounded-full bg-gradient-to-br from-red-500 to-yellow-600 animate-pulse delay-1500 blur-sm"></div>
+          <div className="absolute top-1/2 left-5 w-16 h-16 rounded-full bg-gradient-to-br from-yellow-500 to-red-600 animate-pulse delay-500 blur-sm pointer-events-none"></div>
+          <div className="absolute top-1/4 right-5 w-12 h-12 rounded-full bg-gradient-to-br from-red-500 to-yellow-600 animate-pulse delay-1500 blur-sm pointer-events-none"></div>
         </div>
 
         {/* Floating Mystical Elements with Enhanced Animation */}
