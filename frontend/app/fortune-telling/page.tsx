@@ -554,68 +554,96 @@ function FortuneScroll({ fortune, onTryAgain, canTryAgain, birthDetails }: Fortu
   const formatContent = (content: string) => {
     const cleaned = cleanContent(content);
     
-    // Split by sentences and age mentions for better readability
-    const processedContent = cleaned
-      .split(/(?<=\.)\s+/)
-      .map(sentence => sentence.trim())
-      .filter(sentence => sentence.length > 0);
+    // First, fix age range formatting - combine separated age ranges
+    const ageRangeFixed = cleaned.replace(/(Age \d+)\s*[-–]\s*(\d+)/g, '$1-$2');
     
-    const formattedSections: string[][] = [];
-    let currentGroup: string[] = [];
+    // Look for age mentions and group related content
+    const agePattern = /(Age \d+(?:-\d+)?|大限|流年|\d{4}年|Your \d+-year[^:]*)[:.:]?\s*/gi;
+    const parts = ageRangeFixed.split(agePattern).filter(part => part.trim());
     
-    processedContent.forEach((sentence, idx) => {
-      // Check if this sentence starts a new age/period mention
-      if (sentence.match(/^(Age \d+|大限|流年|\d{4}年|Your \d+-year)/i) && currentGroup.length > 0) {
-        // Save the previous group
-        formattedSections.push(currentGroup);
-        currentGroup = [sentence];
+    const formattedSections: Array<{type: 'age' | 'content', text: string}> = [];
+    
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i].trim();
+      if (!part) continue;
+      
+      // Check if this part is an age/period marker
+      if (part.match(agePattern)) {
+        formattedSections.push({ type: 'age', text: part });
       } else {
-        currentGroup.push(sentence);
+        formattedSections.push({ type: 'content', text: part });
+      }
+    }
+    
+    // Group age markers with their following content
+    const groupedSections: Array<{ageHeader?: string, content: string}> = [];
+    let currentAge = '';
+    let currentContent = '';
+    
+    formattedSections.forEach((section, idx) => {
+      if (section.type === 'age') {
+        // If we have accumulated content, save it first
+        if (currentContent.trim()) {
+          groupedSections.push({
+            ageHeader: currentAge,
+            content: currentContent.trim()
+          });
+        }
+        // Start new age section
+        currentAge = section.text;
+        currentContent = '';
+      } else {
+        currentContent += (currentContent ? ' ' : '') + section.text;
       }
       
-      // If this is the last sentence, save the current group
-      if (idx === processedContent.length - 1 && currentGroup.length > 0) {
-        formattedSections.push(currentGroup);
+      // If this is the last item, save what we have
+      if (idx === formattedSections.length - 1 && (currentAge || currentContent.trim())) {
+        groupedSections.push({
+          ageHeader: currentAge,
+          content: currentContent.trim()
+        });
       }
     });
     
-    // If no age-based splitting occurred, fall back to paragraph splitting
-    if (formattedSections.length === 0) {
-      const paragraphs = cleaned.split('\n\n').filter(p => p.trim());
-      formattedSections.push(...paragraphs.map(p => [p]));
+    // If no age-based grouping worked, fall back to simple paragraph splitting
+    if (groupedSections.length === 0) {
+      groupedSections.push({ content: cleaned });
     }
     
-    return formattedSections.map((group, idx) => {
-      const groupText = group.join(' ');
-      
-      // Check for bullet points
-      if (groupText.includes('• ')) {
-        const items = groupText.split('• ').filter(item => item.trim());
+    return groupedSections.map((section, idx) => {
+      // Check for bullet points in content
+      if (section.content.includes('• ')) {
+        const items = section.content.split('• ').filter(item => item.trim());
         return (
-          <div key={idx} className="space-y-3 mb-6">
-            {items.map((item, itemIdx) => (
-              <div key={itemIdx} className="flex items-start gap-4">
-                <div className="w-2 h-2 bg-red-600 rounded-full mt-3 flex-shrink-0"></div>
-                <p className="text-red-900 text-lg md:text-xl leading-relaxed font-medium">{item.trim()}</p>
+          <div key={idx} className={`mb-6 ${section.ageHeader ? 'bg-amber-100/50 p-4 rounded-lg border-l-4 border-red-500' : ''}`}>
+            {section.ageHeader && (
+              <div className="flex items-center gap-2 mb-3">
+                <Star className="h-4 w-4 text-red-600" />
+                <span className="font-bold text-red-800 text-lg">{section.ageHeader}</span>
               </div>
-            ))}
+            )}
+            <div className="space-y-3">
+              {items.map((item, itemIdx) => (
+                <div key={itemIdx} className="flex items-start gap-4">
+                  <div className="w-2 h-2 bg-red-600 rounded-full mt-3 flex-shrink-0"></div>
+                  <p className="text-red-900 text-lg md:text-xl leading-relaxed font-medium">{item.trim()}</p>
+                </div>
+              ))}
+            </div>
           </div>
         );
       }
       
-      // Check if this group starts with an age mention - make it stand out
-      const startsWithAge = groupText.match(/^(Age \d+|大限|流年|\d{4}年|Your \d+-year)/i);
-      
       return (
-        <div key={idx} className={`mb-6 ${startsWithAge ? 'bg-amber-100/50 p-4 rounded-lg border-l-4 border-red-500' : ''}`}>
-          {startsWithAge && (
+        <div key={idx} className={`mb-6 ${section.ageHeader ? 'bg-amber-100/50 p-4 rounded-lg border-l-4 border-red-500' : ''}`}>
+          {section.ageHeader && (
             <div className="flex items-center gap-2 mb-3">
               <Star className="h-4 w-4 text-red-600" />
-              <span className="font-bold text-red-800 text-lg">{startsWithAge[0]}</span>
+              <span className="font-bold text-red-800 text-lg">{section.ageHeader}</span>
             </div>
           )}
           <p className="text-red-900 text-lg md:text-xl leading-relaxed font-medium">
-            {startsWithAge ? groupText.replace(startsWithAge[0], '').trim() : groupText}
+            {section.content}
           </p>
         </div>
       );
