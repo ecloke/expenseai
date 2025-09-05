@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { createSupabaseClient } from '@/lib/supabase';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -27,9 +26,7 @@ interface FortuneUsage {
 }
 
 export default function FortuneTelling() {
-  const router = useRouter();
   const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     birthDate: '',
     birthTime: '',
@@ -41,11 +38,10 @@ export default function FortuneTelling() {
   const [error, setError] = useState('');
   const [dailyUsage, setDailyUsage] = useState<FortuneUsage>({ count: 0, date: '' });
 
-  // Check authentication and load user
+  // Load user from DashboardLayout context (authentication is handled there)
   useEffect(() => {
     loadUserData();
   }, []);
-
 
   // Check daily usage on component mount
   useEffect(() => {
@@ -58,21 +54,14 @@ export default function FortuneTelling() {
     try {
       const supabase = createSupabaseClient();
       
-      // Get current session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      // Get current session (DashboardLayout already verified authentication)
+      const { data: { session } } = await supabase.auth.getSession();
       
-      if (sessionError || !session) {
-        console.log('❌ No active session, redirecting to login');
-        router.push('/login');
-        return;
+      if (session) {
+        setUser(session.user);
       }
-
-      setUser(session.user);
     } catch (error) {
       console.error('Error loading user data:', error);
-      router.push('/login');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -159,24 +148,11 @@ export default function FortuneTelling() {
     setError('');
   };
 
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <div className="space-y-6 pt-16 lg:pt-0">
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400 mx-auto mb-4"></div>
-              <p className="text-yellow-200">Loading fortune teller...</p>
-            </div>
-          </div>
-        </div>
-      </DashboardLayout>
-    );
-  }
 
   return (
     <DashboardLayout>
