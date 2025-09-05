@@ -411,7 +411,12 @@ export default function FortuneTelling() {
           {/* Fortune Results - Full Width */}
           {fortune && (
             <div className="mt-12">
-              <FortuneScroll fortune={fortune} onTryAgain={handleTryAgain} canTryAgain={canUseFortuneTelling} />
+              <FortuneScroll 
+                fortune={fortune} 
+                onTryAgain={handleTryAgain} 
+                canTryAgain={canUseFortuneTelling}
+                birthDetails={formData}
+              />
             </div>
           )}
         </div>
@@ -519,9 +524,15 @@ interface FortuneScrollProps {
   fortune: FortuneReading;
   onTryAgain: () => void;
   canTryAgain: boolean;
+  birthDetails: {
+    birthDate: string;
+    birthTime: string;
+    birthPlace: string;
+    gender: string;
+  };
 }
 
-function FortuneScroll({ fortune, onTryAgain, canTryAgain }: FortuneScrollProps) {
+function FortuneScroll({ fortune, onTryAgain, canTryAgain, birthDetails }: FortuneScrollProps) {
   const sections = [
     { key: 'personality', title: '性格特质', subtitle: 'Personality & Core Traits', icon: Star, content: fortune.personality },
     { key: 'career', title: '事业前程', subtitle: 'Career Path & Success', icon: Zap, content: fortune.career },
@@ -542,12 +553,44 @@ function FortuneScroll({ fortune, onTryAgain, canTryAgain }: FortuneScrollProps)
 
   const formatContent = (content: string) => {
     const cleaned = cleanContent(content);
-    const paragraphs = cleaned.split('\n\n').filter(p => p.trim());
     
-    return paragraphs.map((paragraph, idx) => {
-      // Check if paragraph contains bullet points
-      if (paragraph.includes('• ')) {
-        const items = paragraph.split('• ').filter(item => item.trim());
+    // Split by sentences and age mentions for better readability
+    const processedContent = cleaned
+      .split(/(?<=\.)\s+/)
+      .map(sentence => sentence.trim())
+      .filter(sentence => sentence.length > 0);
+    
+    const formattedSections = [];
+    let currentGroup = [];
+    
+    processedContent.forEach((sentence, idx) => {
+      // Check if this sentence starts a new age/period mention
+      if (sentence.match(/^(Age \d+|大限|流年|\d{4}年|Your \d+-year)/i) && currentGroup.length > 0) {
+        // Save the previous group
+        formattedSections.push(currentGroup);
+        currentGroup = [sentence];
+      } else {
+        currentGroup.push(sentence);
+      }
+      
+      // If this is the last sentence, save the current group
+      if (idx === processedContent.length - 1 && currentGroup.length > 0) {
+        formattedSections.push(currentGroup);
+      }
+    });
+    
+    // If no age-based splitting occurred, fall back to paragraph splitting
+    if (formattedSections.length === 0) {
+      const paragraphs = cleaned.split('\n\n').filter(p => p.trim());
+      formattedSections.push(...paragraphs.map(p => [p]));
+    }
+    
+    return formattedSections.map((group, idx) => {
+      const groupText = group.join(' ');
+      
+      // Check for bullet points
+      if (groupText.includes('• ')) {
+        const items = groupText.split('• ').filter(item => item.trim());
         return (
           <div key={idx} className="space-y-3 mb-6">
             {items.map((item, itemIdx) => (
@@ -560,10 +603,21 @@ function FortuneScroll({ fortune, onTryAgain, canTryAgain }: FortuneScrollProps)
         );
       }
       
+      // Check if this group starts with an age mention - make it stand out
+      const startsWithAge = groupText.match(/^(Age \d+|大限|流年|\d{4}年|Your \d+-year)/i);
+      
       return (
-        <p key={idx} className="text-red-900 text-lg md:text-xl leading-relaxed mb-6 font-medium">
-          {paragraph}
-        </p>
+        <div key={idx} className={`mb-6 ${startsWithAge ? 'bg-amber-100/50 p-4 rounded-lg border-l-4 border-red-500' : ''}`}>
+          {startsWithAge && (
+            <div className="flex items-center gap-2 mb-3">
+              <Star className="h-4 w-4 text-red-600" />
+              <span className="font-bold text-red-800 text-lg">{startsWithAge[0]}</span>
+            </div>
+          )}
+          <p className="text-red-900 text-lg md:text-xl leading-relaxed font-medium">
+            {startsWithAge ? groupText.replace(startsWithAge[0], '').trim() : groupText}
+          </p>
+        </div>
       );
     });
   };
@@ -597,6 +651,50 @@ function FortuneScroll({ fortune, onTryAgain, canTryAgain }: FortuneScrollProps)
               <h3 className="text-lg md:text-xl lg:text-2xl font-serif">
                 Your Celestial Destiny
               </h3>
+            </div>
+            
+            {/* Birth Details Summary */}
+            <div className="mt-8 bg-white/90 rounded-2xl p-4 md:p-6 shadow-lg border-2 border-amber-300 max-w-2xl mx-auto">
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <Calendar className="h-5 w-5 text-red-600" />
+                <h4 className="text-lg font-serif font-bold text-red-800">Your Birth Details</h4>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                <div className="flex items-center gap-3">
+                  <Calendar className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                  <div>
+                    <span className="text-red-700 font-medium">Date:</span>
+                    <span className="text-red-900 ml-2">{new Date(birthDetails.birthDate).toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Clock className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                  <div>
+                    <span className="text-red-700 font-medium">Time:</span>
+                    <span className="text-red-900 ml-2">{birthDetails.birthTime}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <MapPin className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                  <div>
+                    <span className="text-red-700 font-medium">Place:</span>
+                    <span className="text-red-900 ml-2">{birthDetails.birthPlace}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Star className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                  <div>
+                    <span className="text-red-700 font-medium">Gender:</span>
+                    <span className="text-red-900 ml-2">
+                      {birthDetails.gender === 'male' ? '♂ 男性 Male' : '♀ 女性 Female'}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
             
             {/* Decorative Elements */}
