@@ -191,51 +191,51 @@ export default function FortuneTelling() {
       <DashboardLayout>
         <div className="pt-16 lg:pt-0">
           <div className="bg-gradient-to-br from-red-900 via-red-800 to-yellow-900 relative -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 min-h-screen">
-        {/* Enhanced Oriental Background Elements */}
-        <div className="absolute inset-0 opacity-15 pointer-events-none">
-          <div className="absolute top-10 left-10 w-32 h-32 rounded-full bg-gradient-to-br from-yellow-400 to-red-500 animate-pulse blur-sm pointer-events-none"></div>
-          <div className="absolute top-40 right-20 w-24 h-24 rounded-full bg-gradient-to-br from-red-400 to-yellow-500 animate-pulse delay-1000 blur-sm pointer-events-none"></div>
-          <div className="absolute bottom-20 left-1/4 w-20 h-20 rounded-full bg-gradient-to-br from-yellow-300 to-red-400 animate-pulse delay-2000 blur-sm pointer-events-none"></div>
-          <div className="absolute bottom-40 right-1/3 w-28 h-28 rounded-full bg-gradient-to-br from-red-300 to-yellow-400 animate-pulse delay-3000 blur-sm pointer-events-none"></div>
-          
-          {/* Additional mystical orbs */}
-          <div className="absolute top-1/2 left-5 w-16 h-16 rounded-full bg-gradient-to-br from-yellow-500 to-red-600 animate-pulse delay-500 blur-sm pointer-events-none"></div>
-          <div className="absolute top-1/4 right-5 w-12 h-12 rounded-full bg-gradient-to-br from-red-500 to-yellow-600 animate-pulse delay-1500 blur-sm pointer-events-none"></div>
-        </div>
+            {/* Enhanced Oriental Background Elements */}
+            <div className="absolute inset-0 opacity-15 pointer-events-none">
+              <div className="absolute top-10 left-10 w-32 h-32 rounded-full bg-gradient-to-br from-yellow-400 to-red-500 animate-pulse blur-sm pointer-events-none"></div>
+              <div className="absolute top-40 right-20 w-24 h-24 rounded-full bg-gradient-to-br from-red-400 to-yellow-500 animate-pulse delay-1000 blur-sm pointer-events-none"></div>
+              <div className="absolute bottom-20 left-1/4 w-20 h-20 rounded-full bg-gradient-to-br from-yellow-300 to-red-400 animate-pulse delay-2000 blur-sm pointer-events-none"></div>
+              <div className="absolute bottom-40 right-1/3 w-28 h-28 rounded-full bg-gradient-to-br from-red-300 to-yellow-400 animate-pulse delay-3000 blur-sm pointer-events-none"></div>
+              
+              {/* Additional mystical orbs */}
+              <div className="absolute top-1/2 left-5 w-16 h-16 rounded-full bg-gradient-to-br from-yellow-500 to-red-600 animate-pulse delay-500 blur-sm pointer-events-none"></div>
+              <div className="absolute top-1/4 right-5 w-12 h-12 rounded-full bg-gradient-to-br from-red-500 to-yellow-600 animate-pulse delay-1500 blur-sm pointer-events-none"></div>
+            </div>
 
-        {/* Floating Mystical Elements with Enhanced Animation */}
-        <div className="absolute top-20 right-10 text-yellow-400 opacity-30 animate-bounce pointer-events-none">
-          <Zap className="h-16 w-16 drop-shadow-lg" />
-        </div>
-        <div className="absolute bottom-32 left-16 text-red-400 opacity-30 animate-bounce delay-2000 pointer-events-none">
-          <Sparkles className="h-12 w-12 drop-shadow-lg" />
-        </div>
-        <div className="absolute top-32 left-1/2 text-yellow-300 opacity-25 animate-spin pointer-events-none" style={{ animationDuration: '8s' }}>
-          <Star className="h-10 w-10 drop-shadow-lg" />
-        </div>
-        <div className="absolute bottom-1/4 right-1/4 text-red-300 opacity-25 animate-spin pointer-events-none" style={{ animationDuration: '12s' }}>
-          <Sparkles className="h-8 w-8 drop-shadow-lg" />
-        </div>
+            {/* Floating Mystical Elements with Enhanced Animation */}
+            <div className="absolute top-20 right-10 text-yellow-400 opacity-30 animate-bounce pointer-events-none">
+              <Zap className="h-16 w-16 drop-shadow-lg" />
+            </div>
+            <div className="absolute bottom-32 left-16 text-red-400 opacity-30 animate-bounce delay-2000 pointer-events-none">
+              <Sparkles className="h-12 w-12 drop-shadow-lg" />
+            </div>
+            <div className="absolute top-32 left-1/2 text-yellow-300 opacity-25 animate-spin pointer-events-none" style={{ animationDuration: '8s' }}>
+              <Star className="h-10 w-10 drop-shadow-lg" />
+            </div>
+            <div className="absolute bottom-1/4 right-1/4 text-red-300 opacity-25 animate-spin pointer-events-none" style={{ animationDuration: '12s' }}>
+              <Sparkles className="h-8 w-8 drop-shadow-lg" />
+            </div>
 
-        {/* Mystical particles */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {Array.from({ length: 20 }).map((_, i) => (
-            <div
-              key={i}
-              className={`absolute w-1 h-1 bg-yellow-400 rounded-full animate-ping pointer-events-none`}
-              style={{
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 3}s`,
-                animationDuration: `${2 + Math.random() * 3}s`
-              }}
-            />
-          ))}
-        </div>
+            {/* Mystical particles */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              {Array.from({ length: 20 }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`absolute w-1 h-1 bg-yellow-400 rounded-full animate-ping pointer-events-none`}
+                  style={{
+                    top: `${Math.random() * 100}%`,
+                    left: `${Math.random() * 100}%`,
+                    animationDelay: `${Math.random() * 3}s`,
+                    animationDuration: `${2 + Math.random() * 3}s`
+                  }}
+                />
+              ))}
+            </div>
 
-        <div className="max-w-6xl mx-auto py-12 px-4 relative z-10">
-          {/* Header */}
-          <div className="text-center mb-12 pt-8">
+            <div className="max-w-6xl mx-auto py-12 px-4 relative z-10">
+              {/* Header */}
+              <div className="text-center mb-12 pt-8">
             <h1 className="text-4xl md:text-5xl font-bold text-yellow-300 mb-4 font-serif tracking-wide">
               <Sparkles className="inline h-8 w-8 md:h-10 md:w-10 mr-3 text-yellow-400" />
               东方占卜
