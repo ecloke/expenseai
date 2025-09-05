@@ -173,24 +173,27 @@ export default function FortuneTelling() {
 
   return (
     <DashboardLayout>
-      <style jsx global>{`
-        @keyframes gradient {
-          0%, 100% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-        }
-        @keyframes shimmer {
-          0% { transform: translateX(-100%) skewX(-12deg); }
-          100% { transform: translateX(200%) skewX(-12deg); }
-        }
-        .animate-gradient {
-          background-size: 200% 200%;
-          animation: gradient 3s ease infinite;
-        }
-        .animate-shimmer {
-          animation: shimmer 2s infinite;
-        }
-      `}</style>
-      <div className="space-y-6 pt-16 lg:pt-0 bg-gradient-to-br from-red-900 via-red-800 to-yellow-900 -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 min-h-screen relative">
+      <div className="space-y-6 pt-16 lg:pt-0">
+        <div className="bg-gradient-to-br from-red-900 via-red-800 to-yellow-900 -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 min-h-screen relative">
+          <style dangerouslySetInnerHTML={{
+            __html: `
+              @keyframes gradient {
+                0%, 100% { background-position: 0% 50%; }
+                50% { background-position: 100% 50%; }
+              }
+              @keyframes shimmer {
+                0% { transform: translateX(-100%) skewX(-12deg); }
+                100% { transform: translateX(200%) skewX(-12deg); }
+              }
+              .animate-gradient {
+                background-size: 200% 200%;
+                animation: gradient 3s ease infinite;
+              }
+              .animate-shimmer {
+                animation: shimmer 2s infinite;
+              }
+            `
+          }} />
         {/* Enhanced Oriental Background Elements */}
         <div className="absolute inset-0 opacity-15 pointer-events-none">
           <div className="absolute top-10 left-10 w-32 h-32 rounded-full bg-gradient-to-br from-yellow-400 to-red-500 animate-pulse blur-sm pointer-events-none"></div>
@@ -420,6 +423,8 @@ export default function FortuneTelling() {
               />
             </div>
           )}
+        </div>
+        </div>
       </div>
     </DashboardLayout>
   );
