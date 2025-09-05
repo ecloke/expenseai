@@ -74,7 +74,7 @@ Output format (second person, direct):
 5. Health & Well-being
 
 6. Luck Cycles & Major Turning Points
-• Show 10-year cycles
+• Don't need to show before the person's age
 • Highlight specific years/ages that matter most (e.g. "Age 35: big career change")
 
 7. Practical Advice (direct, sharp, 3–5 clear points)`;
