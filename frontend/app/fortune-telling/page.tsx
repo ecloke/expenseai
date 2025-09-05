@@ -189,7 +189,7 @@ export default function FortuneTelling() {
         }
       `}</style>
       <DashboardLayout>
-      <div className="min-h-screen bg-gradient-to-br from-red-900 via-red-800 to-yellow-900 relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-red-900 via-red-800 to-yellow-900 relative">
         {/* Enhanced Oriental Background Elements */}
         <div className="absolute inset-0 opacity-15">
           <div className="absolute top-10 left-10 w-32 h-32 rounded-full bg-gradient-to-br from-yellow-400 to-red-500 animate-pulse blur-sm"></div>
@@ -203,25 +203,25 @@ export default function FortuneTelling() {
         </div>
 
         {/* Floating Mystical Elements with Enhanced Animation */}
-        <div className="absolute top-20 right-10 text-yellow-400 opacity-30 animate-bounce">
+        <div className="absolute top-20 right-10 text-yellow-400 opacity-30 animate-bounce pointer-events-none">
           <Zap className="h-16 w-16 drop-shadow-lg" />
         </div>
-        <div className="absolute bottom-32 left-16 text-red-400 opacity-30 animate-bounce delay-2000">
+        <div className="absolute bottom-32 left-16 text-red-400 opacity-30 animate-bounce delay-2000 pointer-events-none">
           <Sparkles className="h-12 w-12 drop-shadow-lg" />
         </div>
-        <div className="absolute top-32 left-1/2 text-yellow-300 opacity-25 animate-spin" style={{ animationDuration: '8s' }}>
+        <div className="absolute top-32 left-1/2 text-yellow-300 opacity-25 animate-spin pointer-events-none" style={{ animationDuration: '8s' }}>
           <Star className="h-10 w-10 drop-shadow-lg" />
         </div>
-        <div className="absolute bottom-1/4 right-1/4 text-red-300 opacity-25 animate-spin" style={{ animationDuration: '12s' }}>
+        <div className="absolute bottom-1/4 right-1/4 text-red-300 opacity-25 animate-spin pointer-events-none" style={{ animationDuration: '12s' }}>
           <Sparkles className="h-8 w-8 drop-shadow-lg" />
         </div>
 
         {/* Mystical particles */}
-        <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {Array.from({ length: 20 }).map((_, i) => (
             <div
               key={i}
-              className={`absolute w-1 h-1 bg-yellow-400 rounded-full animate-ping`}
+              className={`absolute w-1 h-1 bg-yellow-400 rounded-full animate-ping pointer-events-none`}
               style={{
                 top: `${Math.random() * 100}%`,
                 left: `${Math.random() * 100}%`,
@@ -554,100 +554,42 @@ function FortuneScroll({ fortune, onTryAgain, canTryAgain, birthDetails }: Fortu
   const formatContent = (content: string) => {
     const cleaned = cleanContent(content);
     
-    // First, fix age range formatting - combine separated age ranges
-    const ageRangeFixed = cleaned.replace(/(Age \d+)\s*[-–]\s*(\d+)/g, '$1-$2');
-    
-    // Look for age mentions and group related content
-    const agePattern = /(Age \d+(?:-\d+)?|大限|流年|\d{4}年|Your \d+-year[^:]*)[:.:]?\s*/gi;
-    const parts = ageRangeFixed.split(agePattern).filter(part => part.trim());
-    
-    const formattedSections: Array<{type: 'age' | 'content', text: string}> = [];
-    
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i].trim();
-      if (!part) continue;
+    // Simple formatting with proper line breaks and age highlighting
+    const lines = cleaned.split('\n').filter(line => line.trim());
+    const formattedText = lines.map((line, idx) => {
+      const trimmedLine = line.trim();
       
-      // Check if this part is an age/period marker
-      if (part.match(agePattern)) {
-        formattedSections.push({ type: 'age', text: part });
-      } else {
-        formattedSections.push({ type: 'content', text: part });
-      }
-    }
-    
-    // Group age markers with their following content
-    const groupedSections: Array<{ageHeader?: string, content: string}> = [];
-    let currentAge = '';
-    let currentContent = '';
-    
-    formattedSections.forEach((section, idx) => {
-      if (section.type === 'age') {
-        // If we have accumulated content, save it first
-        if (currentContent.trim()) {
-          groupedSections.push({
-            ageHeader: currentAge,
-            content: currentContent.trim()
-          });
-        }
-        // Start new age section
-        currentAge = section.text;
-        currentContent = '';
-      } else {
-        currentContent += (currentContent ? ' ' : '') + section.text;
-      }
+      // Check if line starts with age pattern and make it bold
+      const agePattern = /^(Age \d+(?:-\d+)?|大限|流年|\d{4}年)/i;
+      const ageMatch = trimmedLine.match(agePattern);
       
-      // If this is the last item, save what we have
-      if (idx === formattedSections.length - 1 && (currentAge || currentContent.trim())) {
-        groupedSections.push({
-          ageHeader: currentAge,
-          content: currentContent.trim()
-        });
-      }
-    });
-    
-    // If no age-based grouping worked, fall back to simple paragraph splitting
-    if (groupedSections.length === 0) {
-      groupedSections.push({ content: cleaned });
-    }
-    
-    return groupedSections.map((section, idx) => {
-      // Check for bullet points in content
-      if (section.content.includes('• ')) {
-        const items = section.content.split('• ').filter(item => item.trim());
+      if (ageMatch) {
         return (
-          <div key={idx} className={`mb-6 ${section.ageHeader ? 'bg-amber-100/50 p-4 rounded-lg border-l-4 border-red-500' : ''}`}>
-            {section.ageHeader && (
-              <div className="flex items-center gap-2 mb-3">
-                <Star className="h-4 w-4 text-red-600" />
-                <span className="font-bold text-red-800 text-lg">{section.ageHeader}</span>
-              </div>
-            )}
-            <div className="space-y-3">
-              {items.map((item, itemIdx) => (
-                <div key={itemIdx} className="flex items-start gap-4">
-                  <div className="w-2 h-2 bg-red-600 rounded-full mt-3 flex-shrink-0"></div>
-                  <p className="text-red-900 text-lg md:text-xl leading-relaxed font-medium">{item.trim()}</p>
-                </div>
-              ))}
-            </div>
+          <div key={idx} className="mb-4">
+            <h4 className="text-xl md:text-2xl font-bold text-red-800 mb-2 flex items-center gap-2">
+              <Star className="h-5 w-5 text-red-600" />
+              {ageMatch[1]}
+            </h4>
+            <p className="text-red-900 text-lg md:text-xl leading-relaxed pl-7">
+              {trimmedLine.replace(ageMatch[1], '').replace(/^[:\-\s]+/, '')}
+            </p>
           </div>
         );
       }
       
-      return (
-        <div key={idx} className={`mb-6 ${section.ageHeader ? 'bg-amber-100/50 p-4 rounded-lg border-l-4 border-red-500' : ''}`}>
-          {section.ageHeader && (
-            <div className="flex items-center gap-2 mb-3">
-              <Star className="h-4 w-4 text-red-600" />
-              <span className="font-bold text-red-800 text-lg">{section.ageHeader}</span>
-            </div>
-          )}
-          <p className="text-red-900 text-lg md:text-xl leading-relaxed font-medium">
-            {section.content}
+      // Regular paragraph
+      if (trimmedLine) {
+        return (
+          <p key={idx} className="text-red-900 text-lg md:text-xl leading-relaxed mb-4">
+            {trimmedLine}
           </p>
-        </div>
-      );
-    });
+        );
+      }
+      
+      return null;
+    }).filter(Boolean);
+    
+    return formattedText;
   };
 
   return (
