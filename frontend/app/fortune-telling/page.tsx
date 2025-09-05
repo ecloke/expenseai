@@ -560,8 +560,8 @@ function FortuneScroll({ fortune, onTryAgain, canTryAgain, birthDetails }: Fortu
       .map(sentence => sentence.trim())
       .filter(sentence => sentence.length > 0);
     
-    const formattedSections = [];
-    let currentGroup = [];
+    const formattedSections: string[][] = [];
+    let currentGroup: string[] = [];
     
     processedContent.forEach((sentence, idx) => {
       // Check if this sentence starts a new age/period mention
