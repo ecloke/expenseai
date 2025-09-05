@@ -159,10 +159,12 @@ export default function FortuneTelling() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400 mx-auto mb-4"></div>
-            <p className="text-yellow-200">Loading fortune teller...</p>
+        <div className="space-y-6 pt-16 lg:pt-0">
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400 mx-auto mb-4"></div>
+              <p className="text-yellow-200">Loading fortune teller...</p>
+            </div>
           </div>
         </div>
       </DashboardLayout>
