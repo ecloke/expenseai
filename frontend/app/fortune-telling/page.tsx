@@ -46,6 +46,7 @@ export default function FortuneTelling() {
     loadUserData();
   }, []);
 
+
   // Check daily usage on component mount
   useEffect(() => {
     if (user) {
@@ -180,8 +181,8 @@ export default function FortuneTelling() {
   return (
     <DashboardLayout>
       <div className="space-y-6 pt-16 lg:pt-0">
-        {/* Clean Oriental Background */}
-        <div className="bg-gradient-to-br from-red-900 via-red-800 to-yellow-900 p-4 sm:p-6 lg:p-8 min-h-screen rounded-lg relative">
+        {/* Oriental Fortune Telling Container */}
+        <div className="bg-gradient-to-br from-red-900 via-red-800 to-yellow-900 rounded-lg relative overflow-hidden" style={{ minHeight: '80vh', padding: '2rem' }}>
           <style dangerouslySetInnerHTML={{
             __html: `
               @keyframes gradient {
@@ -216,7 +217,7 @@ export default function FortuneTelling() {
             <div className="absolute top-1/2 left-1/2 w-16 h-16 rounded-full bg-yellow-300 animate-pulse delay-2000"></div>
           </div>
 
-          <div className="max-w-4xl mx-auto py-8 px-4 relative z-10">
+          <div className="max-w-4xl mx-auto relative">
           {/* Header */}
           <div className="text-center mb-12 pt-8">
             <h1 className="text-4xl md:text-5xl font-bold text-yellow-300 mb-4 font-serif tracking-wide">
