@@ -181,7 +181,7 @@ export default function FortuneTelling() {
     <DashboardLayout>
       <div className="space-y-6 pt-16 lg:pt-0">
         {/* Clean Oriental Background */}
-        <div className="bg-gradient-to-br from-red-900 via-red-800 to-yellow-900 -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 min-h-screen">
+        <div className="bg-gradient-to-br from-red-900 via-red-800 to-yellow-900 p-4 sm:p-6 lg:p-8 min-h-screen rounded-lg relative">
           <style dangerouslySetInnerHTML={{
             __html: `
               @keyframes gradient {
@@ -209,11 +209,11 @@ export default function FortuneTelling() {
             `
           }} />
 
-          {/* Simplified Background Elements */}
-          <div className="fixed inset-0 pointer-events-none opacity-10 overflow-hidden">
-            <div className="absolute top-20 left-20 w-32 h-32 rounded-full bg-yellow-400 animate-pulse"></div>
-            <div className="absolute bottom-20 right-20 w-24 h-24 rounded-full bg-red-400 animate-pulse delay-1000"></div>
-            <div className="absolute top-1/2 right-10 w-16 h-16 rounded-full bg-yellow-300 animate-pulse delay-2000"></div>
+          {/* Simplified Background Elements - Positioned within container */}
+          <div className="absolute inset-0 pointer-events-none opacity-10 overflow-hidden rounded-lg">
+            <div className="absolute top-20 right-20 w-32 h-32 rounded-full bg-yellow-400 animate-pulse"></div>
+            <div className="absolute bottom-20 right-10 w-24 h-24 rounded-full bg-red-400 animate-pulse delay-1000"></div>
+            <div className="absolute top-1/2 left-1/2 w-16 h-16 rounded-full bg-yellow-300 animate-pulse delay-2000"></div>
           </div>
 
           <div className="max-w-4xl mx-auto py-8 px-4 relative z-10">
