@@ -79,7 +79,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   // If no configuration, redirect to setup
-  if (!userConfig || !userConfig.telegram_bot_token || !userConfig.gemini_api_key) {
+  if (!userConfig) {
     router.push('/setup')
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
