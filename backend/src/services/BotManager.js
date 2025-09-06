@@ -1511,8 +1511,7 @@ async saveReceiptAsExpense(userId, receiptData, projectId) {
     if (categories.length > 0) {
       message += `🥧 *Category Breakdown:*\n`;
       categories.forEach(cat => {
-        const emoji = this.expenseService.getCategoryEmoji(cat.category);
-        message += `${emoji} ${this.expenseService.capitalizeFirst(cat.category)}: $${cat.amount} (${cat.percentage}%)\n`;
+        message += `• ${this.expenseService.capitalizeFirst(cat.category)}: $${cat.amount} (${cat.percentage}%)\n`;
       });
       message += '\n';
     }
@@ -1547,8 +1546,7 @@ async saveReceiptAsExpense(userId, receiptData, projectId) {
       if (generalCategories.length > 0) {
         message += `🥧 Categories: `;
         message += generalCategories.slice(0, 3).map(cat => {
-          const emoji = this.expenseService.getCategoryEmoji(cat.category);
-          return `${emoji} ${cat.percentage}%`;
+          return `${this.expenseService.capitalizeFirst(cat.category)} ${cat.percentage}%`;
         }).join(', ') + '\n';
       }
 
@@ -1574,8 +1572,7 @@ async saveReceiptAsExpense(userId, receiptData, projectId) {
         if (projectCategories.length > 0) {
           message += `🥧 Categories: `;
           message += projectCategories.slice(0, 3).map(cat => {
-            const emoji = this.expenseService.getCategoryEmoji(cat.category);
-            return `${emoji} ${cat.percentage}%`;
+            return `${this.expenseService.capitalizeFirst(cat.category)} ${cat.percentage}%`;
           }).join(', ') + '\n';
         }
 
