@@ -11,6 +11,7 @@ import userRoutes from './routes/user.js';
 import analyticsRoutes from './routes/analytics.js';
 import healthRoutes from './routes/health.js';
 import projectRoutes from './routes/projects.js';
+import categoriesRoutes from './routes/categories.js';
 import webhookRoutes from './routes/webhook.js';
 import fortuneRoutes from './routes/fortune.js';
 
@@ -84,6 +85,7 @@ app.use('/api/user', userRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/health', healthRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/categories', categoriesRoutes);
 app.use('/api/webhook', webhookRoutes);
 app.use('/api/fortune', fortuneRoutes);
 

@@ -380,16 +380,29 @@ class ExpenseService {
    */
   async createExpense(userId, expenseData) {
     try {
+      // Prepare expense data with category_id support
+      const insertData = {
+        user_id: userId,
+        receipt_date: expenseData.receiptDate || expenseData.receipt_date,
+        store_name: expenseData.storeName || expenseData.store_name,
+        category: expenseData.category,
+        total_amount: parseFloat(expenseData.totalAmount || expenseData.total_amount),
+        created_at: new Date().toISOString()
+      };
+
+      // Add category_id if provided (for dynamic categories)
+      if (expenseData.category_id) {
+        insertData.category_id = expenseData.category_id;
+      }
+
+      // Add project_id if provided
+      if (expenseData.project_id) {
+        insertData.project_id = expenseData.project_id;
+      }
+
       const { data, error } = await this.supabase
         .from('expenses')
-        .insert([{
-          user_id: userId,
-          receipt_date: expenseData.receiptDate,
-          store_name: expenseData.storeName,
-          category: expenseData.category,
-          total_amount: parseFloat(expenseData.totalAmount),
-          created_at: new Date().toISOString()
-        }])
+        .insert([insertData])
         .select()
         .single();
 
@@ -405,9 +418,62 @@ class ExpenseService {
   }
 
   /**
-   * Get available categories
+   * Get available categories for a user (dynamic from database)
    */
-  getAvailableCategories() {
+  async getAvailableCategories(userId) {
+    try {
+      if (!userId) {
+        // Fallback to default categories if no user ID provided
+        return CATEGORIES.map(category => ({
+          value: category,
+          label: `${CATEGORY_EMOJIS[category]} ${this.capitalizeFirst(category)}`,
+          emoji: CATEGORY_EMOJIS[category],
+          id: null
+        }));
+      }
+
+      const { data: categories, error } = await this.supabase
+        .from('categories')
+        .select('id, name')
+        .eq('user_id', userId)
+        .order('name', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching user categories:', error);
+        // Fallback to default categories
+        return CATEGORIES.map(category => ({
+          value: category,
+          label: `${CATEGORY_EMOJIS[category]} ${this.capitalizeFirst(category)}`,
+          emoji: CATEGORY_EMOJIS[category],
+          id: null
+        }));
+      }
+
+      // Convert database categories to the expected format
+      return categories.map(category => ({
+        value: category.name,
+        label: `${this.getCategoryEmoji(category.name)} ${this.capitalizeFirst(category.name)}`,
+        emoji: this.getCategoryEmoji(category.name),
+        id: category.id
+      }));
+
+    } catch (error) {
+      console.error('Error in getAvailableCategories:', error);
+      // Fallback to default categories
+      return CATEGORIES.map(category => ({
+        value: category,
+        label: `${CATEGORY_EMOJIS[category]} ${this.capitalizeFirst(category)}`,
+        emoji: CATEGORY_EMOJIS[category],
+        id: null
+      }));
+    }
+  }
+
+  /**
+   * Get available categories (legacy method for backward compatibility)
+   * @deprecated Use getAvailableCategories(userId) instead
+   */
+  getAvailableCategoriesLegacy() {
     return CATEGORIES.map(category => ({
       value: category,
       label: `${CATEGORY_EMOJIS[category]} ${this.capitalizeFirst(category)}`,
