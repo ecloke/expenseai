@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sparkles, Calendar, Clock, MapPin, Star, Zap, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react';
+import { Sparkles, Calendar, Clock, MapPin, Star } from 'lucide-react';
 import { apiClient } from '@/lib/apiClient';
 
 interface FortuneReading {
@@ -239,10 +239,15 @@ export default function FortuneTelling() {
                           <Calendar className="h-4 w-4 md:h-5 md:w-5" />
                           诞生之日 • Date of Birth
                         </Label>
-                        <OrientalDatePicker 
-                          value={formData.birthDate}
-                          onChange={(date) => handleInputChange('birthDate', date)}
-                        />
+                        <div className="relative">
+                          <Input
+                            type="date"
+                            value={formData.birthDate}
+                            onChange={(e) => handleInputChange('birthDate', e.target.value)}
+                            required
+                            className="bg-red-900/50 border-2 border-yellow-500/60 text-yellow-100 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/30 h-12 text-base md:text-lg rounded-lg [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:brightness-200"
+                          />
+                        </div>
                       </div>
 
                       {/* Time of Birth - Mobile Optimized */}
@@ -251,10 +256,15 @@ export default function FortuneTelling() {
                           <Clock className="h-4 w-4 md:h-5 md:w-5" />
                           时辰 • Time of Birth
                         </Label>
-                        <OrientalTimePicker
-                          value={formData.birthTime}
-                          onChange={(time) => handleInputChange('birthTime', time)}
-                        />
+                        <div className="relative">
+                          <Input
+                            type="time"
+                            value={formData.birthTime}
+                            onChange={(e) => handleInputChange('birthTime', e.target.value)}
+                            required
+                            className="bg-red-900/50 border-2 border-yellow-500/60 text-yellow-100 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/30 h-12 text-base md:text-lg rounded-lg [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:brightness-200"
+                          />
+                        </div>
                       </div>
 
                       {/* Place of Birth - Clean Design */}
@@ -476,7 +486,7 @@ function MysticalLoadingState() {
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <Sparkles className="absolute top-4 right-8 h-5 w-5 text-yellow-400 animate-ping" />
         <Star className="absolute bottom-8 left-12 h-4 w-4 text-red-400 animate-pulse" />
-        <Zap className="absolute top-12 left-6 h-6 w-6 text-yellow-300 animate-bounce" />
+        <Star className="absolute top-12 left-6 h-6 w-6 text-yellow-300 animate-bounce" />
       </div>
     </div>
   );
@@ -497,10 +507,10 @@ interface FortuneScrollProps {
 function FortuneScroll({ fortune, onTryAgain, canTryAgain, birthDetails }: FortuneScrollProps) {
   const sections = [
     { key: 'personality', title: '性格特质', subtitle: 'Personality & Core Traits', icon: Star, content: fortune.personality },
-    { key: 'career', title: '事业前程', subtitle: 'Career Path & Success', icon: Zap, content: fortune.career },
+    { key: 'career', title: '事业前程', subtitle: 'Career Path & Success', icon: Star, content: fortune.career },
     { key: 'wealth', title: '财运机遇', subtitle: 'Wealth & Financial Fortune', icon: Sparkles, content: fortune.wealth },
     { key: 'relationships', title: '情感姻缘', subtitle: 'Love & Relationships', icon: Star, content: fortune.relationships },
-    { key: 'health', title: '健康运势', subtitle: 'Health & Vitality', icon: Zap, content: fortune.health },
+    { key: 'health', title: '健康运势', subtitle: 'Health & Vitality', icon: Star, content: fortune.health },
     { key: 'lifePeriods', title: '人生转机', subtitle: 'Life Turning Points', icon: Sparkles, content: fortune.lifePeriods },
     { key: 'advice', title: '神谕指引', subtitle: 'Divine Guidance & Wisdom', icon: Star, content: fortune.advice }
   ];
@@ -716,365 +726,6 @@ function FortuneScroll({ fortune, onTryAgain, canTryAgain, birthDetails }: Fortu
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-// Custom Oriental Date Picker Component
-interface OrientalDatePickerProps {
-  value: string;
-  onChange: (date: string) => void;
-}
-
-function OrientalDatePicker({ value, onChange }: OrientalDatePickerProps) {
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [selectedDay, setSelectedDay] = useState(new Date().getDate());
-  const [isEditingYear, setIsEditingYear] = useState(false);
-
-  useEffect(() => {
-    if (value) {
-      const [year, month, day] = value.split('-').map(Number);
-      setSelectedYear(year);
-      setSelectedMonth(month);
-      setSelectedDay(day);
-    }
-  }, []);
-
-  useEffect(() => {
-    const formattedDate = `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}-${selectedDay.toString().padStart(2, '0')}`;
-    onChange(formattedDate);
-  }, [selectedYear, selectedMonth, selectedDay, onChange]);
-
-  const months = [
-    { num: 1, name: '正月', eng: 'January' },
-    { num: 2, name: '二月', eng: 'February' },
-    { num: 3, name: '三月', eng: 'March' },
-    { num: 4, name: '四月', eng: 'April' },
-    { num: 5, name: '五月', eng: 'May' },
-    { num: 6, name: '六月', eng: 'June' },
-    { num: 7, name: '七月', eng: 'July' },
-    { num: 8, name: '八月', eng: 'August' },
-    { num: 9, name: '九月', eng: 'September' },
-    { num: 10, name: '十月', eng: 'October' },
-    { num: 11, name: '十一月', eng: 'November' },
-    { num: 12, name: '十二月', eng: 'December' },
-  ];
-
-  const getDaysInMonth = (year: number, month: number) => {
-    return new Date(year, month, 0).getDate();
-  };
-
-  const daysInMonth = getDaysInMonth(selectedYear, selectedMonth);
-
-  return (
-    <div className="bg-gradient-to-br from-red-800/40 to-yellow-800/30 border-2 border-yellow-500/60 rounded-xl p-4 md:p-6 space-y-4 md:space-y-6">
-      {/* Year Selector */}
-      <div className="text-center space-y-3">
-        <p className="text-yellow-300 text-sm font-medium">年份 Year</p>
-        <div className="flex items-center justify-center gap-2 md:gap-4">
-          <button
-            type="button"
-            onClick={() => setSelectedYear(prev => prev - 1)}
-            className="p-2 bg-red-700/50 hover:bg-red-600/70 border border-yellow-500/30 rounded-full transition-colors flex-shrink-0"
-          >
-            <ChevronLeft className="h-4 w-4 text-yellow-300" />
-          </button>
-          
-          {isEditingYear ? (
-            <input
-              type="text"
-              value={selectedYear.toString()}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value === '' || /^\d{1,4}$/.test(value)) {
-                  setSelectedYear(value === '' ? new Date().getFullYear() : parseInt(value) || new Date().getFullYear());
-                }
-              }}
-              onBlur={() => setIsEditingYear(false)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  setIsEditingYear(false);
-                }
-              }}
-              onFocus={(e) => e.target.select()}
-              autoFocus
-              className="bg-gradient-to-r from-yellow-600 to-red-600 px-4 md:px-6 py-2 md:py-3 rounded-lg text-white font-bold text-lg md:text-xl min-w-[80px] md:min-w-[100px] text-center border-2 border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-300"
-            />
-          ) : (
-            <button
-              type="button"
-              onClick={() => setIsEditingYear(true)}
-              className="bg-gradient-to-r from-yellow-600 to-red-600 px-6 py-3 rounded-lg text-white font-bold text-xl min-w-[100px] hover:from-yellow-500 hover:to-red-500 transition-all cursor-pointer"
-            >
-              {selectedYear}
-            </button>
-          )}
-          
-          <button
-            type="button"
-            onClick={() => setSelectedYear(prev => prev + 1)}
-            className="p-2 bg-red-700/50 hover:bg-red-600/70 border border-yellow-500/30 rounded-full transition-colors"
-          >
-            <ChevronRight className="h-4 w-4 text-yellow-300" />
-          </button>
-        </div>
-        <p className="text-yellow-200/60 text-xs">点击年份直接编辑 • Click year to edit directly</p>
-      </div>
-
-      {/* Month Selector */}
-      <div className="space-y-3">
-        <p className="text-yellow-300 text-sm font-medium text-center">月份 Month</p>
-        <div className="grid grid-cols-3 gap-2">
-          {months.map((month) => (
-            <button
-              key={month.num}
-              type="button"
-              onClick={() => setSelectedMonth(month.num)}
-              className={`p-3 rounded-lg border-2 transition-all text-center ${
-                selectedMonth === month.num
-                  ? 'bg-gradient-to-r from-yellow-500 to-red-500 border-yellow-400 text-red-900 font-bold scale-105'
-                  : 'bg-red-900/30 border-yellow-500/30 text-yellow-200 hover:bg-red-800/50 hover:border-yellow-400/60'
-              }`}
-            >
-              <div className="text-sm leading-tight">
-                <div className="font-medium">{month.name}</div>
-                <div className="text-xs opacity-80">{month.eng}</div>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Day Selector */}
-      <div className="space-y-3">
-        <p className="text-yellow-300 text-sm font-medium text-center">日期 Day</p>
-        <div className="grid grid-cols-7 gap-1">
-          {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => (
-            <button
-              key={day}
-              type="button"
-              onClick={() => setSelectedDay(day)}
-              className={`p-2 rounded-lg border transition-all text-center ${
-                selectedDay === day
-                  ? 'bg-gradient-to-r from-yellow-500 to-red-500 border-yellow-400 text-red-900 font-bold scale-110'
-                  : 'bg-red-900/30 border-yellow-500/20 text-yellow-200 hover:bg-red-800/50 hover:border-yellow-400/60'
-              }`}
-            >
-              {day}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="text-center pt-2">
-        <p className="text-yellow-200/80 text-sm">
-          选择的日期: <span className="font-bold text-yellow-300">{selectedYear}年 {selectedMonth}月 {selectedDay}日</span>
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// Custom Oriental Time Picker Component
-interface OrientalTimePickerProps {
-  value: string;
-  onChange: (time: string) => void;
-}
-
-function OrientalTimePicker({ value, onChange }: OrientalTimePickerProps) {
-  const [selectedHour, setSelectedHour] = useState(12);
-  const [selectedMinute, setSelectedMinute] = useState(0);
-  const [isEditingHour, setIsEditingHour] = useState(false);
-  const [isEditingMinute, setIsEditingMinute] = useState(false);
-
-  useEffect(() => {
-    if (value) {
-      const [hour, minute] = value.split(':').map(Number);
-      setSelectedHour(hour);
-      setSelectedMinute(minute);
-    }
-  }, []);
-
-  useEffect(() => {
-    const formattedTime = `${selectedHour.toString().padStart(2, '0')}:${selectedMinute.toString().padStart(2, '0')}`;
-    onChange(formattedTime);
-  }, [selectedHour, selectedMinute, onChange]);
-
-  const chineseHours = [
-    { num: 0, name: '子时', period: '23:00-01:00', western: 'Midnight' },
-    { num: 1, name: '丑时', period: '01:00-03:00', western: 'Late Night' },
-    { num: 2, name: '寅时', period: '03:00-05:00', western: 'Pre-Dawn' },
-    { num: 3, name: '卯时', period: '05:00-07:00', western: 'Dawn' },
-    { num: 4, name: '辰时', period: '07:00-09:00', western: 'Morning' },
-    { num: 5, name: '巳时', period: '09:00-11:00', western: 'Late Morning' },
-    { num: 6, name: '午时', period: '11:00-13:00', western: 'Noon' },
-    { num: 7, name: '未时', period: '13:00-15:00', western: 'Afternoon' },
-    { num: 8, name: '申时', period: '15:00-17:00', western: 'Late Afternoon' },
-    { num: 9, name: '酉时', period: '17:00-19:00', western: 'Evening' },
-    { num: 10, name: '戌时', period: '19:00-21:00', western: 'Night' },
-    { num: 11, name: '亥时', period: '21:00-23:00', western: 'Late Night' },
-  ];
-
-  const getChineseHour = (hour: number) => {
-    if (hour === 23 || hour === 0) return chineseHours[0];
-    return chineseHours[Math.floor((hour + 1) / 2)] || chineseHours[0];
-  };
-
-  const currentChineseHour = getChineseHour(selectedHour);
-
-  return (
-    <div className="bg-gradient-to-br from-red-800/40 to-yellow-800/30 border-2 border-yellow-500/60 rounded-xl p-6 space-y-6">
-      {/* Chinese Hour Display */}
-      <div className="text-center bg-gradient-to-r from-yellow-600/20 to-red-600/20 p-4 rounded-lg border border-yellow-500/30">
-        <p className="text-yellow-300 text-sm font-medium">当前时辰</p>
-        <p className="text-2xl font-bold text-yellow-200 mt-1">{currentChineseHour.name}</p>
-        <p className="text-red-200 text-sm">{currentChineseHour.western} • {currentChineseHour.period}</p>
-      </div>
-
-      {/* Hour Selector */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-center gap-4">
-          <div className="text-center">
-            <p className="text-yellow-300 text-sm font-medium mb-2">小时 Hour</p>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setSelectedHour(prev => prev === 0 ? 23 : prev - 1)}
-                className="p-2 bg-red-700/50 hover:bg-red-600/70 border border-yellow-500/30 rounded-full transition-colors"
-              >
-                <ChevronUp className="h-4 w-4 text-yellow-300" />
-              </button>
-              
-              {isEditingHour ? (
-                <input
-                  type="text"
-                  value={selectedHour.toString().padStart(2, '0')}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === '' || (/^\d{1,2}$/.test(value) && parseInt(value) <= 23)) {
-                      setSelectedHour(value === '' ? 0 : parseInt(value));
-                    }
-                  }}
-                  onBlur={() => setIsEditingHour(false)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      setIsEditingHour(false);
-                    }
-                  }}
-                  onFocus={(e) => e.target.select()}
-                  autoFocus
-                  className="bg-gradient-to-r from-yellow-600 to-red-600 px-4 py-3 rounded-lg text-white font-bold text-xl min-w-[60px] text-center border-2 border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-300"
-                />
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setIsEditingHour(true)}
-                  className="bg-gradient-to-r from-yellow-600 to-red-600 px-4 py-3 rounded-lg text-white font-bold text-xl min-w-[60px] hover:from-yellow-500 hover:to-red-500 transition-all cursor-pointer"
-                >
-                  {selectedHour.toString().padStart(2, '0')}
-                </button>
-              )}
-              
-              <button
-                type="button"
-                onClick={() => setSelectedHour(prev => prev === 23 ? 0 : prev + 1)}
-                className="p-2 bg-red-700/50 hover:bg-red-600/70 border border-yellow-500/30 rounded-full transition-colors"
-              >
-                <ChevronDown className="h-4 w-4 text-yellow-300" />
-              </button>
-            </div>
-          </div>
-
-          <div className="text-yellow-200 text-2xl font-bold">:</div>
-
-          {/* Minute Selector */}
-          <div className="text-center">
-            <p className="text-yellow-300 text-sm font-medium mb-2">分钟 Minute</p>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setSelectedMinute(prev => prev === 0 ? 59 : prev - 1)}
-                className="p-2 bg-red-700/50 hover:bg-red-600/70 border border-yellow-500/30 rounded-full transition-colors"
-              >
-                <ChevronUp className="h-4 w-4 text-yellow-300" />
-              </button>
-              
-              {isEditingMinute ? (
-                <input
-                  type="text"
-                  value={selectedMinute.toString().padStart(2, '0')}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === '' || (/^\d{1,2}$/.test(value) && parseInt(value) <= 59)) {
-                      setSelectedMinute(value === '' ? 0 : parseInt(value));
-                    }
-                  }}
-                  onBlur={() => setIsEditingMinute(false)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      setIsEditingMinute(false);
-                    }
-                  }}
-                  onFocus={(e) => e.target.select()}
-                  autoFocus
-                  className="bg-gradient-to-r from-yellow-600 to-red-600 px-4 py-3 rounded-lg text-white font-bold text-xl min-w-[60px] text-center border-2 border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-300"
-                />
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setIsEditingMinute(true)}
-                  className="bg-gradient-to-r from-yellow-600 to-red-600 px-4 py-3 rounded-lg text-white font-bold text-xl min-w-[60px] hover:from-yellow-500 hover:to-red-500 transition-all cursor-pointer"
-                >
-                  {selectedMinute.toString().padStart(2, '0')}
-                </button>
-              )}
-              
-              <button
-                type="button"
-                onClick={() => setSelectedMinute(prev => prev === 59 ? 0 : prev + 1)}
-                className="p-2 bg-red-700/50 hover:bg-red-600/70 border border-yellow-500/30 rounded-full transition-colors"
-              >
-                <ChevronDown className="h-4 w-4 text-yellow-300" />
-              </button>
-            </div>
-          </div>
-        </div>
-        <p className="text-yellow-200/60 text-xs text-center">点击时间直接编辑 • Click time to edit directly</p>
-      </div>
-
-      {/* Quick Time Buttons */}
-      <div className="space-y-3">
-        <p className="text-yellow-300 text-sm font-medium text-center">快速选择</p>
-        <div className="grid grid-cols-2 gap-2">
-          {[
-            { time: '06:00', label: '卯时 • Dawn' },
-            { time: '12:00', label: '午时 • Noon' },
-            { time: '18:00', label: '酉时 • Evening' },
-            { time: '00:00', label: '子时 • Midnight' },
-          ].map((preset) => (
-            <button
-              key={preset.time}
-              type="button"
-              onClick={() => {
-                const [hour, minute] = preset.time.split(':').map(Number);
-                setSelectedHour(hour);
-                setSelectedMinute(minute);
-              }}
-              className="p-3 bg-red-900/30 border border-yellow-500/30 rounded-lg text-yellow-200 hover:bg-red-800/50 hover:border-yellow-400/60 transition-all text-center text-sm"
-            >
-              <div className="font-medium">{preset.time}</div>
-              <div className="text-xs opacity-80">{preset.label}</div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="text-center pt-2">
-        <p className="text-yellow-200/80 text-sm">
-          选择的时间: <span className="font-bold text-yellow-300">{selectedHour.toString().padStart(2, '0')}:{selectedMinute.toString().padStart(2, '0')}</span>
-        </p>
       </div>
     </div>
   );
