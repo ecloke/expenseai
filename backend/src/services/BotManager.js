@@ -927,7 +927,7 @@ Please enter the receipt date or /cancel to stop:`;
         }
 
         this.conversationManager.updateStep(userId, 2, { storeName: input.trim() });
-        const categories = this.expenseService.getAvailableCategories();
+        const categories = await this.expenseService.getAvailableCategories(userId);
         let categoryMessage = `✅ Store: ${input.trim()}
 
 📋 Please select a category by typing the number:
@@ -941,7 +941,7 @@ Please enter the receipt date or /cancel to stop:`;
 
       case 2: // Waiting for category selection
         const categoryIndex = parseInt(input) - 1;
-        const availableCategories = this.expenseService.getAvailableCategories();
+        const availableCategories = await this.expenseService.getAvailableCategories(userId);
         
         if (isNaN(categoryIndex) || categoryIndex < 0 || categoryIndex >= availableCategories.length) {
           return `❌ Invalid selection. Please choose a number from 1 to ${availableCategories.length}:
@@ -950,7 +950,10 @@ ${availableCategories.map((cat, index) => `${index + 1}. ${cat.label}`).join('\n
         }
 
         const selectedCategory = availableCategories[categoryIndex];
-        this.conversationManager.updateStep(userId, 3, { category: selectedCategory.value });
+        this.conversationManager.updateStep(userId, 3, { 
+          category: selectedCategory.value,
+          categoryId: selectedCategory.id 
+        });
         return `✅ Category: ${selectedCategory.label}
 
 💵 Please enter the total amount (numbers only):
@@ -971,6 +974,7 @@ Please enter the total amount:`;
           receipt_date: conversation.data.receiptDate,
           store_name: conversation.data.storeName,
           category: conversation.data.category,
+          category_id: conversation.data.categoryId,
           total_amount: parseFloat(amount)
         };
 
