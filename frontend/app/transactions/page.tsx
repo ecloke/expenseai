@@ -22,7 +22,8 @@ import { ChevronLeft, ChevronRight, Search, Calendar, Store, Filter, Download, R
 import { Expense } from '@/types'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
-import { CATEGORY_EMOJIS, CATEGORIES, ITEMS_PER_PAGE, getCategoryEmoji } from '@/lib/constants'
+import { CATEGORY_EMOJIS, ITEMS_PER_PAGE, getCategoryEmoji } from '@/lib/constants'
+import { useCategoriesWithAll, useCategories } from '@/hooks/useCategories'
 import { formatDateForDisplay, formatDateTimeForDisplay, getTodayString, getDaysAgoString, getMonthStartString, formatDateForAPI } from '@/lib/dateUtils'
 
 export default function Transactions() {
@@ -48,6 +49,10 @@ export default function Transactions() {
     total_amount: 0
   })
   const router = useRouter()
+  
+  // Dynamic categories
+  const { categories: categoriesWithAll } = useCategoriesWithAll()
+  const { categories: categoriesOnly } = useCategories()
   
   const itemsPerPage = ITEMS_PER_PAGE
 
@@ -346,9 +351,9 @@ export default function Transactions() {
                 <SimpleSelect
                   value={categoryFilter}
                   onValueChange={handleCategoryChange}
-                  options={CATEGORIES.map(category => ({
-                    value: category,
-                    label: category === 'all' ? 'All Categories' : `${CATEGORY_EMOJIS[category]} ${category}`
+                  options={categoriesWithAll.map(category => ({
+                    value: category.value,
+                    label: category.label
                   }))}
                   placeholder="All Categories"
                 />
@@ -653,9 +658,9 @@ export default function Transactions() {
                 <SimpleSelect
                   value={editForm.category}
                   onValueChange={(value) => setEditForm({ ...editForm, category: value })}
-                  options={CATEGORIES.filter(cat => cat !== 'all').map(category => ({
-                    value: category,
-                    label: `${CATEGORY_EMOJIS[category]} ${category}`
+                  options={categoriesOnly.map(category => ({
+                    value: category.value,
+                    label: category.label
                   }))}
                   placeholder="Select category"
                   className="col-span-3"

@@ -18,7 +18,8 @@ import {
   Menu,
   X,
   Calculator,
-  Sparkles
+  Sparkles,
+  Tag
 } from 'lucide-react'
 import { createSupabaseClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
@@ -78,6 +79,12 @@ export default function Sidebar({ userConfig, botSession }: SidebarProps) {
       href: '/projects',
       icon: FolderOpen,
       current: pathname === '/projects'
+    },
+    {
+      name: 'Categories',
+      href: '/categories',
+      icon: Tag,
+      current: pathname === '/categories'
     },
     {
       name: 'Investment Calculator',
