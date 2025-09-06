@@ -1204,6 +1204,7 @@ ${options.map((option, index) => `${index + 1}. ${option.label}`).join('\n')}`;
         receipt_date: expenseData.receipt_date || expenseData.date,
         store_name: expenseData.store_name,
         category: expenseData.category,
+        category_id: expenseData.category_id,
         total_amount: expenseData.total_amount || expenseData.total
       };
 
@@ -1434,6 +1435,22 @@ All expenses have been saved to your database! 💾`;
    */
 async saveReceiptAsExpense(userId, receiptData, projectId) {
   try {
+    // Auto-resolve category_id if missing but category name exists
+    let categoryId = receiptData.category_id;
+    if (!categoryId && receiptData.category) {
+      try {
+        const { data: category } = await this.supabase
+          .from('categories')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('name', receiptData.category)
+          .single();
+        categoryId = category?.id;
+      } catch (error) {
+        console.log('Could not auto-resolve category_id for:', receiptData.category);
+      }
+    }
+
     // Create expense record (now that ReceiptProcessor doesn't save automatically)
     const expenseData = {
       user_id: userId,
@@ -1441,6 +1458,7 @@ async saveReceiptAsExpense(userId, receiptData, projectId) {
       receipt_date: receiptData.receipt_date || receiptData.date,
       store_name: receiptData.store_name,
       category: receiptData.category,
+      category_id: categoryId,
       total_amount: receiptData.total_amount || receiptData.total
     };
 

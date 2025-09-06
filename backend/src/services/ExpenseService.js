@@ -380,6 +380,22 @@ class ExpenseService {
    */
   async createExpense(userId, expenseData) {
     try {
+      // Auto-resolve category_id if missing but category name exists
+      let categoryId = expenseData.category_id;
+      if (!categoryId && expenseData.category) {
+        try {
+          const { data: category } = await this.supabase
+            .from('categories')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('name', expenseData.category)
+            .single();
+          categoryId = category?.id;
+        } catch (error) {
+          console.log('Could not auto-resolve category_id for:', expenseData.category);
+        }
+      }
+
       // Prepare expense data with category_id support
       const insertData = {
         user_id: userId,
@@ -390,9 +406,9 @@ class ExpenseService {
         created_at: new Date().toISOString()
       };
 
-      // Add category_id if provided (for dynamic categories)
-      if (expenseData.category_id) {
-        insertData.category_id = expenseData.category_id;
+      // Add category_id if resolved or provided
+      if (categoryId) {
+        insertData.category_id = categoryId;
       }
 
       // Add project_id if provided
