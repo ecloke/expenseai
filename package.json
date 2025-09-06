@@ -26,5 +26,9 @@
     "gemini",
     "google-sheets",
     "supabase"
-  ]
+  ],
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.2",
+    "dotenv": "^17.2.2"
+  }
 }
