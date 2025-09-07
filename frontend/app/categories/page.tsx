@@ -19,7 +19,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Plus, Tag, Edit, Trash2, AlertCircle, CheckCircle } from 'lucide-react'
-import { getCategoryEmoji } from '@/lib/constants'
+// Removed category emoji imports - using text-only categories now
 import { Skeleton } from '@/components/ui/skeleton'
 
 interface Category {
@@ -348,7 +348,6 @@ export default function CategoriesPage() {
                         <TableRow key={category.id} className="border-gray-700 hover:bg-gray-750/50">
                           <TableCell>
                             <div className="flex items-center gap-3">
-                              <span className="text-xl">{getCategoryEmoji(category.name)}</span>
                               <span className="font-medium text-white text-sm capitalize">{category.name}</span>
                             </div>
                           </TableCell>
@@ -430,7 +429,6 @@ export default function CategoriesPage() {
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start mb-3">
                           <div className="flex items-center gap-3">
-                            <span className="text-xl">{getCategoryEmoji(category.name)}</span>
                             <div>
                               <h3 className="font-medium text-white text-base capitalize">{category.name}</h3>
                               <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">

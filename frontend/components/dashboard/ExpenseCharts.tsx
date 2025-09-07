@@ -29,7 +29,7 @@ import {
   Receipt
 } from 'lucide-react'
 import { Expense } from '@/types'
-import { CATEGORY_EMOJIS, CHART_COLORS, TimeRange, getCategoryEmoji } from '@/lib/constants'
+import { CHART_COLORS, TimeRange } from '@/lib/constants'
 import { getDateRange, formatDateForAPI } from '@/lib/dateUtils'
 
 interface ExpenseChartsProps {
@@ -348,7 +348,7 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
                     </Pie>
                     <Tooltip 
                       formatter={(value, name, props) => [`${currency}${value}`, 'Amount']}
-                      labelFormatter={(label) => `${getCategoryEmoji(label)} ${label}`}
+                      labelFormatter={(label) => label}
                       contentStyle={{ 
                         backgroundColor: '#1F2937', 
                         border: '1px solid #374151', 
@@ -374,7 +374,7 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
                           style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
                         />
                         <span className="font-medium text-gray-200">
-                          {getCategoryEmoji(category.category)} {category.category}
+                          {category.category}
                         </span>
                       </div>
                       <div className="text-right">

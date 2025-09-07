@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { createSupabaseClient } from '@/lib/supabase'
-import { CATEGORY_EMOJIS, getCategoryEmoji } from '@/lib/constants'
+// Removed category emoji imports - using text-only categories now
 
 interface Category {
   id: string
@@ -11,7 +11,6 @@ interface Category {
 interface CategoryOption {
   value: string
   label: string
-  emoji: string
   id: string | null
 }
 
@@ -41,8 +40,7 @@ export function useCategories() {
 
       const categoryOptions: CategoryOption[] = (result.data || []).map((category: Category) => ({
         value: category.name,
-        label: `${getCategoryEmoji(category.name)} ${category.name}`,
-        emoji: getCategoryEmoji(category.name),
+        label: category.name,
         id: category.id
       }))
 
@@ -55,8 +53,7 @@ export function useCategories() {
       const defaultCategories = ['groceries', 'dining', 'gas', 'pharmacy', 'retail', 'services', 'entertainment', 'other']
       const fallbackOptions: CategoryOption[] = defaultCategories.map(category => ({
         value: category,
-        label: `${CATEGORY_EMOJIS[category as keyof typeof CATEGORY_EMOJIS]} ${category}`,
-        emoji: CATEGORY_EMOJIS[category as keyof typeof CATEGORY_EMOJIS],
+        label: category,
         id: null
       }))
       setCategories(fallbackOptions)
@@ -85,7 +82,6 @@ export function useCategoriesWithAll() {
     {
       value: 'all',
       label: 'All Categories',
-      emoji: '📂',
       id: null
     },
     ...categories

@@ -3,17 +3,7 @@
  * This file eliminates duplication across multiple services
  */
 
-// Category emojis - matches frontend constants
-export const CATEGORY_EMOJIS = {
-  groceries: '🛒',
-  dining: '🍽️',
-  gas: '⛽',
-  pharmacy: '💊',
-  retail: '🛍️',
-  services: '🔧',
-  entertainment: '🎬',
-  other: '📦'
-};
+// Category emojis removed - using text-only categories now
 
 // Available categories
 export const CATEGORIES = ['groceries', 'dining', 'gas', 'pharmacy', 'retail', 'services', 'entertainment', 'other'];

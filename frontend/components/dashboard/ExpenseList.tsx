@@ -34,16 +34,7 @@ const CATEGORY_COLORS: { [key: string]: string } = {
   other: 'bg-gray-100 text-gray-800'
 }
 
-const CATEGORY_EMOJIS: { [key: string]: string } = {
-  groceries: '🛒',
-  dining: '🍽️',
-  gas: '⛽',
-  pharmacy: '💊',
-  retail: '🛍️',
-  services: '🔧',
-  entertainment: '🎬',
-  other: '📦'
-}
+// Removed category emojis - using text-only categories now
 
 export default function ExpenseList({ userId, projectId }: ExpenseListProps) {
   const [expenses, setExpenses] = useState<Expense[]>([])
@@ -189,7 +180,7 @@ export default function ExpenseList({ userId, projectId }: ExpenseListProps) {
                           variant="secondary" 
                           className="bg-gray-600 text-gray-200 border-gray-500"
                         >
-                          {CATEGORY_EMOJIS[expense.category]} {expense.category}
+{expense.category}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">

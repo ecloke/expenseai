@@ -1,5 +1,5 @@
 import { getTopStoresNormalized } from '../utils/storeNormalizer.js';
-import { CATEGORY_EMOJIS, CATEGORIES } from '../constants.js';
+import { CATEGORIES } from '../constants.js';
 import { getTodayString, getYesterdayString, getWeekStartString, getMonthStartString, getCommonDateRanges } from '../utils/dateUtils.js';
 
 /**
@@ -273,8 +273,7 @@ class ExpenseService {
         .sort(([,a], [,b]) => b - a)
         .forEach(([category, amount]) => {
           const percentage = ((amount / total) * 100).toFixed(0);
-          const emoji = this.getCategoryEmoji(category);
-          message += `${emoji} ${this.capitalizeFirst(category)}: $${amount.toFixed(2)} (${percentage}%)\n`;
+          message += `• ${this.capitalizeFirst(category)}: $${amount.toFixed(2)} (${percentage}%)\n`;
         });
     }
 
@@ -282,11 +281,8 @@ class ExpenseService {
   }
 
   /**
-   * Get emoji for category
+   * Get emoji for category - REMOVED (now using text-only categories)
    */
-  getCategoryEmoji(category) {
-    return CATEGORY_EMOJIS[category] || CATEGORY_EMOJIS.other;
-  }
 
   /**
    * Capitalize first letter
@@ -308,15 +304,13 @@ class ExpenseService {
     message += `📋 Transactions: ${stats.count}\n`;
 
     if (stats.topCategory) {
-      const emoji = this.getCategoryEmoji(stats.topCategory.category);
-      message += `🏆 Top Category: ${emoji} ${this.capitalizeFirst(stats.topCategory.category)} ($${stats.topCategory.amount})\n`;
+      message += `🏆 Top Category: ${this.capitalizeFirst(stats.topCategory.category)} ($${stats.topCategory.amount})\n`;
     }
 
     if (stats.categories.length > 1) {
       message += `\n📈 Categories:\n`;
       stats.categories.slice(0, 3).forEach(cat => {
-        const emoji = this.getCategoryEmoji(cat.category);
-        message += `${emoji} ${this.capitalizeFirst(cat.category)}: $${cat.amount} (${cat.percentage}%)\n`;
+        message += `• ${this.capitalizeFirst(cat.category)}: $${cat.amount} (${cat.percentage}%)\n`;
       });
     }
 
@@ -442,8 +436,7 @@ class ExpenseService {
         // Fallback to default categories if no user ID provided
         return CATEGORIES.map(category => ({
           value: category,
-          label: `${CATEGORY_EMOJIS[category]} ${this.capitalizeFirst(category)}`,
-          emoji: CATEGORY_EMOJIS[category],
+          label: `${this.capitalizeFirst(category)}`,
           id: null
         }));
       }
@@ -459,8 +452,7 @@ class ExpenseService {
         // Fallback to default categories
         return CATEGORIES.map(category => ({
           value: category,
-          label: `${CATEGORY_EMOJIS[category]} ${this.capitalizeFirst(category)}`,
-          emoji: CATEGORY_EMOJIS[category],
+          label: `${this.capitalizeFirst(category)}`,
           id: null
         }));
       }
@@ -468,8 +460,7 @@ class ExpenseService {
       // Convert database categories to the expected format
       return categories.map(category => ({
         value: category.name,
-        label: `${this.getCategoryEmoji(category.name)} ${this.capitalizeFirst(category.name)}`,
-        emoji: this.getCategoryEmoji(category.name),
+        label: `${this.capitalizeFirst(category.name)}`,
         id: category.id
       }));
 
@@ -478,8 +469,7 @@ class ExpenseService {
       // Fallback to default categories
       return CATEGORIES.map(category => ({
         value: category,
-        label: `${CATEGORY_EMOJIS[category]} ${this.capitalizeFirst(category)}`,
-        emoji: CATEGORY_EMOJIS[category],
+        label: `${this.capitalizeFirst(category)}`,
         id: null
       }));
     }
@@ -492,8 +482,7 @@ class ExpenseService {
   getAvailableCategoriesLegacy() {
     return CATEGORIES.map(category => ({
       value: category,
-      label: `${CATEGORY_EMOJIS[category]} ${this.capitalizeFirst(category)}`,
-      emoji: CATEGORY_EMOJIS[category]
+      label: `${this.capitalizeFirst(category)}`
     }));
   }
 }

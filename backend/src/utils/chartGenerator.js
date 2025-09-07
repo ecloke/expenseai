@@ -27,7 +27,7 @@ export function generateCategoryPieChart(categories, title = 'Category Breakdown
 
   const chart = new QuickChart();
   
-  const labels = categories.map(cat => `${getCategoryEmoji(cat.category)} ${capitalizeFirst(cat.category)}`);
+  const labels = categories.map(cat => capitalizeFirst(cat.category));
   const data = categories.map(cat => cat.amount);
   const colors = categories.map(cat => CATEGORY_COLORS[cat.category] || CATEGORY_COLORS.other);
 
@@ -100,22 +100,8 @@ export function generateCategoryPieChart(categories, title = 'Category Breakdown
 }
 
 /**
- * Get category emoji
- * @param {string} category - Category name
- * @returns {string} - Emoji
+ * Get category emoji - REMOVED (now using text-only categories)
  */
-function getCategoryEmoji(category) {
-  const emojis = {
-    groceries: '🛒',
-    dining: '🍽️',
-    gas: '⛽',
-    pharmacy: '💊',
-    retail: '🛍️',
-    services: '🔧',
-    other: '📦'
-  };
-  return emojis[category] || '📦';
-}
 
 /**
  * Capitalize first letter

@@ -3,17 +3,7 @@
  * This file eliminates duplication across multiple components
  */
 
-// Category emojis - previously duplicated in 4+ files
-export const CATEGORY_EMOJIS = {
-  groceries: '🛒',
-  dining: '🍽️',
-  gas: '⛽',
-  pharmacy: '💊',
-  retail: '🛍️',
-  services: '🔧',
-  entertainment: '🎬',
-  other: '📦'
-} as const;
+// Category emojis removed - using text-only categories now
 
 // Categories array - previously duplicated everywhere
 export const CATEGORIES = ['all', 'groceries', 'dining', 'gas', 'pharmacy', 'retail', 'services', 'entertainment', 'other'] as const;
@@ -41,9 +31,6 @@ export type TimeRange = 'week' | 'month' | 'all';
 // Category type
 export type Category = typeof CATEGORIES[number];
 
-// Category with emoji type
-export type CategoryWithEmoji = keyof typeof CATEGORY_EMOJIS;
-
 // Project filter options
 export const PROJECT_FILTERS = {
   ALL: 'all',
@@ -65,7 +52,4 @@ export const API_CONSTANTS = {
   TIMEOUT: 10000 // 10 seconds
 } as const;
 
-// Helper functions
-export const getCategoryEmoji = (category: string): string => {
-  return CATEGORY_EMOJIS[category as keyof typeof CATEGORY_EMOJIS] || CATEGORY_EMOJIS.other;
-};
+// Helper functions removed - no longer using category emojis

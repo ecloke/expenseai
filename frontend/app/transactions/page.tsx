@@ -22,7 +22,7 @@ import { ChevronLeft, ChevronRight, Search, Calendar, Store, Filter, Download, R
 import { Expense } from '@/types'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
-import { CATEGORY_EMOJIS, ITEMS_PER_PAGE, getCategoryEmoji } from '@/lib/constants'
+import { ITEMS_PER_PAGE } from '@/lib/constants'
 import { useCategoriesWithAll, useCategories } from '@/hooks/useCategories'
 import { formatDateForDisplay, formatDateTimeForDisplay, getTodayString, getDaysAgoString, getMonthStartString, formatDateForAPI } from '@/lib/dateUtils'
 
@@ -466,7 +466,7 @@ export default function Transactions() {
                                 variant="secondary" 
                                 className="bg-gray-600 text-gray-200 border-gray-500 text-xs"
                               >
-                                {getCategoryEmoji(expense.category)} {expense.category}
+                                {expense.category}
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right">
@@ -528,7 +528,7 @@ export default function Transactions() {
                                 variant="secondary" 
                                 className="bg-gray-600 text-gray-200 border-gray-500 text-xs"
                               >
-                                {getCategoryEmoji(expense.category)} {expense.category}
+                                {expense.category}
                               </Badge>
                             </div>
                           </div>
@@ -714,7 +714,7 @@ export default function Transactions() {
                     </div>
                     <div>
                       <span className="text-gray-400">Category:</span>
-                      <div className="text-white">{getCategoryEmoji(deletingExpense.category)} {deletingExpense.category}</div>
+                      <div className="text-white">{deletingExpense.category}</div>
                     </div>
                     <div>
                       <span className="text-gray-400">Amount:</span>

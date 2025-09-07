@@ -991,13 +991,12 @@ Please enter the total amount:`;
             await this.saveReceiptAsExpense(userId, expenseData, null);
             this.conversationManager.endConversation(userId);
             
-            const categoryEmoji = this.expenseService.getCategoryEmoji(expenseData.category);
             return `✅ *Expense Created Successfully!*
 
 📊 *Summary:*
 📅 Date: ${expenseData.receipt_date}
 🏪 Store: ${expenseData.store_name}
-📋 Category: ${categoryEmoji} ${this.expenseService.capitalizeFirst(expenseData.category)}
+📋 Category: ${this.expenseService.capitalizeFirst(expenseData.category)}
 💰 Amount: $${amount}
 📁 Project: General expenses
 
