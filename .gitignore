@@ -68,3 +68,7 @@ context-engineering-intro/
 # API keys are stored in Railway environment variables
 # Never commit actual keys to repository
 
+# Private scripts with sensitive data
+scripts/private/
+*.private.js
+
