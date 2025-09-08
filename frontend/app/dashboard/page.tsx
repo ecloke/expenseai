@@ -143,7 +143,8 @@ export default function Dashboard() {
           <ExpenseCharts userId={user?.id} projectId={selectedProject} currency={getCurrentProjectCurrency()} />
         </div>
 
-        {/* Expenses Table Section */}
+        {/* Expenses Table Section - HIDDEN FOR NOW (can be shown later) */}
+        {false && (
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 flex items-center gap-2">
             <Receipt className="h-5 w-5 sm:h-6 sm:w-6 text-green-400" />
@@ -151,6 +152,7 @@ export default function Dashboard() {
           </h2>
           <ExpenseList userId={user?.id} projectId={selectedProject} />
         </div>
+        )}
       </div>
 
       {/* Tutorial Guide */}

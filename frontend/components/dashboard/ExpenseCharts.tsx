@@ -404,20 +404,96 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
           </CardContent>
         </Card>
 
-        {/* Enhanced Category Breakdown */}
+        {/* Income Statement */}
+        <Card className="bg-gray-800 border-gray-700">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Target className="h-5 w-5 text-blue-400" />
+              Income Statement
+            </CardTitle>
+            <CardDescription className="text-gray-400">Financial breakdown for {timeRange === 'today' ? 'today' : timeRange === 'week' ? 'this week' : timeRange === 'month' ? 'this month' : timeRange === 'year' ? 'this year' : 'all time'}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {/* Income Section */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <TrendingUp className="h-5 w-5 text-green-400" />
+                  <h3 className="text-lg font-semibold text-green-400">INCOME: {currency}{stats.totalIncome}</h3>
+                </div>
+                {stats.totalIncome > 0 ? (
+                  <div className="space-y-2">
+                    {getCategoryBreakdownData('income').slice(0, 4).map((category) => (
+                      <div key={category.category} className="flex justify-between items-center">
+                        <span className="text-gray-300 text-sm">{category.category}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-green-400 font-medium">{currency}{category.amount}</span>
+                          <span className="text-gray-500 text-xs">({Math.round((category.amount / stats.totalIncome) * 100)}%)</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No income recorded</p>
+                )}
+              </div>
+
+              {/* Expense Section */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <TrendingDown className="h-5 w-5 text-red-400" />
+                  <h3 className="text-lg font-semibold text-red-400">EXPENSES: {currency}{stats.totalExpense}</h3>
+                </div>
+                {stats.totalExpense > 0 ? (
+                  <div className="space-y-2">
+                    {getCategoryBreakdownData('expense').slice(0, 4).map((category) => (
+                      <div key={category.category} className="flex justify-between items-center">
+                        <span className="text-gray-300 text-sm">{category.category}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-red-400 font-medium">{currency}{category.amount}</span>
+                          <span className="text-gray-500 text-xs">({Math.round((category.amount / stats.totalExpense) * 100)}%)</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No expenses recorded</p>
+                )}
+              </div>
+
+              {/* Net Balance */}
+              <div className="pt-4 border-t border-gray-600">
+                <div className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-blue-400" />
+                  <h3 className={`text-lg font-bold ${ 
+                    stats.netIncome >= 0 ? 'text-green-400' : 'text-red-400'
+                  }`}>
+                    NET BALANCE: {stats.netIncome >= 0 ? '+' : ''}{currency}{Math.abs(stats.netIncome)} 
+                    {stats.netIncome >= 0 ? ' ✅' : ' ⚠️'}
+                  </h3>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Category Breakdown (Expenses Only) & Top Stores */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Enhanced Category Breakdown - Expenses Only */}
         <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-white">
               <PieChartIcon className="h-5 w-5 text-green-400" />
               Category Breakdown
             </CardTitle>
-            <CardDescription className="text-gray-400">Spending by category with details</CardDescription>
+            <CardDescription className="text-gray-400">Expense spending by category</CardDescription>
           </CardHeader>
           <CardContent>
-            {categoryBreakdown.length === 0 ? (
+            {getCategoryBreakdownData('expense').length === 0 ? (
               <div className="flex flex-col items-center justify-center h-[280px] text-gray-400">
                 <PieChartIcon className="h-12 w-12 mb-4 text-gray-600" />
-                <h3 className="text-lg font-medium text-gray-300 mb-2">No category data</h3>
+                <h3 className="text-lg font-medium text-gray-300 mb-2">No expense data</h3>
                 <p className="text-sm text-center">Add expenses to see category breakdowns</p>
               </div>
             ) : (
@@ -426,21 +502,24 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
                 <ResponsiveContainer width="100%" height={280}>
                   <PieChart>
                     <Pie
-                      data={categoryBreakdown}
+                      data={getCategoryBreakdownData('expense').map(item => ({
+                        ...item,
+                        percentage: Math.round((item.amount / stats.totalExpense) * 100)
+                      }))}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ category, percentage }) => `${percentage}%`}
+                      label={({ percentage }) => `${percentage}%`}
                       outerRadius={90}
                       fill="#8884d8"
                       dataKey="amount"
                     >
-                      {categoryBreakdown.map((entry, index) => (
+                      {getCategoryBreakdownData('expense').map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                       ))}
                     </Pie>
                     <Tooltip 
-                      formatter={(value, name, props) => [`${currency}${value}`, 'Amount']}
+                      formatter={(value) => [`${currency}${value}`, 'Amount']}
                       labelFormatter={(label) => label}
                       contentStyle={{ 
                         backgroundColor: '#1F2937', 
@@ -459,7 +538,7 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
 
                 {/* Legend with Details */}
                 <div className="space-y-3">
-                  {categoryBreakdown.map((category, index) => (
+                  {getCategoryBreakdownData('expense').map((category, index) => (
                     <div key={category.category} className="flex items-center justify-between p-3 rounded-lg bg-gray-700/50 hover:bg-gray-700/70 transition-colors">
                       <div className="flex items-center gap-3">
                         <div 
@@ -472,7 +551,7 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
                       </div>
                       <div className="text-right">
                         <div className="font-semibold text-white">{currency}{category.amount}</div>
-                        <div className="text-sm text-gray-400">{category.percentage}%</div>
+                        <div className="text-sm text-gray-400">{Math.round((category.amount / stats.totalExpense) * 100)}%</div>
                       </div>
                     </div>
                   ))}
@@ -481,82 +560,9 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
             )}
           </CardContent>
         </Card>
-      </div>
 
-      {/* Income Statement & Top Stores */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Income Statement - 60% */}
-        <Card className="bg-gray-800 border-gray-700 lg:col-span-3">
-          <CardHeader>
-            <CardTitle className="text-white">Income Statement</CardTitle>
-            <CardDescription className="text-gray-400">Financial breakdown for {timeRange === 'today' ? 'today' : timeRange === 'week' ? 'this week' : timeRange === 'month' ? 'this month' : timeRange === 'year' ? 'this year' : 'all time'}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {/* Income Section */}
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <TrendingUp className="h-5 w-5 text-green-400" />
-                  <h3 className="text-lg font-semibold text-green-400">INCOME: ${currency}{stats.totalIncome}</h3>
-                </div>
-                {stats.totalIncome > 0 ? (
-                  <div className="space-y-2">
-                    {getCategoryBreakdownData('income').slice(0, 4).map((category) => (
-                      <div key={category.category} className="flex justify-between items-center">
-                        <span className="text-gray-300 text-sm">{category.category}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-green-400 font-medium">${currency}{category.amount}</span>
-                          <span className="text-gray-500 text-xs">({Math.round((category.amount / stats.totalIncome) * 100)}%)</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-500 text-sm">No income recorded</p>
-                )}
-              </div>
-
-              {/* Expense Section */}
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <TrendingDown className="h-5 w-5 text-red-400" />
-                  <h3 className="text-lg font-semibold text-red-400">EXPENSES: ${currency}{stats.totalExpense}</h3>
-                </div>
-                {stats.totalExpense > 0 ? (
-                  <div className="space-y-2">
-                    {getCategoryBreakdownData('expense').slice(0, 4).map((category) => (
-                      <div key={category.category} className="flex justify-between items-center">
-                        <span className="text-gray-300 text-sm">{category.category}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-red-400 font-medium">${currency}{category.amount}</span>
-                          <span className="text-gray-500 text-xs">({Math.round((category.amount / stats.totalExpense) * 100)}%)</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-500 text-sm">No expenses recorded</p>
-                )}
-              </div>
-
-              {/* Net Balance */}
-              <div className="pt-4 border-t border-gray-600">
-                <div className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-blue-400" />
-                  <h3 className={`text-lg font-bold ${ 
-                    stats.netIncome >= 0 ? 'text-green-400' : 'text-red-400'
-                  }`}>
-                    NET BALANCE: {stats.netIncome >= 0 ? '+' : ''}${currency}{Math.abs(stats.netIncome)} 
-                    {stats.netIncome >= 0 ? ' ✅' : ' ⚠️'}
-                  </h3>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Top Stores - 40% */}
-        <Card className="bg-gray-800 border-gray-700 lg:col-span-2">
+        {/* Top Stores - 50% */}
+        <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
             <CardTitle className="text-white">Top Stores</CardTitle>
             <CardDescription className="text-gray-400">Your most visited stores</CardDescription>
@@ -569,27 +575,20 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
                 <p className="text-sm text-center">Start shopping to see your favorite stores</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                {viewData.topStores.map((store: any, index: number) => (
-                  <div key={store.store} className="flex flex-col justify-between p-3 rounded-lg bg-gray-700/50 hover:bg-gray-700/70 transition-colors min-h-[100px] w-full">
-                    <div className="flex-1 flex flex-col justify-center text-center mb-2">
-                      <div 
-                        className="font-medium text-gray-200 text-xs leading-tight mb-1 break-words hyphens-auto overflow-hidden" 
-                        title={store.store}
-                        style={{ 
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          wordBreak: 'break-word',
-                          overflowWrap: 'break-word'
-                        }}
-                      >
-                        {store.store}
+              <div className="space-y-3">
+                {viewData.topStores.slice(0, 8).map((store: any, index: number) => (
+                  <div key={store.store} className="flex items-center justify-between p-3 rounded-lg bg-gray-700/50 hover:bg-gray-700/70 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center">
+                        <span className="text-xs font-medium text-gray-300">#{index + 1}</span>
                       </div>
-                      <div className="text-xs text-gray-400 mt-auto">{store.count} visit{store.count !== 1 ? 's' : ''}</div>
+                      <div>
+                        <div className="font-medium text-gray-200 text-sm">{store.store}</div>
+                        <div className="text-xs text-gray-400">{store.count} visit{store.count !== 1 ? 's' : ''}</div>
+                      </div>
                     </div>
-                    <div className="font-semibold text-green-400 text-sm text-center border-t border-gray-600 pt-2">
-                      {currency}{store.amount.toFixed(2)}
+                    <div className="text-right">
+                      <div className="font-semibold text-green-400">{currency}{store.amount.toFixed(2)}</div>
                     </div>
                   </div>
                 ))}
