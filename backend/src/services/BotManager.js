@@ -1173,6 +1173,7 @@ The income has been saved to your account.`;
           this.conversationManager.endConversation(userId);
           return '❌ Sorry, there was an error saving your income. Please try again with /income command.';
         }
+        break;
     }
   }
 
