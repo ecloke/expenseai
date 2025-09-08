@@ -916,8 +916,8 @@ Type the date or /cancel to stop:`;
 Please enter the income date in YYYY-MM-DD format.
 
 📅 *Examples:*
-• 2025-01-15 (salary payment)
-• 2025-08-24 (freelance payment)
+• 2025-01-15 
+• 2025-08-24 
 
 Type the date or /cancel to stop:`;
   }
