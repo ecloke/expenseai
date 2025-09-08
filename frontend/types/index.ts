@@ -16,6 +16,10 @@ export interface Expense {
   receipt_date: string
   store_name: string
   category: string
+  category_name?: string
+  type?: 'income' | 'expense'
+  transaction_type?: 'income' | 'expense'
   total_amount: number
   created_at: string
+  project_id?: string
 }

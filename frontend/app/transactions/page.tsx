@@ -134,7 +134,7 @@ export default function Transactions() {
       // Apply client-side filters for backward compatibility
       if (searchTerm.trim()) {
         const searchLower = searchTerm.toLowerCase()
-        transactions = transactions.filter(tx => 
+        transactions = transactions.filter((tx: any) => 
           tx.store_name?.toLowerCase().includes(searchLower) ||
           tx.category?.toLowerCase().includes(searchLower) ||
           tx.category_name?.toLowerCase().includes(searchLower)
@@ -142,15 +142,15 @@ export default function Transactions() {
       }
 
       if (categoryFilter !== 'all') {
-        transactions = transactions.filter(tx => 
+        transactions = transactions.filter((tx: any) => 
           tx.category === categoryFilter || tx.category_name === categoryFilter
         )
       }
 
       if (projectFilter === 'general') {
-        transactions = transactions.filter(tx => !tx.project_id)
+        transactions = transactions.filter((tx: any) => !tx.project_id)
       } else if (projectFilter !== 'all') {
-        transactions = transactions.filter(tx => tx.project_id === projectFilter)
+        transactions = transactions.filter((tx: any) => tx.project_id === projectFilter)
       }
 
       setExpenses(transactions)

@@ -330,7 +330,7 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
             <DollarSign className="h-4 w-4 text-green-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-white">{currency}{stats.total}</div>
+            <div className="text-3xl font-bold text-white">{currency}{stats.totalExpense}</div>
             <p className="text-xs text-gray-400 mt-1">This {timeRange === 'week' ? 'week' : timeRange === 'month' ? 'month' : 'period'}</p>
           </CardContent>
         </Card>
@@ -341,7 +341,7 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
             <Receipt className="h-4 w-4 text-blue-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-white">{stats.count}</div>
+            <div className="text-3xl font-bold text-white">{stats.totalCount}</div>
             <p className="text-xs text-gray-400 mt-1">Total receipts</p>
           </CardContent>
         </Card>
@@ -370,7 +370,7 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
             <CardDescription className="text-gray-400">Your daily expense pattern</CardDescription>
           </CardHeader>
           <CardContent>
-            {dailySpending.length === 0 ? (
+            {dailyTransactionData.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-[300px] text-gray-400">
                 <BarChart3 className="h-12 w-12 mb-4 text-gray-600" />
                 <h3 className="text-lg font-medium text-gray-300 mb-2">No spending data</h3>
@@ -378,7 +378,7 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={dailySpending}>
+                <BarChart data={dailyTransactionData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="formatted_date" stroke="#9CA3AF" />
                   <YAxis stroke="#9CA3AF" />
@@ -394,7 +394,8 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
                     }}
                     cursor={{ fill: 'rgba(75, 85, 99, 0.1)' }}
                   />
-                  <Bar dataKey="amount" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="expense" fill="#EF4444" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="income" fill="#10B981" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -488,7 +489,7 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
             <CardDescription className="text-gray-400">Your most visited stores</CardDescription>
           </CardHeader>
           <CardContent>
-            {topStores.length === 0 ? (
+            {viewData.topStores.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-[200px] text-gray-400">
                 <Receipt className="h-12 w-12 mb-4 text-gray-600" />
                 <h3 className="text-lg font-medium text-gray-300 mb-2">No store data</h3>
@@ -496,7 +497,7 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                {topStores.map((store, index) => (
+                {viewData.topStores.map((store: any, index: number) => (
                   <div key={store.store} className="flex flex-col justify-between p-3 rounded-lg bg-gray-700/50 hover:bg-gray-700/70 transition-colors min-h-[100px] w-full">
                     <div className="flex-1 flex flex-col justify-center text-center mb-2">
                       <div 
