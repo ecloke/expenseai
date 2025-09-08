@@ -187,8 +187,11 @@ class BotManager {
         return;
       }
 
-      // Update last activity
+      // Update last activity and capture chat_id
       this.updateLastActivity(userId);
+      
+      // Update bot session with chat_id for future message sending
+      await this.updateBotSession(userId, config.telegram_bot_username, true, msg.chat.id);
 
       // Skip photo messages (handled separately)
       if (msg.photo) return;
@@ -237,8 +240,11 @@ class BotManager {
         return;
       }
 
-      // Update last activity
+      // Update last activity and capture chat_id
       this.updateLastActivity(userId);
+      
+      // Update bot session with chat_id for future message sending
+      await this.updateBotSession(userId, config.telegram_bot_username, true, msg.chat.id);
 
       const bot = this.bots.get(userId)?.bot;
       if (!bot) return;
@@ -2328,21 +2334,31 @@ Select which project you want to reopen:
   /**
    * Update bot session status in database
    */
-  async updateBotSession(userId, botUsername, isActive) {
+  async updateBotSession(userId, botUsername, isActive, chatId = null) {
     try {
+      const updateData = {
+        user_id: userId,
+        bot_username: botUsername,
+        is_active: isActive,
+        last_activity: new Date().toISOString()
+      };
+
+      // Only update chat_id if it's provided (preserve existing value if not)
+      if (chatId !== null) {
+        updateData.chat_id = chatId;
+      }
+
       const { error } = await this.supabase
         .from('bot_sessions')
-        .upsert({
-          user_id: userId,
-          bot_username: botUsername,
-          is_active: isActive,
-          last_activity: new Date().toISOString()
-        }, {
+        .upsert(updateData, {
           onConflict: 'user_id'
         });
 
       if (error) {
         console.error('Failed to update bot session:', error);
+      } else {
+        const chatInfo = chatId ? ` (chat_id: ${chatId})` : '';
+        console.log(`✅ Updated bot session for user ${userId}: active=${isActive}${chatInfo}`);
       }
     } catch (error) {
       console.error('Error updating bot session:', error);
@@ -2488,15 +2504,15 @@ Your expense has been saved to the database\\! 💾`;
       // Update last activity
       this.updateLastActivity(userId);
 
-      // Skip photo messages (handled separately)
-      if (message.photo) return;
-
-      // Get user config
+      // Get user config (needed for bot username)
       const config = await this.getUserConfig(userId);
       if (!config) {
         console.error(`No config found for webhook user ${userId}`);
         return;
       }
+
+      // Update bot session with chat_id for future message sending
+      await this.updateBotSession(userId, config.telegram_bot_username, true, message.chat.id);
 
       // Process text message as command
       const response = await this.handleTextCommand(message.text, userId);
@@ -2532,6 +2548,9 @@ Your expense has been saved to the database\\! 💾`;
         console.error(`No config found for webhook user ${userId}`);
         return;
       }
+
+      // Update bot session with chat_id for future message sending
+      await this.updateBotSession(userId, config.telegram_bot_username, true, message.chat.id);
 
       // Validate photo message
       if (!message.photo || message.photo.length === 0) {
