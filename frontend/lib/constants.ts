@@ -26,7 +26,7 @@ export const ITEMS_PER_PAGE = 20;
 export const MALAYSIA_TIMEZONE = 'Asia/Kuala_Lumpur';
 
 // Date range types
-export type TimeRange = 'week' | 'month' | 'all';
+export type TimeRange = 'today' | 'week' | 'month' | 'year' | 'all';
 
 // Category type
 export type Category = typeof CATEGORIES[number];

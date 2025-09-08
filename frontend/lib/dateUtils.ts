@@ -3,7 +3,7 @@
  * This eliminates duplicate date logic across components
  */
 
-import { format, subDays, startOfWeek, startOfMonth, endOfMonth, endOfWeek } from 'date-fns';
+import { format, subDays, startOfWeek, startOfMonth, startOfYear, endOfMonth, endOfWeek } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import { MALAYSIA_TIMEZONE, TimeRange } from './constants';
 
@@ -14,6 +14,11 @@ export const getDateRange = (range: TimeRange) => {
   const now = new Date();
   
   switch (range) {
+    case 'today':
+      return {
+        start: now,
+        end: now
+      };
     case 'week': 
       return { 
         start: startOfWeek(now), 
@@ -23,6 +28,11 @@ export const getDateRange = (range: TimeRange) => {
       return { 
         start: startOfMonth(now), 
         end: now 
+      };
+    case 'year':
+      return {
+        start: startOfYear(now),
+        end: now
       };
     case 'all':
     default:

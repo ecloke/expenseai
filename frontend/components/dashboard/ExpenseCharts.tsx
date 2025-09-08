@@ -315,8 +315,10 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
         <h2 className="text-2xl font-bold text-white">Expense Analytics</h2>
         <Tabs value={timeRange} onValueChange={(value) => setTimeRange(value as any)}>
           <TabsList className="bg-gray-800 border-gray-600">
+            <TabsTrigger value="today" className="text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">Today</TabsTrigger>
             <TabsTrigger value="week" className="text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">This Week</TabsTrigger>
             <TabsTrigger value="month" className="text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">This Month</TabsTrigger>
+            <TabsTrigger value="year" className="text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">This Year</TabsTrigger>
             <TabsTrigger value="all" className="text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">All Time</TabsTrigger>
           </TabsList>
         </Tabs>
@@ -481,9 +483,80 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
         </Card>
       </div>
 
-      {/* Top Stores */}
-      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
-        <Card className="bg-gray-800 border-gray-700">
+      {/* Income Statement & Top Stores */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Income Statement - 60% */}
+        <Card className="bg-gray-800 border-gray-700 lg:col-span-3">
+          <CardHeader>
+            <CardTitle className="text-white">Income Statement</CardTitle>
+            <CardDescription className="text-gray-400">Financial breakdown for {timeRange === 'today' ? 'today' : timeRange === 'week' ? 'this week' : timeRange === 'month' ? 'this month' : timeRange === 'year' ? 'this year' : 'all time'}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {/* Income Section */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <TrendingUp className="h-5 w-5 text-green-400" />
+                  <h3 className="text-lg font-semibold text-green-400">INCOME: ${currency}{stats.totalIncome}</h3>
+                </div>
+                {stats.totalIncome > 0 ? (
+                  <div className="space-y-2">
+                    {getCategoryBreakdownData('income').slice(0, 4).map((category) => (
+                      <div key={category.category} className="flex justify-between items-center">
+                        <span className="text-gray-300 text-sm">{category.category}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-green-400 font-medium">${currency}{category.amount}</span>
+                          <span className="text-gray-500 text-xs">({Math.round((category.amount / stats.totalIncome) * 100)}%)</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No income recorded</p>
+                )}
+              </div>
+
+              {/* Expense Section */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <TrendingDown className="h-5 w-5 text-red-400" />
+                  <h3 className="text-lg font-semibold text-red-400">EXPENSES: ${currency}{stats.totalExpense}</h3>
+                </div>
+                {stats.totalExpense > 0 ? (
+                  <div className="space-y-2">
+                    {getCategoryBreakdownData('expense').slice(0, 4).map((category) => (
+                      <div key={category.category} className="flex justify-between items-center">
+                        <span className="text-gray-300 text-sm">{category.category}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-red-400 font-medium">${currency}{category.amount}</span>
+                          <span className="text-gray-500 text-xs">({Math.round((category.amount / stats.totalExpense) * 100)}%)</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No expenses recorded</p>
+                )}
+              </div>
+
+              {/* Net Balance */}
+              <div className="pt-4 border-t border-gray-600">
+                <div className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-blue-400" />
+                  <h3 className={`text-lg font-bold ${ 
+                    stats.netIncome >= 0 ? 'text-green-400' : 'text-red-400'
+                  }`}>
+                    NET BALANCE: {stats.netIncome >= 0 ? '+' : ''}${currency}{Math.abs(stats.netIncome)} 
+                    {stats.netIncome >= 0 ? ' ✅' : ' ⚠️'}
+                  </h3>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Top Stores - 40% */}
+        <Card className="bg-gray-800 border-gray-700 lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-white">Top Stores</CardTitle>
             <CardDescription className="text-gray-400">Your most visited stores</CardDescription>
