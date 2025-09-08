@@ -194,8 +194,8 @@ class BotManager {
       // Update last activity and capture chat_id
       this.updateLastActivity(userId);
       
-      // Update bot session with chat_id for future message sending
-      await this.updateBotSession(userId, config.telegram_bot_username, true, msg.chat.id);
+      // Update bot session with chat_id for future message sending (only if changed)
+      await this.updateBotSessionIfNeeded(userId, config.telegram_bot_username, true, msg.chat.id);
 
       // Skip photo messages (handled separately)
       if (msg.photo) return;
@@ -247,8 +247,8 @@ class BotManager {
       // Update last activity and capture chat_id
       this.updateLastActivity(userId);
       
-      // Update bot session with chat_id for future message sending
-      await this.updateBotSession(userId, config.telegram_bot_username, true, msg.chat.id);
+      // Update bot session with chat_id for future message sending (only if changed)
+      await this.updateBotSessionIfNeeded(userId, config.telegram_bot_username, true, msg.chat.id);
 
       const bot = this.bots.get(userId)?.bot;
       if (!bot) return;
@@ -1599,6 +1599,34 @@ I only understand specific commands to save AI processing costs.
     
     this.bots.delete(userId);
     await this.updateBotSession(userId, null, false);
+  }
+
+  /**
+   * Update bot session only if chat_id has changed (to reduce database spam)
+   */
+  async updateBotSessionIfNeeded(userId, botUsername, isActive, chatId = null) {
+    try {
+      // First check current chat_id to see if update is needed
+      if (chatId !== null) {
+        const { data: currentSession } = await this.supabase
+          .from('bot_sessions')
+          .select('chat_id')
+          .eq('user_id', userId)
+          .single();
+        
+        // Only update if chat_id is different or doesn't exist
+        if (currentSession && currentSession.chat_id === chatId) {
+          return; // No update needed
+        }
+      }
+      
+      // Chat ID changed or first time, proceed with update
+      await this.updateBotSession(userId, botUsername, isActive, chatId);
+    } catch (error) {
+      console.error('Error in updateBotSessionIfNeeded:', error);
+      // Fallback to regular update
+      await this.updateBotSession(userId, botUsername, isActive, chatId);
+    }
   }
 
   /**

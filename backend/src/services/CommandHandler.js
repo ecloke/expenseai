@@ -26,6 +26,21 @@ class CommandHandler {
           return this.getHelpMessage();
         case '/help':
           return this.getHelpMessage();
+        case '/stats':
+          const stats = await this.expenseService.getMonthlyStats(userId);
+          return this.expenseService.formatMonthlyStats(stats);
+        case '/today':
+          const todayExpenses = await this.expenseService.getTodayExpensesWithProjects(userId);
+          return this.expenseService.formatExpenseSummaryWithProjects(todayExpenses, "Today's Expenses");
+        case '/yesterday':
+          const yesterdayExpenses = await this.expenseService.getYesterdayExpensesWithProjects(userId);
+          return this.expenseService.formatExpenseSummaryWithProjects(yesterdayExpenses, "Yesterday's Expenses");
+        case '/week':
+          const weekExpenses = await this.expenseService.getWeekExpensesWithProjects(userId);
+          return this.expenseService.formatExpenseSummaryWithProjects(weekExpenses, "This Week's Expenses");
+        case '/month':
+          const monthExpenses = await this.expenseService.getMonthExpensesWithProjects(userId);
+          return this.expenseService.formatExpenseSummaryWithProjects(monthExpenses, "This Month's Expenses");
         case '/summary':
           return this.handleSummaryCommand(userId, params);
         case '/create':
@@ -88,19 +103,19 @@ class CommandHandler {
       }
 
       const periodLabel = validPeriod.charAt(0).toUpperCase() + validPeriod.slice(1);
-      const netAmount = summary.income.total - summary.expenses.total;
+      const netAmount = summary.net_balance;
       const netEmoji = netAmount >= 0 ? '💚' : '❤️';
       const netLabel = netAmount >= 0 ? 'Net Gain' : 'Net Loss';
 
       return `📊 **${periodLabel} Financial Summary**
 
-💰 **Income: +$${summary.income.total.toFixed(2)}**
-📈 Transactions: ${summary.income.count}
-📋 Categories: ${summary.income.categories.map(c => `${c.name} (+$${c.total.toFixed(2)})`).join(', ') || 'None'}
+💰 **Income: +$${summary.total_income.toFixed(2)}**
+📈 Transactions: ${summary.transaction_count.income}
+📋 Categories: ${summary.income_breakdown.map(c => `${c.category} (+$${c.amount.toFixed(2)})`).join(', ') || 'None'}
 
-💸 **Expenses: -$${summary.expenses.total.toFixed(2)}**  
-📉 Transactions: ${summary.expenses.count}
-📋 Categories: ${summary.expenses.categories.map(c => `${c.name} (-$${c.total.toFixed(2)})`).join(', ') || 'None'}
+💸 **Expenses: -$${summary.total_expenses.toFixed(2)}**  
+📉 Transactions: ${summary.transaction_count.expenses}
+📋 Categories: ${summary.expense_breakdown.map(c => `${c.category} (-$${c.amount.toFixed(2)})`).join(', ') || 'None'}
 
 ${netEmoji} **${netLabel}: ${netAmount >= 0 ? '+' : ''}$${Math.abs(netAmount).toFixed(2)}**
 
