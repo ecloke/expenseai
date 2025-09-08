@@ -614,48 +614,4 @@ router.post('/restart/:user_id', async (req, res) => {
   }
 });
 
-/**
- * POST /api/bot/broadcast
- * Broadcast message to all users with valid chat_id
- */
-router.post('/broadcast', async (req, res) => {
-  try {
-    const { message, options = {} } = req.body;
-
-    if (!message) {
-      return res.status(400).json({ error: 'Message is required' });
-    }
-
-    console.log('📢 Broadcasting message to all users...');
-
-    // Get BotManager instance
-    const botManager = req.app.get('botManager');
-    if (!botManager) {
-      return res.status(500).json({ error: 'BotManager not available' });
-    }
-
-    // Broadcast the message
-    const results = await botManager.broadcastMessage(message, options);
-
-    res.json({
-      success: true,
-      results: {
-        total: results.total,
-        successful: results.success,
-        failed: results.failed,
-        success_rate: results.total > 0 ? (results.success / results.total * 100).toFixed(1) : 0
-      },
-      errors: results.errors,
-      message: `Broadcast completed: ${results.success}/${results.total} messages sent successfully`
-    });
-
-  } catch (error) {
-    console.error('Broadcast error:', error);
-    res.status(500).json({ 
-      error: 'Broadcast failed',
-      message: error.message 
-    });
-  }
-});
-
 export default router;
