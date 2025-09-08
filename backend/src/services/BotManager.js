@@ -5,6 +5,7 @@ import ReceiptProcessor from './ReceiptProcessor.js';
 import ChatProcessor from './ChatProcessor.js';
 import ExpenseService from './ExpenseService.js';
 import ConversationStateManager from '../utils/conversationState.js';
+import ConversationFlowManager from './ConversationFlowManager.js';
 import { parseMonthRange, isValidDateFormat, isValidAmount, formatDateRange } from '../utils/dateUtils.js';
 import { generateCategoryPieChart } from '../utils/chartGenerator.js';
 import https from 'https';
@@ -22,6 +23,7 @@ class BotManager {
     this.chatProcessor = new ChatProcessor(supabase);
     this.expenseService = new ExpenseService(supabase);
     this.conversationManager = new ConversationStateManager();
+    this.conversationFlowManager = new ConversationFlowManager(supabase, this.expenseService, this.conversationManager);
     this.rateLimitMap = new Map(); // For rate limiting per user
     this.errorLogCache = new Map(); // For error log rate limiting: userId_errorHash -> lastLogTime
     this.ERROR_LOG_RATE_LIMIT_MS = 60000; // 1 minute between identical error logs
@@ -937,11 +939,13 @@ Type the date or /cancel to stop:`;
       return '❌ Operation cancelled.';
     }
 
+    // For create_expense and create_income flows, delegate to ConversationFlowManager
+    if (conversation.type === 'create_expense' || conversation.type === 'create_income') {
+      return this.conversationFlowManager.handleConversationInput(userId, input, conversation);
+    }
+    
+    // Keep other flows in BotManager for now (to be extracted later)
     switch (conversation.type) {
-      case 'create_expense':
-        return this.handleCreateExpenseFlow(userId, input, conversation);
-      case 'create_income':
-        return this.handleCreateIncomeFlow(userId, input, conversation);
       case 'create_project':
         return this.handleCreateProjectFlow(userId, input, conversation);
       case 'close_project':
