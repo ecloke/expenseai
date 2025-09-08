@@ -1807,13 +1807,14 @@ I help you track expenses by processing receipt photos and organizing them by pr
 
 *💰 Manual Entry:*
 • /create - Add expense manually (step-by-step)
+• /income - Add income manually (step-by-step)
 
 *📚 Help:*
 • /help - Detailed command guide
 
 💡 *Quick Start:*
-1. Create a project with /new (optional)
-2. Send receipt photos for auto-tracking
+1. Upload a receipt to try it out! 
+2. Use /create to manually create an expense
 3. Use \`/summary week\` for weekly analysis
 
 Type /help for detailed usage examples!`;
@@ -1823,62 +1824,41 @@ Type /help for detailed usage examples!`;
    * Get help message
    */
   getHelpMessage() {
-    return `🤖 *AI Expense Tracker - Complete Guide*
+    return `🎉 *Welcome to AI Expense Tracker!*
 
-📁 *Project Management:*
-• \`/new\` - Create new project (trips, events, etc.)
-  → Enter project name
-  → Set currency (USD, RM, EUR, etc.)
-• \`/list\` - View all open projects
-• \`/close\` - Close a project (removes from selection menu)
-• \`/open\` - Reopen a previously closed project
+I help you track expenses by processing receipt photos and organizing them by projects.
 
-*Project Features:*
-• Organize expenses by purpose (Thailand Trip, Birthday Party)
-• Each project has its own currency
-• Expenses can be general (no project) or project-specific
+📸 *Send me a photo* of your receipt for automatic expense tracking!
 
-📸 *Photo Processing:*
-• Send **one receipt photo at a time** for automatic tracking
-• AI extracts store name, date, amount, and category
-• If you have open projects, you'll choose where to save the expense
-• Wait for processing to complete before sending next photo
-• Multiple photos in one message will be rejected
+📋 *Available Commands:*
 
-📊 *Summary Commands (Enhanced Analytics):*
-• \`/summary day\` - Today's detailed breakdown
-• \`/summary week\` - This week's summary
-• \`/summary month\` - This month's summary
-• \`/summary jan-aug\` - January to August
-• \`/summary january-march\` - January to March  
-• \`/summary 1-6\` - January to June (numeric)
+*📁 Project Management:*
+• /new - Create a new project (trips, events, etc.)
+• /list - View all open projects
+• /close - Close a project when finished
+• /open - Reopen a previously closed project
 
-*Summary includes:* Total spend, category breakdown with percentages, top 5 stores
-
-📈 *Quick Expense Queries:*
+*📊 Analytics:*
+• /summary day - Today's detailed summary
+• /summary week - This week's summary  
+• /summary month - This month's summary
+• /summary jan-aug - Custom month range
 • /stats - Quick monthly overview
-• /today - Today's total expenses
-• /yesterday - Yesterday's total expenses
-• /week - This week's total expenses
-• /month - This month's total expenses
+• /today, /yesterday, /week, /month - Quick expense totals
 
-💰 *Manual Expense Entry:*
-• \`/create\` - Add expense step-by-step
-  → Date (YYYY-MM-DD)
-  → Store name
-  → Category selection
-  → Amount
-  → Project selection (if you have open projects)
+*💰 Manual Entry:*
+• /create - Add expense manually (step-by-step)
+• /income - Add income manually (step-by-step)
 
-💡 *Pro Tips:*
-• Create projects for trips, events, or any specific spending category
-• Use month ranges: jan-dec, february-august, 3-9
-• Type /cancel during conversations to stop
-• Send **single, clear receipt photos** for best AI results
-• Wait 10 seconds between photos to avoid rate limiting
-• Date format must be YYYY-MM-DD (e.g., 2025-01-15)
+*📚 Help:*
+• /help - Detailed command guide
 
-❓ Type any unknown command to see available options.`;
+💡 *Quick Start:*
+1. Upload a receipt to try it out! 
+2. Use /create to manually create an expense
+3. Use \`/summary week\` for weekly analysis
+
+Type /help for detailed usage examples!`;
   }
 
   /**
@@ -1903,6 +1883,7 @@ I only understand specific commands to save AI processing costs.
 
 *💰 Manual Entry:*
 • /create - Step-by-step expense entry
+• /income - Step-by-step income entry
 
 *📚 Help:*
 • /start - Welcome & quick start
