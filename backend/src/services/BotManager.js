@@ -944,6 +944,8 @@ Type the date or /cancel to stop:`;
         return this.handleOpenProjectFlow(userId, input, conversation);
       case 'project_selection':
         return this.handleProjectSelectionFlow(userId, input, conversation);
+      case 'income_project_selection':
+        return this.handleIncomeProjectSelectionFlow(userId, input, conversation);
       case 'multi_receipt_confirmation':
         return this.handleMultiReceiptConfirmation(userId, input, conversation);
       case 'multi_receipt_project_selection':
@@ -1152,12 +1154,20 @@ Please enter the income amount:`;
           total_amount: parseFloat(amount)
         };
 
-        // Save income transaction
-        try {
-          await this.expenseService.createIncomeTransaction(userId, incomeData);
+        // Check for open projects (same logic as expense)
+        const hasOpenProjects = await this.hasOpenProjects(userId);
+        
+        if (hasOpenProjects) {
+          // Show project selection
           this.conversationManager.endConversation(userId);
-          
-          return `✅ *Income Created Successfully!*
+          return await this.showProjectSelectionForIncome(userId, incomeData);
+        } else {
+          // No open projects, save directly as general income
+          try {
+            await this.expenseService.createIncomeTransaction(userId, incomeData);
+            this.conversationManager.endConversation(userId);
+            
+            return `✅ *Income Created Successfully!*
 
 📊 *Summary:*
 📅 Date: ${incomeData.receipt_date}
@@ -1165,13 +1175,15 @@ Please enter the income amount:`;
 📋 Category: ${this.expenseService.capitalizeFirst(incomeData.category)}
 💰 Amount: +$${amount}
 📈 Type: Income
+📁 Project: General
 
 The income has been saved to your account.`;
 
-        } catch (error) {
-          console.error('Error creating income:', error);
-          this.conversationManager.endConversation(userId);
-          return '❌ Sorry, there was an error saving your income. Please try again with /income command.';
+          } catch (error) {
+            console.error('Error creating income:', error);
+            this.conversationManager.endConversation(userId);
+            return '❌ Sorry, there was an error saving your income. Please try again with /income command.';
+          }
         }
         break;
     }
@@ -1411,6 +1423,70 @@ Your expense has been saved to the database! 💾`;
   }
 
   /**
+   * Handle income project selection conversation flow
+   */
+  async handleIncomeProjectSelectionFlow(userId, input, conversation) {
+    const selectionIndex = parseInt(input) - 1;
+    const options = conversation.data.options;
+    const incomeData = conversation.data.incomeData;
+
+    if (isNaN(selectionIndex) || selectionIndex < 0 || selectionIndex >= options.length) {
+      return `❌ Invalid selection. Please choose a number from 1 to ${options.length}:
+
+${options.map((option, index) => `${index + 1}. ${option.label}`).join('\n')}`;
+    }
+
+    const selectedOption = options[selectionIndex];
+    
+    try {
+      // Create income with project_id (null for general income)
+      const finalIncomeData = {
+        user_id: userId,
+        project_id: selectedOption.project_id,
+        receipt_date: incomeData.receipt_date,
+        store_name: incomeData.description, // Use description as store_name for compatibility
+        category: incomeData.category,
+        category_id: incomeData.category_id,
+        total_amount: incomeData.total_amount,
+        type: 'income' // Ensure it's marked as income
+      };
+
+      const { data: income, error } = await this.supabase
+        .from('expenses') // Using expenses table as it handles both income and expenses
+        .insert([finalIncomeData])
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(error.message || 'Failed to create income');
+      }
+
+      console.log(`✅ Saved income to project: +$${finalIncomeData.total_amount} - ${finalIncomeData.store_name}`);
+
+      this.conversationManager.endConversation(userId);
+
+      const currency = selectedOption.project_id ? selectedOption.currency : '$';
+      const projectInfo = selectedOption.project_id ? `\n📁 Project: ${selectedOption.label}` : '\n📁 Project: General';
+
+      return `✅ *Income Saved Successfully!*
+
+📊 *Summary:*
+📅 Date: ${incomeData.receipt_date || 'N/A'}
+📝 Description: ${incomeData.description || 'N/A'}
+🏷️ Category: ${incomeData.category || 'N/A'}
+💰 Amount: +${currency}${(incomeData.total_amount || 0).toFixed(2)}
+📈 Type: Income${projectInfo}
+
+Your income has been saved to the database! 💾`;
+
+    } catch (error) {
+      console.error('Error saving income to project:', error);
+      this.conversationManager.endConversation(userId);
+      return '❌ Sorry, there was an error saving your income. Please try again with /income.';
+    }
+  }
+
+  /**
    * Handle multi-receipt confirmation conversation
    */
   async handleMultiReceiptConfirmation(userId, input, conversation) {
@@ -1591,6 +1667,69 @@ All expenses have been saved to your database! 💾`;
 
     } catch (error) {
       console.error('Error in showProjectSelection:', error);
+      return '❌ Error showing project selection. Please try again.';
+    }
+  }
+
+  /**
+   * Show project selection for income transactions
+   */
+  async showProjectSelectionForIncome(userId, incomeData) {
+    try {
+      const { data: projects, error } = await this.supabase
+        .from('projects')
+        .select('id, name, currency')
+        .eq('user_id', userId)
+        .eq('status', 'open')
+        .order('name');
+
+      if (error || !projects) {
+        console.error('Error fetching projects for income selection:', error);
+        return '❌ Error fetching projects. Saving as general income.';
+      }
+
+      // Build selection options
+      const options = [
+        { label: 'General income', project_id: null, currency: '$' }
+      ];
+
+      projects.forEach(project => {
+        options.push({
+          label: project.name,
+          project_id: project.id,
+          currency: project.currency
+        });
+      });
+
+      // Start project selection conversation for income
+      this.conversationManager.startConversation(userId, 'income_project_selection', {
+        options: options,
+        incomeData: incomeData
+      });
+
+      let message = `✅ *Income Transaction Ready!*
+
+📊 *Summary:*
+📅 Date: ${incomeData.receipt_date || 'N/A'}
+📝 Description: ${incomeData.description || 'N/A'}
+🏷️ Category: ${incomeData.category || 'N/A'}
+💰 Amount: +$${(incomeData.total_amount || 0).toFixed(2)}
+
+📁 *Which project should this income be assigned to?*
+
+`;
+
+      options.forEach((option, index) => {
+        const currencyInfo = option.project_id ? ` (${option.currency})` : '';
+        message += `${index + 1}. ${option.label}${currencyInfo}\n`;
+      });
+
+      message += `\n💡 Reply with the number of your choice.`;
+
+      return message;
+
+    } catch (error) {
+      console.error('Error in showProjectSelectionForIncome:', error);
       return '❌ Error showing project selection. Please try again.';
     }
   }
