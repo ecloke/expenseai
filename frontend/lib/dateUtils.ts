@@ -8,31 +8,32 @@ import { formatInTimeZone } from 'date-fns-tz';
 import { MALAYSIA_TIMEZONE, TimeRange } from './constants';
 
 /**
- * Get date range based on time range type
+ * Get date range based on time range type in Malaysia timezone
  */
 export const getDateRange = (range: TimeRange, customRange?: { start: Date; end: Date }) => {
-  const now = new Date();
+  // Get current date in Malaysia timezone
+  const nowInMalaysia = new Date(formatInTimeZone(new Date(), MALAYSIA_TIMEZONE, 'yyyy-MM-dd\'T\'HH:mm:ss'));
   
   switch (range) {
     case 'today':
       return {
-        start: now,
-        end: now
+        start: nowInMalaysia,
+        end: nowInMalaysia
       };
     case 'week': 
       return { 
-        start: startOfWeek(now), 
-        end: now 
+        start: startOfWeek(nowInMalaysia), 
+        end: nowInMalaysia 
       };
     case 'month': 
       return { 
-        start: startOfMonth(now), 
-        end: now 
+        start: startOfMonth(nowInMalaysia), 
+        end: nowInMalaysia 
       };
     case 'year':
       return {
-        start: startOfYear(now),
-        end: now
+        start: startOfYear(nowInMalaysia),
+        end: nowInMalaysia
       };
     case 'custom':
       return customRange || null;
@@ -57,47 +58,47 @@ export const formatDateTimeForDisplay = (date: string | Date): string => {
 };
 
 /**
- * Format date for API queries (YYYY-MM-DD)
+ * Format date for API queries (YYYY-MM-DD) in Malaysia timezone
  */
 export const formatDateForAPI = (date: Date): string => {
-  return format(date, 'yyyy-MM-dd');
+  return formatInTimeZone(date, MALAYSIA_TIMEZONE, 'yyyy-MM-dd');
 };
 
 /**
- * Get today's date as YYYY-MM-DD string
+ * Get today's date as YYYY-MM-DD string in Malaysia timezone
  */
 export const getTodayString = (): string => {
-  return format(new Date(), 'yyyy-MM-dd');
+  return formatInTimeZone(new Date(), MALAYSIA_TIMEZONE, 'yyyy-MM-dd');
 };
 
 /**
- * Get yesterday's date as YYYY-MM-DD string
+ * Get yesterday's date as YYYY-MM-DD string in Malaysia timezone
  */
 export const getYesterdayString = (): string => {
   const yesterday = subDays(new Date(), 1);
-  return format(yesterday, 'yyyy-MM-dd');
+  return formatInTimeZone(yesterday, MALAYSIA_TIMEZONE, 'yyyy-MM-dd');
 };
 
 /**
- * Get date N days ago as YYYY-MM-DD string
+ * Get date N days ago as YYYY-MM-DD string in Malaysia timezone
  */
 export const getDaysAgoString = (days: number): string => {
   const date = subDays(new Date(), days);
-  return format(date, 'yyyy-MM-dd');
+  return formatInTimeZone(date, MALAYSIA_TIMEZONE, 'yyyy-MM-dd');
 };
 
 /**
- * Get start of current week as YYYY-MM-DD string
+ * Get start of current week as YYYY-MM-DD string in Malaysia timezone
  */
 export const getWeekStartString = (): string => {
-  return format(startOfWeek(new Date()), 'yyyy-MM-dd');
+  return formatInTimeZone(startOfWeek(new Date()), MALAYSIA_TIMEZONE, 'yyyy-MM-dd');
 };
 
 /**
- * Get start of current month as YYYY-MM-DD string
+ * Get start of current month as YYYY-MM-DD string in Malaysia timezone
  */
 export const getMonthStartString = (): string => {
-  return format(startOfMonth(new Date()), 'yyyy-MM-dd');
+  return formatInTimeZone(startOfMonth(new Date()), MALAYSIA_TIMEZONE, 'yyyy-MM-dd');
 };
 
 /**
@@ -136,15 +137,15 @@ export const daysBetween = (startDate: Date, endDate: Date): number => {
 };
 
 /**
- * Get date range for common periods
+ * Get date range for common periods in Malaysia timezone
  */
 export const getCommonDateRanges = () => {
-  const now = new Date();
+  const nowInMalaysia = new Date(formatInTimeZone(new Date(), MALAYSIA_TIMEZONE, 'yyyy-MM-dd\'T\'HH:mm:ss'));
   
   return {
     today: {
-      start: formatDateForAPI(now),
-      end: formatDateForAPI(now)
+      start: formatDateForAPI(nowInMalaysia),
+      end: formatDateForAPI(nowInMalaysia)
     },
     yesterday: {
       start: getYesterdayString(),
@@ -152,19 +153,19 @@ export const getCommonDateRanges = () => {
     },
     thisWeek: {
       start: getWeekStartString(),
-      end: formatDateForAPI(now)
+      end: formatDateForAPI(nowInMalaysia)
     },
     thisMonth: {
       start: getMonthStartString(),
-      end: formatDateForAPI(now)
+      end: formatDateForAPI(nowInMalaysia)
     },
     last7Days: {
       start: getDaysAgoString(7),
-      end: formatDateForAPI(now)
+      end: formatDateForAPI(nowInMalaysia)
     },
     last30Days: {
       start: getDaysAgoString(30),
-      end: formatDateForAPI(now)
+      end: formatDateForAPI(nowInMalaysia)
     }
   };
 };
