@@ -485,6 +485,295 @@ class ExpenseService {
       label: `${this.capitalizeFirst(category)}`
     }));
   }
+
+  // ========================================
+  // INCOME TRACKING ENHANCEMENTS
+  // ========================================
+
+  /**
+   * Get comprehensive income/expense summary for a period
+   * Returns both income and expense breakdown with net balance
+   */
+  async getIncomeExpenseSummary(userId, period) {
+    try {
+      const ranges = getCommonDateRanges();
+      const range = ranges[period];
+      
+      if (!range) {
+        throw new Error(`Invalid period: ${period}`);
+      }
+
+      // Get all transactions for the period
+      const { data: transactions, error } = await this.supabase
+        .from('expenses')
+        .select('*, categories(name, type)')
+        .eq('user_id', userId)
+        .gte('receipt_date', range.start)
+        .lte('receipt_date', range.end);
+
+      if (error) throw error;
+
+      // Separate income and expenses based on type column or category analysis
+      const income = [];
+      const expenses = [];
+
+      for (const transaction of transactions || []) {
+        // Check if transaction has type column
+        if (transaction.type) {
+          if (transaction.type === 'income') {
+            income.push(transaction);
+          } else {
+            expenses.push(transaction);
+          }
+        } else if (transaction.categories?.type) {
+          // Fallback to category type
+          if (transaction.categories.type === 'income') {
+            income.push(transaction);
+          } else {
+            expenses.push(transaction);
+          }
+        } else {
+          // Default to expense for backward compatibility
+          expenses.push(transaction);
+        }
+      }
+
+      // Calculate totals
+      const totalIncome = income.reduce((sum, t) => sum + (t.total_amount || 0), 0);
+      const totalExpenses = expenses.reduce((sum, t) => sum + (t.total_amount || 0), 0);
+      const netBalance = totalIncome - totalExpenses;
+
+      // Calculate category breakdowns
+      const incomeBreakdown = this.calculateCategoryBreakdown(income, totalIncome);
+      const expenseBreakdown = this.calculateCategoryBreakdown(expenses, totalExpenses);
+
+      return {
+        period,
+        total_income: totalIncome,
+        total_expenses: totalExpenses,
+        net_balance: netBalance,
+        income_breakdown: incomeBreakdown,
+        expense_breakdown: expenseBreakdown,
+        transaction_count: {
+          income: income.length,
+          expenses: expenses.length,
+          total: transactions?.length || 0
+        }
+      };
+
+    } catch (error) {
+      console.error('Error getting income/expense summary:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Calculate category breakdown with percentages
+   */
+  calculateCategoryBreakdown(transactions, total) {
+    if (!transactions || transactions.length === 0 || total === 0) {
+      return [];
+    }
+
+    const categoryTotals = {};
+    
+    for (const transaction of transactions) {
+      // Get category name from categories relation or fallback to category field
+      const categoryName = transaction.categories?.name || transaction.category || 'Other';
+      
+      if (!categoryTotals[categoryName]) {
+        categoryTotals[categoryName] = 0;
+      }
+      
+      categoryTotals[categoryName] += transaction.total_amount || 0;
+    }
+
+    // Convert to array with percentages and sort by amount
+    return Object.entries(categoryTotals)
+      .map(([category, amount]) => ({
+        category: this.capitalizeFirst(category),
+        amount: amount,
+        percentage: ((amount / total) * 100).toFixed(1)
+      }))
+      .sort((a, b) => b.amount - a.amount)
+      .filter(item => item.amount > 0); // Only include non-zero amounts
+  }
+
+  /**
+   * Get transactions by type (income or expense)
+   */
+  async getTransactionsByType(userId, type, startDate, endDate) {
+    try {
+      let query = this.supabase
+        .from('expenses')
+        .select('*, categories(name, type)')
+        .eq('user_id', userId);
+
+      // Add date filtering if provided
+      if (startDate) {
+        query = query.gte('receipt_date', startDate);
+      }
+      if (endDate) {
+        query = query.lte('receipt_date', endDate);
+      }
+
+      // Add type filtering if type column exists
+      if (type && (type === 'income' || type === 'expense')) {
+        query = query.eq('type', type);
+      }
+
+      const { data: transactions, error } = await query
+        .order('receipt_date', { ascending: false });
+
+      if (error) throw error;
+
+      // If type column doesn't exist, filter by category type or default logic
+      if (!transactions?.[0]?.type && type) {
+        return transactions.filter(t => {
+          if (t.categories?.type === type) return true;
+          if (!t.categories?.type && type === 'expense') return true; // Default to expense
+          return false;
+        });
+      }
+
+      return transactions || [];
+
+    } catch (error) {
+      console.error(`Error getting ${type} transactions:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get available categories by type (income or expense)
+   */
+  async getAvailableCategoriesByType(userId, type) {
+    try {
+      if (!userId) {
+        // Return default categories based on type
+        if (type === 'income') {
+          return [
+            { value: 'salary', label: 'Salary', id: null },
+            { value: 'freelance', label: 'Freelance', id: null },
+            { value: 'investment_returns', label: 'Investment Returns', id: null },
+            { value: 'cash_rebate', label: 'Cash Rebate', id: null },
+            { value: 'side_income', label: 'Side Income', id: null },
+            { value: 'other_income', label: 'Other Income', id: null }
+          ];
+        } else {
+          // Return existing expense categories
+          return this.getAvailableCategoriesLegacy();
+        }
+      }
+
+      let query = this.supabase
+        .from('categories')
+        .select('id, name, type')
+        .eq('user_id', userId);
+
+      // Add type filtering if specified
+      if (type && (type === 'income' || type === 'expense')) {
+        query = query.eq('type', type);
+      }
+
+      const { data: categories, error } = await query
+        .order('name', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching categories by type:', error);
+        return this.getAvailableCategoriesByType(null, type); // Fallback to defaults
+      }
+
+      // Convert to expected format
+      return categories.map(category => ({
+        value: category.name,
+        label: this.capitalizeFirst(category.name),
+        id: category.id,
+        type: category.type || 'expense'
+      }));
+
+    } catch (error) {
+      console.error('Error in getAvailableCategoriesByType:', error);
+      return this.getAvailableCategoriesByType(null, type); // Fallback to defaults
+    }
+  }
+
+  /**
+   * Create income transaction
+   */
+  async createIncomeTransaction(userId, incomeData) {
+    try {
+      // Prepare the income transaction data
+      const insertData = {
+        user_id: userId,
+        receipt_date: incomeData.receipt_date,
+        store_name: incomeData.source || 'Income Source', // Use 'source' for income
+        description: incomeData.description || '', // Income description
+        category: incomeData.category,
+        total_amount: parseFloat(incomeData.total_amount),
+        type: 'income', // Explicitly set as income
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      // Resolve category_id if needed
+      let categoryId = incomeData.category_id;
+      if (!categoryId && incomeData.category && userId) {
+        categoryId = await this.resolveCategoryId(userId, incomeData.category, 'income');
+      }
+
+      if (categoryId) {
+        insertData.category_id = categoryId;
+      }
+
+      const { data, error } = await this.supabase
+        .from('expenses') // Still using expenses table as per migration strategy
+        .insert([insertData])
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      return data;
+
+    } catch (error) {
+      console.error('Error creating income transaction:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Enhanced category resolution with type support
+   */
+  async resolveCategoryId(userId, categoryName, type = 'expense') {
+    try {
+      let query = this.supabase
+        .from('categories')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('name', categoryName);
+
+      // Add type filtering if type column exists
+      if (type) {
+        query = query.eq('type', type);
+      }
+
+      const { data: category, error } = await query.single();
+
+      if (error || !category) {
+        console.warn(`Category "${categoryName}" of type "${type}" not found for user ${userId}`);
+        return null;
+      }
+
+      return category.id;
+
+    } catch (error) {
+      console.error('Error resolving category ID:', error);
+      return null;
+    }
+  }
 }
 
 export default ExpenseService;

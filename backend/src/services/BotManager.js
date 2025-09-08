@@ -782,6 +782,9 @@ Sorry, I couldn't process any of the ${photoCount} receipt photos. Please try ag
         case '/create':
           return this.handleCreateCommand(userId);
         
+        case '/income':
+          return this.handleIncomeCommand(userId);
+        
         case '/new':
           return this.handleNewProjectCommand(userId);
         
@@ -805,6 +808,7 @@ Sorry, I couldn't process any of the ${photoCount} receipt photos. Please try ag
 
   /**
    * Handle /summary command with parameters
+   * Enhanced to show comprehensive income/expense breakdown
    */
   async handleSummaryCommand(userId, params) {
     if (params.length === 0) {
@@ -812,42 +816,78 @@ Sorry, I couldn't process any of the ${photoCount} receipt photos. Please try ag
     }
 
     const period = params.join(' ').toLowerCase();
-    let expenses = [];
-    let title = '';
+    let validPeriod = '';
 
     try {
+      // Map period aliases to ExpenseService periods
       switch (period) {
         case 'day':
-          expenses = await this.expenseService.getTodayExpensesWithProjects(userId);
-          title = "Today's Summary";
+        case 'today':
+          validPeriod = 'today';
           break;
-        
         case 'week':
-          expenses = await this.expenseService.getWeekExpensesWithProjects(userId);
-          title = "This Week's Summary";
+          validPeriod = 'week';
           break;
-        
         case 'month':
-          expenses = await this.expenseService.getMonthExpensesWithProjects(userId);
-          title = "This Month's Summary";
+          validPeriod = 'month';
           break;
-        
         default:
-          // Try to parse as month range
-          const range = parseMonthRange(period);
-          if (range) {
-            expenses = await this.expenseService.getCustomRangeExpensesWithProjects(userId, range.startDate, range.endDate);
-            title = `${formatDateRange(range)} Summary`;
-          } else {
-            return this.getSummaryUsageMessage();
-          }
+          return this.getSummaryUsageMessage();
       }
 
-      return await this.formatEnhancedSummary(expenses, title, userId);
+      // Get comprehensive income/expense summary
+      const summary = await this.expenseService.getIncomeExpenseSummary(userId, validPeriod);
+      
+      return this.formatIncomeExpenseSummary(summary, validPeriod);
+      
     } catch (error) {
-      console.error('Error in summary command:', error);
+      console.error('Error in enhanced summary command:', error);
       return '❌ Sorry, I encountered an error generating your summary. Please try again.';
     }
+  }
+
+  /**
+   * Format comprehensive income/expense summary for Telegram
+   */
+  formatIncomeExpenseSummary(summary, period) {
+    const periodTitle = period.charAt(0).toUpperCase() + period.slice(1);
+    let message = `📊 *${periodTitle} Financial Summary*\n\n`;
+
+    // Income section
+    message += `💰 *INCOME: $${summary.total_income.toFixed(2)}*\n`;
+    if (summary.income_breakdown.length > 0) {
+      summary.income_breakdown.forEach(item => {
+        message += `• ${item.category}: $${item.amount.toFixed(2)} (${item.percentage}%)\n`;
+      });
+    } else {
+      message += `• No income recorded\n`;
+    }
+
+    message += `\n`;
+
+    // Expenses section
+    message += `💸 *EXPENSES: $${summary.total_expenses.toFixed(2)}*\n`;
+    if (summary.expense_breakdown.length > 0) {
+      summary.expense_breakdown.forEach(item => {
+        message += `• ${item.category}: $${item.amount.toFixed(2)} (${item.percentage}%)\n`;
+      });
+    } else {
+      message += `• No expenses recorded\n`;
+    }
+
+    message += `\n`;
+
+    // Net balance
+    const balanceIcon = summary.net_balance >= 0 ? '✅' : '⚠️';
+    const balancePrefix = summary.net_balance >= 0 ? '+' : '';
+    message += `📊 *NET BALANCE: ${balancePrefix}$${summary.net_balance.toFixed(2)}* ${balanceIcon}\n\n`;
+
+    // Transaction count
+    message += `📈 Income transactions: ${summary.transaction_count.income}\n`;
+    message += `📉 Expense transactions: ${summary.transaction_count.expenses}\n`;
+    message += `📊 Total transactions: ${summary.transaction_count.total}`;
+
+    return message;
   }
 
   /**
@@ -867,6 +907,22 @@ Type the date or /cancel to stop:`;
   }
 
   /**
+   * Handle /income command to create income transactions
+   */
+  async handleIncomeCommand(userId) {
+    this.conversationManager.startConversation(userId, 'create_income');
+    return `💰 *Create New Income*
+
+Please enter the income date in YYYY-MM-DD format.
+
+📅 *Examples:*
+• 2025-01-15 (salary payment)
+• 2025-08-24 (freelance payment)
+
+Type the date or /cancel to stop:`;
+  }
+
+  /**
    * Handle conversation input for multi-step commands
    */
   async handleConversationInput(userId, input, conversation) {
@@ -878,6 +934,8 @@ Type the date or /cancel to stop:`;
     switch (conversation.type) {
       case 'create_expense':
         return this.handleCreateExpenseFlow(userId, input, conversation);
+      case 'create_income':
+        return this.handleCreateIncomeFlow(userId, input, conversation);
       case 'create_project':
         return this.handleCreateProjectFlow(userId, input, conversation);
       case 'close_project':
@@ -1007,6 +1065,113 @@ The expense has been saved to your account.`;
             this.conversationManager.endConversation(userId);
             return '❌ Sorry, there was an error saving your expense. Please try again with /create command.';
           }
+        }
+    }
+  }
+
+  /**
+   * Handle create income conversation flow
+   */
+  async handleCreateIncomeFlow(userId, input, conversation) {
+    switch (conversation.step) {
+      case 0: // Waiting for income date
+        if (!isValidDateFormat(input)) {
+          return `❌ Invalid date format. Please use YYYY-MM-DD format.
+
+📅 *Examples:*
+• 2025-01-15
+• 2025-08-24
+
+Please enter the income date or /cancel to stop:`;
+        }
+        
+        this.conversationManager.updateStep(userId, 1, { incomeDate: input });
+        return `✅ Date set: ${input}
+
+📝 Please enter a description for this income:
+
+*Examples:* Monthly salary, Freelance payment, Investment return, etc.`;
+
+      case 1: // Waiting for description
+        if (!input || input.trim().length < 1) {
+          return `❌ Description cannot be empty.
+
+📝 Please enter a description for this income:`;
+        }
+
+        this.conversationManager.updateStep(userId, 2, { description: input.trim() });
+        const incomeCategories = await this.expenseService.getAvailableCategoriesByType(userId, 'income');
+        let categoryMessage = `✅ Description: ${input.trim()}
+
+📋 Please select an income category by typing the number:
+
+`;
+        incomeCategories.forEach((cat, index) => {
+          categoryMessage += `${index + 1}. ${cat.label}\n`;
+        });
+
+        return categoryMessage;
+
+      case 2: // Waiting for category selection
+        const categoryIndex = parseInt(input) - 1;
+        const availableIncomeCategories = await this.expenseService.getAvailableCategoriesByType(userId, 'income');
+        
+        if (isNaN(categoryIndex) || categoryIndex < 0 || categoryIndex >= availableIncomeCategories.length) {
+          return `❌ Invalid selection. Please choose a number from 1 to ${availableIncomeCategories.length}:
+
+${availableIncomeCategories.map((cat, index) => `${index + 1}. ${cat.label}`).join('\n')}`;
+        }
+
+        const selectedIncomeCategory = availableIncomeCategories[categoryIndex];
+        this.conversationManager.updateStep(userId, 3, { 
+          category: selectedIncomeCategory.value,
+          categoryId: selectedIncomeCategory.id 
+        });
+        return `✅ Category: ${selectedIncomeCategory.label}
+
+💰 Please enter the income amount (numbers only):
+
+*Examples:* 2500.00, 500, 1000.50`;
+
+      case 3: // Waiting for amount
+        if (!isValidAmount(input)) {
+          return `❌ Invalid amount. Please enter a positive number.
+
+💰 *Examples:* 2500.00, 500, 1000.50
+
+Please enter the income amount:`;
+        }
+
+        const amount = parseFloat(input).toFixed(2);
+        const incomeData = {
+          receipt_date: conversation.data.incomeDate,
+          source: conversation.data.description, // Store description as source
+          description: conversation.data.description,
+          category: conversation.data.category,
+          category_id: conversation.data.categoryId,
+          total_amount: parseFloat(amount)
+        };
+
+        // Save income transaction
+        try {
+          await this.expenseService.createIncomeTransaction(userId, incomeData);
+          this.conversationManager.endConversation(userId);
+          
+          return `✅ *Income Created Successfully!*
+
+📊 *Summary:*
+📅 Date: ${incomeData.receipt_date}
+📝 Description: ${incomeData.description}
+📋 Category: ${this.expenseService.capitalizeFirst(incomeData.category)}
+💰 Amount: +$${amount}
+📈 Type: Income
+
+The income has been saved to your account.`;
+
+        } catch (error) {
+          console.error('Error creating income:', error);
+          this.conversationManager.endConversation(userId);
+          return '❌ Sorry, there was an error saving your income. Please try again with /income command.';
         }
     }
   }

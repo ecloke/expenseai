@@ -18,13 +18,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Plus, Tag, Edit, Trash2, AlertCircle, CheckCircle } from 'lucide-react'
+import { Plus, Tag, Edit, Trash2, AlertCircle, CheckCircle, TrendingUp, TrendingDown, Filter } from 'lucide-react'
 // Removed category emoji imports - using text-only categories now
 import { Skeleton } from '@/components/ui/skeleton'
 
 interface Category {
   id: string
   name: string
+  type: 'income' | 'expense'
   is_default: boolean
   created_at: string
   updated_at: string
@@ -42,11 +43,13 @@ export default function CategoriesPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [user, setUser] = useState<any>(null)
+  const [selectedType, setSelectedType] = useState<'all' | 'income' | 'expense'>('all')
   const supabase = createSupabaseClient()
 
   // Form states
   const [newCategory, setNewCategory] = useState({
-    name: ''
+    name: '',
+    type: 'expense' as 'income' | 'expense'
   })
 
   const [editForm, setEditForm] = useState({
@@ -61,7 +64,7 @@ export default function CategoriesPage() {
     if (user) {
       fetchCategories()
     }
-  }, [user])
+  }, [user, selectedType])
 
   const loadUser = async () => {
     try {
@@ -83,7 +86,13 @@ export default function CategoriesPage() {
 
       if (!user) return
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories?user_id=${user.id}`)
+      // Build query parameters
+      const params = new URLSearchParams({ user_id: user.id })
+      if (selectedType !== 'all') {
+        params.append('type', selectedType)
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories?${params.toString()}`)
       const result = await response.json()
 
       if (!response.ok) {
@@ -141,6 +150,7 @@ export default function CategoriesPage() {
         },
         body: JSON.stringify({
           name: newCategory.name.trim(),
+          type: newCategory.type,
           user_id: user.id
         })
       })
@@ -151,7 +161,7 @@ export default function CategoriesPage() {
         throw new Error(result.message || 'Failed to create category')
       }
 
-      setNewCategory({ name: '' })
+      setNewCategory({ name: '', type: 'expense' })
       setIsCreateDialogOpen(false)
       fetchCategories()
     } catch (error: any) {
@@ -269,7 +279,7 @@ export default function CategoriesPage() {
               <DialogHeader>
                 <DialogTitle className="text-lg sm:text-xl">Create New Category</DialogTitle>
                 <DialogDescription className="text-gray-400 text-sm sm:text-base">
-                  Add a new category to organize your expenses.
+                  Add a new category to organize your {newCategory.type === 'income' ? 'income' : 'expense'} transactions.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 pt-4">
@@ -283,6 +293,37 @@ export default function CategoriesPage() {
                     className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
                     maxLength={100}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-gray-300">Category Type</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={newCategory.type === 'expense' ? 'default' : 'outline'}
+                      onClick={() => setNewCategory({ ...newCategory, type: 'expense' })}
+                      className={`flex-1 ${
+                        newCategory.type === 'expense'
+                          ? 'bg-red-600 hover:bg-red-700 text-white'
+                          : 'border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white bg-gray-800'
+                      }`}
+                    >
+                      <TrendingDown className="h-4 w-4 mr-2" />
+                      Expense
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={newCategory.type === 'income' ? 'default' : 'outline'}
+                      onClick={() => setNewCategory({ ...newCategory, type: 'income' })}
+                      className={`flex-1 ${
+                        newCategory.type === 'income'
+                          ? 'bg-green-600 hover:bg-green-700 text-white'
+                          : 'border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white bg-gray-800'
+                      }`}
+                    >
+                      <TrendingUp className="h-4 w-4 mr-2" />
+                      Income
+                    </Button>
+                  </div>
                 </div>
                 {error && (
                   <div className="text-red-400 text-sm flex items-center gap-2">
@@ -310,6 +351,53 @@ export default function CategoriesPage() {
             </DialogContent>
           </Dialog>
         </div>
+
+        {/* Type Filter */}
+        <Card className="bg-gray-800 border-gray-700">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-white text-lg sm:text-xl">
+              <Filter className="h-5 w-5 text-blue-400" />
+              Filter by Type
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={selectedType === 'all' ? 'default' : 'outline'}
+                onClick={() => setSelectedType('all')}
+                className={selectedType === 'all' 
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                  : 'border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
+                }
+              >
+                <Tag className="h-4 w-4 mr-2" />
+                All Categories
+              </Button>
+              <Button
+                variant={selectedType === 'income' ? 'default' : 'outline'}
+                onClick={() => setSelectedType('income')}
+                className={selectedType === 'income' 
+                  ? 'bg-green-600 hover:bg-green-700 text-white'
+                  : 'border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
+                }
+              >
+                <TrendingUp className="h-4 w-4 mr-2" />
+                Income
+              </Button>
+              <Button
+                variant={selectedType === 'expense' ? 'default' : 'outline'}
+                onClick={() => setSelectedType('expense')}
+                className={selectedType === 'expense' 
+                  ? 'bg-red-600 hover:bg-red-700 text-white'
+                  : 'border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
+                }
+              >
+                <TrendingDown className="h-4 w-4 mr-2" />
+                Expense
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Categories Table */}
         <Card className="bg-gray-800 border-gray-700">
@@ -348,20 +436,39 @@ export default function CategoriesPage() {
                         <TableRow key={category.id} className="border-gray-700 hover:bg-gray-750/50">
                           <TableCell>
                             <div className="flex items-center gap-3">
-                              <span className="font-medium text-white text-sm capitalize">{category.name}</span>
+                              <div className="flex items-center gap-2">
+                                {category.type === 'income' ? (
+                                  <TrendingUp className="h-4 w-4 text-green-400" />
+                                ) : (
+                                  <TrendingDown className="h-4 w-4 text-red-400" />
+                                )}
+                                <span className="font-medium text-white text-sm capitalize">{category.name}</span>
+                              </div>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge 
-                              variant={category.is_default ? 'default' : 'secondary'}
-                              className={
-                                category.is_default 
-                                  ? 'bg-blue-700 text-white hover:bg-blue-600 text-xs' 
-                                  : 'bg-gray-600 text-gray-300 hover:bg-gray-500 text-xs'
-                              }
-                            >
-                              {category.is_default ? 'Default' : 'Custom'}
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                              <Badge 
+                                variant="secondary"
+                                className={`text-xs ${
+                                  category.type === 'income'
+                                    ? 'bg-green-700/30 text-green-300 border-green-600'
+                                    : 'bg-red-700/30 text-red-300 border-red-600'
+                                }`}
+                              >
+                                {category.type === 'income' ? 'Income' : 'Expense'}
+                              </Badge>
+                              <Badge 
+                                variant={category.is_default ? 'default' : 'secondary'}
+                                className={
+                                  category.is_default 
+                                    ? 'bg-blue-700 text-white hover:bg-blue-600 text-xs' 
+                                    : 'bg-gray-600 text-gray-300 hover:bg-gray-500 text-xs'
+                                }
+                              >
+                                {category.is_default ? 'Default' : 'Custom'}
+                              </Badge>
+                            </div>
                           </TableCell>
                           <TableCell className="text-gray-300 text-sm">
                             {category.transaction_count || 0}
@@ -430,8 +537,25 @@ export default function CategoriesPage() {
                         <div className="flex justify-between items-start mb-3">
                           <div className="flex items-center gap-3">
                             <div>
-                              <h3 className="font-medium text-white text-base capitalize">{category.name}</h3>
-                              <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                {category.type === 'income' ? (
+                                  <TrendingUp className="h-4 w-4 text-green-400" />
+                                ) : (
+                                  <TrendingDown className="h-4 w-4 text-red-400" />
+                                )}
+                                <h3 className="font-medium text-white text-base capitalize">{category.name}</h3>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm text-gray-400">
+                                <Badge 
+                                  variant="secondary"
+                                  className={`text-xs ${
+                                    category.type === 'income'
+                                      ? 'bg-green-700/30 text-green-300 border-green-600'
+                                      : 'bg-red-700/30 text-red-300 border-red-600'
+                                  }`}
+                                >
+                                  {category.type === 'income' ? 'Income' : 'Expense'}
+                                </Badge>
                                 <Badge 
                                   variant={category.is_default ? 'default' : 'secondary'}
                                   className={

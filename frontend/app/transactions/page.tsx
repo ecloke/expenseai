@@ -18,13 +18,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { ChevronLeft, ChevronRight, Search, Calendar, Store, Filter, Download, Receipt, Edit, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Search, Calendar, Store, Filter, Download, Receipt, Edit, Trash2, Plus, TrendingUp, TrendingDown } from 'lucide-react'
 import { Expense } from '@/types'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
 import { ITEMS_PER_PAGE } from '@/lib/constants'
 import { useCategoriesWithAll, useCategories } from '@/hooks/useCategories'
 import { formatDateForDisplay, formatDateTimeForDisplay, getTodayString, getDaysAgoString, getMonthStartString, formatDateForAPI } from '@/lib/dateUtils'
+import { CreateTransactionDialog } from '@/components/transactions/CreateTransactionDialog'
 
 export default function Transactions() {
   const [expenses, setExpenses] = useState<Expense[]>([])
@@ -32,6 +33,8 @@ export default function Transactions() {
   const [searchTerm, setSearchTerm] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [projectFilter, setProjectFilter] = useState('all')
+  const [transactionType, setTransactionType] = useState('all') // 'all', 'income', 'expense'
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [projects, setProjects] = useState<any[]>([])
   const [dateRange, setDateRange] = useState('all') // 'week', 'month', 'custom', 'all'
   const [customStartDate, setCustomStartDate] = useState<Date | null>(null)
@@ -65,7 +68,7 @@ export default function Transactions() {
       loadExpenses()
       loadProjects()
     }
-  }, [user, currentPage, searchTerm, categoryFilter, projectFilter, dateRange, customStartDate, customEndDate])
+  }, [user, currentPage, searchTerm, categoryFilter, projectFilter, transactionType, dateRange, customStartDate, customEndDate])
 
   const loadUser = async () => {
     try {
@@ -88,61 +91,74 @@ export default function Transactions() {
 
     try {
       setLoading(true)
-      const supabase = createSupabaseClient()
+      
+      // Build query parameters
+      const params = new URLSearchParams({
+        user_id: user.id,
+        limit: itemsPerPage.toString(),
+        offset: ((currentPage - 1) * itemsPerPage).toString()
+      })
 
-      let query = supabase
-        .from('expenses')
-        .select('*, projects(name, currency)', { count: 'exact' })
-        .eq('user_id', user.id)
-        .order('receipt_date', { ascending: false })
-
-      // Apply search filter
-      if (searchTerm.trim()) {
-        query = query.or(`store_name.ilike.%${searchTerm}%,category.ilike.%${searchTerm}%`)
+      // Add transaction type filter
+      if (transactionType !== 'all') {
+        params.append('type', transactionType)
       }
 
-      // Apply category filter
-      if (categoryFilter !== 'all') {
-        query = query.eq('category', categoryFilter)
-      }
-
-      // Apply project filter
-      if (projectFilter === 'general') {
-        query = query.is('project_id', null)
-      } else if (projectFilter !== 'all') {
-        query = query.eq('project_id', projectFilter)
-      }
-
-      // Apply date range filter
+      // Add date range filters
       if (dateRange === 'week') {
-        query = query.gte('receipt_date', getDaysAgoString(7))
+        params.append('start_date', getDaysAgoString(7))
       } else if (dateRange === 'month') {
-        query = query.gte('receipt_date', getMonthStartString())
+        params.append('start_date', getMonthStartString())
       } else if (dateRange === 'custom') {
         if (customStartDate) {
-          query = query.gte('receipt_date', formatDateForAPI(customStartDate))
+          params.append('start_date', formatDateForAPI(customStartDate))
         }
         if (customEndDate) {
-          query = query.lte('receipt_date', formatDateForAPI(customEndDate))
+          params.append('end_date', formatDateForAPI(customEndDate))
         }
       }
 
-      // Apply pagination
-      const from = (currentPage - 1) * itemsPerPage
-      const to = from + itemsPerPage - 1
-
-      const { data, error, count } = await query.range(from, to)
-
-      if (error) {
-        throw error
+      // Fetch transactions from the new API
+      const response = await fetch(`/api/expenses?${params.toString()}`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const result = await response.json()
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to fetch transactions')
       }
 
-      setExpenses(data || [])
-      setTotalCount(count || 0)
+      let transactions = result.data || []
+
+      // Apply client-side filters for backward compatibility
+      if (searchTerm.trim()) {
+        const searchLower = searchTerm.toLowerCase()
+        transactions = transactions.filter(tx => 
+          tx.store_name?.toLowerCase().includes(searchLower) ||
+          tx.category?.toLowerCase().includes(searchLower) ||
+          tx.category_name?.toLowerCase().includes(searchLower)
+        )
+      }
+
+      if (categoryFilter !== 'all') {
+        transactions = transactions.filter(tx => 
+          tx.category === categoryFilter || tx.category_name === categoryFilter
+        )
+      }
+
+      if (projectFilter === 'general') {
+        transactions = transactions.filter(tx => !tx.project_id)
+      } else if (projectFilter !== 'all') {
+        transactions = transactions.filter(tx => tx.project_id === projectFilter)
+      }
+
+      setExpenses(transactions)
+      setTotalCount(result.meta?.total || transactions.length)
       setError(null)
     } catch (error) {
       console.error('Error loading expenses:', error)
-      setError('Failed to load expenses')
+      setError('Failed to load transactions')
     } finally {
       setLoading(false)
     }
@@ -309,16 +325,25 @@ export default function Transactions() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-white">Transactions</h1>
-            <p className="text-gray-400 mt-1 sm:mt-2 text-sm sm:text-base">View and manage all your expense transactions</p>
+            <p className="text-gray-400 mt-1 sm:mt-2 text-sm sm:text-base">View and manage all your financial transactions</p>
           </div>
-          <Button
-            onClick={exportData}
-            className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
-            disabled={expenses.length === 0}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Export CSV
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Button
+              onClick={() => setCreateDialogOpen(true)}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Transaction
+            </Button>
+            <Button
+              onClick={exportData}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              disabled={expenses.length === 0}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -330,7 +355,7 @@ export default function Transactions() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
               {/* Search */}
               <div className="sm:col-span-2 lg:col-span-2">
                 <label className="block text-sm font-medium text-gray-300 mb-2">Search</label>
@@ -343,6 +368,24 @@ export default function Transactions() {
                     className="pl-10 bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:bg-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20"
                   />
                 </div>
+              </div>
+
+              {/* Transaction Type Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Type</label>
+                <SimpleSelect
+                  value={transactionType}
+                  onValueChange={(value) => {
+                    setTransactionType(value)
+                    setCurrentPage(1)
+                  }}
+                  options={[
+                    { value: 'all', label: 'All Types' },
+                    { value: 'income', label: '💰 Income' },
+                    { value: 'expense', label: '💸 Expense' }
+                  ]}
+                  placeholder="All Types"
+                />
               </div>
 
               {/* Category Filter */}
@@ -439,8 +482,9 @@ export default function Transactions() {
                     <Table>
                       <TableHeader>
                         <TableRow className="border-gray-600 hover:bg-gray-700/50">
+                          <TableHead className="text-gray-300 text-xs sm:text-sm">Type</TableHead>
                           <TableHead className="text-gray-300 text-xs sm:text-sm">Date</TableHead>
-                          <TableHead className="text-gray-300 text-xs sm:text-sm">Store</TableHead>
+                          <TableHead className="text-gray-300 text-xs sm:text-sm">Store/Source</TableHead>
                           <TableHead className="text-gray-300 text-xs sm:text-sm">Category</TableHead>
                           <TableHead className="text-right text-gray-300 text-xs sm:text-sm">Amount</TableHead>
                           <TableHead className="text-gray-300 text-xs sm:text-sm">Added</TableHead>
@@ -448,8 +492,26 @@ export default function Transactions() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {expenses.map((expense) => (
+                        {expenses.map((expense) => {
+                          const transactionType = expense.type || expense.transaction_type || 'expense'
+                          const isIncome = transactionType === 'income'
+                          
+                          return (
                           <TableRow key={expense.id} className="border-gray-600 hover:bg-gray-600/50">
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                {isIncome ? (
+                                  <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-400" />
+                                ) : (
+                                  <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4 text-red-400" />
+                                )}
+                                <span className={`text-xs font-medium ${
+                                  isIncome ? 'text-green-400' : 'text-red-400'
+                                }`}>
+                                  {isIncome ? 'Income' : 'Expense'}
+                                </span>
+                              </div>
+                            </TableCell>
                             <TableCell>
                               <div className="font-medium text-gray-200 text-xs sm:text-sm">
                                 {formatDateForDisplay(expense.receipt_date)}
@@ -466,12 +528,14 @@ export default function Transactions() {
                                 variant="secondary" 
                                 className="bg-gray-600 text-gray-200 border-gray-500 text-xs"
                               >
-                                {expense.category}
+                                {expense.category || expense.category_name}
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right">
-                              <span className="font-semibold text-sm sm:text-lg text-green-400">
-                                {formatAmount(expense)}
+                              <span className={`font-semibold text-sm sm:text-lg ${
+                                isIncome ? 'text-green-400' : 'text-red-400'
+                              }`}>
+                                {isIncome ? '+' : '-'}{formatAmount(expense)}
                               </span>
                             </TableCell>
                             <TableCell>
@@ -500,14 +564,18 @@ export default function Transactions() {
                               </div>
                             </TableCell>
                           </TableRow>
-                        ))}
+                        )})}
                       </TableBody>
                     </Table>
                   </div>
 
                   {/* Mobile Card View */}
                   <div className="sm:hidden space-y-3">
-                    {expenses.map((expense) => (
+                    {expenses.map((expense) => {
+                      const transactionType = expense.type || expense.transaction_type || 'expense'
+                      const isIncome = transactionType === 'income'
+                      
+                      return (
                       <Card key={expense.id} className="bg-gray-700/50 border-gray-600">
                         <CardContent className="p-4">
                           <div className="flex justify-between items-start mb-3">
@@ -516,19 +584,33 @@ export default function Transactions() {
                                 <Store className="h-4 w-4 text-gray-400" />
                                 <span className="font-medium text-gray-200 text-sm">{expense.store_name}</span>
                               </div>
-                              <div className="text-xs text-gray-400">
-                                {formatDateForDisplay(expense.receipt_date)}
+                              <div className="flex items-center gap-2 text-xs">
+                                <span className="text-gray-400">{formatDateForDisplay(expense.receipt_date)}</span>
+                                <div className="flex items-center gap-1">
+                                  {isIncome ? (
+                                    <TrendingUp className="h-3 w-3 text-green-400" />
+                                  ) : (
+                                    <TrendingDown className="h-3 w-3 text-red-400" />
+                                  )}
+                                  <span className={`font-medium ${
+                                    isIncome ? 'text-green-400' : 'text-red-400'
+                                  }`}>
+                                    {isIncome ? 'Income' : 'Expense'}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                             <div className="text-right">
-                              <div className="font-semibold text-lg text-green-400 mb-1">
-                                {formatAmount(expense)}
+                              <div className={`font-semibold text-lg mb-1 ${
+                                isIncome ? 'text-green-400' : 'text-red-400'
+                              }`}>
+                                {isIncome ? '+' : '-'}{formatAmount(expense)}
                               </div>
                               <Badge 
                                 variant="secondary" 
                                 className="bg-gray-600 text-gray-200 border-gray-500 text-xs"
                               >
-                                {expense.category}
+                                {expense.category || expense.category_name}
                               </Badge>
                             </div>
                           </div>
@@ -557,8 +639,7 @@ export default function Transactions() {
                           </div>
                         </CardContent>
                       </Card>
-                    ))}
-                  </div>
+                    )})}                  </div>
 
                   {/* Pagination */}
                   {totalPages > 1 && (
@@ -622,9 +703,9 @@ export default function Transactions() {
         <Dialog open={!!editingExpense} onOpenChange={(open) => !open && setEditingExpense(null)}>
           <DialogContent className="bg-gray-800 border-gray-700 text-white">
             <DialogHeader>
-              <DialogTitle>Edit Expense</DialogTitle>
+              <DialogTitle>Edit Transaction</DialogTitle>
               <DialogDescription className="text-gray-400">
-                Make changes to your expense record
+                Make changes to your transaction record
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -695,9 +776,9 @@ export default function Transactions() {
         <Dialog open={!!deletingExpense} onOpenChange={(open) => !open && setDeletingExpense(null)}>
           <DialogContent className="bg-gray-800 border-gray-700 text-white">
             <DialogHeader>
-              <DialogTitle>Delete Expense</DialogTitle>
+              <DialogTitle>Delete Transaction</DialogTitle>
               <DialogDescription className="text-gray-400">
-                Are you sure you want to delete this expense? This action cannot be undone.
+                Are you sure you want to delete this transaction? This action cannot be undone.
               </DialogDescription>
             </DialogHeader>
             {deletingExpense && (
@@ -714,7 +795,7 @@ export default function Transactions() {
                     </div>
                     <div>
                       <span className="text-gray-400">Category:</span>
-                      <div className="text-white">{deletingExpense.category}</div>
+                      <div className="text-white">{deletingExpense.category || deletingExpense.category_name}</div>
                     </div>
                     <div>
                       <span className="text-gray-400">Amount:</span>
@@ -734,6 +815,14 @@ export default function Transactions() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Create Transaction Dialog */}
+        <CreateTransactionDialog
+          open={createDialogOpen}
+          onOpenChange={setCreateDialogOpen}
+          onTransactionCreated={loadExpenses}
+          userId={user?.id || ''}
+        />
       </div>
     </DashboardLayout>
   )

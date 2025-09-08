@@ -24,9 +24,13 @@ import {
   Calendar,
   DollarSign,
   TrendingUp,
+  TrendingDown,
   PieChart as PieChartIcon,
   BarChart3,
-  Receipt
+  Receipt,
+  Target,
+  ArrowUpRight,
+  ArrowDownRight
 } from 'lucide-react'
 import { Expense } from '@/types'
 import { CHART_COLORS, TimeRange } from '@/lib/constants'
@@ -38,112 +42,161 @@ interface ExpenseChartsProps {
   currency?: string
 }
 
+interface Transaction {
+  id: string
+  type: 'income' | 'expense'
+  receipt_date: string
+  store_name: string
+  category: string
+  total_amount: number
+  created_at: string
+  project_id?: string
+}
+
 export default function ExpenseCharts({ userId, projectId, currency = '$' }: ExpenseChartsProps) {
-  const [expenses, setExpenses] = useState<Expense[]>([])
+  const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState<TimeRange>('month')
   const [error, setError] = useState<string | null>(null)
+  const [selectedView, setSelectedView] = useState<'overview' | 'income' | 'expense'>('overview')
 
   useEffect(() => {
-    loadExpenses()
+    if (userId) {
+      loadTransactions()
+    }
   }, [userId, timeRange, projectId])
 
-  const loadExpenses = async () => {
+  const loadTransactions = async () => {
     try {
       setLoading(true)
-      const supabase = createSupabaseClient()
-
-      let query = supabase
-        .from('expenses')
-        .select('*')
-        .eq('user_id', userId)
-        .order('receipt_date', { ascending: false })
-
-      // Apply project filter
-      if (projectId === 'general') {
-        query = query.is('project_id', null)
-      } else if (projectId && projectId !== 'general') {
-        query = query.eq('project_id', projectId)
-      }
+      
+      // Build query parameters
+      const params = new URLSearchParams({
+        user_id: userId,
+        limit: '1000',
+        offset: '0'
+      })
 
       // Apply time range filter
       const dateRange = getDateRange(timeRange)
       if (dateRange) {
-        query = query.gte('receipt_date', formatDateForAPI(dateRange.start))
+        params.append('start_date', formatDateForAPI(dateRange.start))
       }
 
-      const { data, error } = await query.limit(1000)
-
-      if (error) {
-        throw error
+      // Fetch transactions from the new API
+      const response = await fetch(`/api/expenses?${params.toString()}`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const result = await response.json()
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to fetch transactions')
       }
 
-      setExpenses(data || [])
+      let data = result.data || []
+
+      // Apply project filter client-side
+      if (projectId === 'general') {
+        data = data.filter((tx: Transaction) => !tx.project_id)
+      } else if (projectId && projectId !== 'general') {
+        data = data.filter((tx: Transaction) => tx.project_id === projectId)
+      }
+
+      // Convert data to consistent format
+      const transactions: Transaction[] = data.map((tx: any) => ({
+        id: tx.id,
+        type: tx.type || tx.transaction_type || 'expense',
+        receipt_date: tx.receipt_date,
+        store_name: tx.store_name,
+        category: tx.category || tx.category_name,
+        total_amount: parseFloat(tx.total_amount.toString()),
+        created_at: tx.created_at,
+        project_id: tx.project_id
+      }))
+
+      setTransactions(transactions)
       setError(null)
     } catch (error) {
-      console.error('Error loading expenses:', error)
-      setError('Failed to load expense data')
+      console.error('Error loading transactions:', error)
+      setError('Failed to load transaction data')
     } finally {
       setLoading(false)
     }
   }
 
-  const getDailySpendingData = () => {
-    if (!expenses || expenses.length === 0) {
+  const getDailyTransactionData = () => {
+    if (!transactions || transactions.length === 0) {
       return [];
     }
     
-    const dailyData: { [key: string]: number } = {}
+    const dailyData: { [key: string]: { income: number, expense: number } } = {}
     
-    expenses.forEach(expense => {
-      const date = expense.receipt_date
-      dailyData[date] = (dailyData[date] || 0) + parseFloat(expense.total_amount.toString())
+    transactions.forEach(tx => {
+      const date = tx.receipt_date
+      if (!dailyData[date]) {
+        dailyData[date] = { income: 0, expense: 0 }
+      }
+      
+      if (tx.type === 'income') {
+        dailyData[date].income += tx.total_amount
+      } else {
+        dailyData[date].expense += tx.total_amount
+      }
     })
 
     return Object.entries(dailyData)
-      .map(([date, amount]) => ({
+      .map(([date, amounts]) => ({
         date,
-        amount: parseFloat(amount.toFixed(2)),
+        income: parseFloat(amounts.income.toFixed(2)),
+        expense: parseFloat(amounts.expense.toFixed(2)),
+        net: parseFloat((amounts.income - amounts.expense).toFixed(2)),
         formatted_date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: '2-digit' })
       }))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .slice(-30) // Last 30 days
   }
 
-  const getCategoryBreakdownData = () => {
-    if (!expenses || expenses.length === 0) {
+  const getCategoryBreakdownData = (type?: 'income' | 'expense') => {
+    if (!transactions || transactions.length === 0) {
       return [];
     }
     
-    const categoryData: { [key: string]: number } = {}
+    const filteredTx = type ? transactions.filter(tx => tx.type === type) : transactions
+    const categoryData: { [key: string]: { amount: number, type: string } } = {}
     
-    expenses.forEach(expense => {
-      const category = expense.category
-      categoryData[category] = (categoryData[category] || 0) + parseFloat(expense.total_amount.toString())
+    filteredTx.forEach(tx => {
+      const category = tx.category
+      if (!categoryData[category]) {
+        categoryData[category] = { amount: 0, type: tx.type }
+      }
+      categoryData[category].amount += tx.total_amount
     })
 
     return Object.entries(categoryData)
-      .map(([category, amount]) => ({
+      .map(([category, data]) => ({
         category,
-        amount: parseFloat(amount.toFixed(2)),
+        amount: parseFloat(data.amount.toFixed(2)),
+        type: data.type,
         percentage: 0 // Will calculate after total
       }))
       .sort((a, b) => b.amount - a.amount)
   }
 
-  const getTopStoresData = () => {
-    if (!expenses || expenses.length === 0) {
+  const getTopStoresData = (type?: 'income' | 'expense') => {
+    if (!transactions || transactions.length === 0) {
       return [];
     }
     
-    const storeData: { [key: string]: { amount: number, count: number } } = {}
+    const filteredTx = type ? transactions.filter(tx => tx.type === type) : transactions
+    const storeData: { [key: string]: { amount: number, count: number, type: string } } = {}
     
-    expenses.forEach(expense => {
-      const store = expense.store_name
+    filteredTx.forEach(tx => {
+      const store = tx.store_name
       if (!storeData[store]) {
-        storeData[store] = { amount: 0, count: 0 }
+        storeData[store] = { amount: 0, count: 0, type: tx.type }
       }
-      storeData[store].amount += parseFloat(expense.total_amount.toString())
+      storeData[store].amount += tx.total_amount
       storeData[store].count += 1
     })
 
@@ -151,28 +204,42 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
       .map(([store, data]) => ({
         store,
         amount: parseFloat(data.amount.toFixed(2)),
-        count: data.count
+        count: data.count,
+        type: data.type
       }))
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 5)
   }
 
   const getTotalStatsData = () => {
-    if (!expenses || expenses.length === 0) {
+    if (!transactions || transactions.length === 0) {
       return {
-        total: 0,
-        count: 0,
+        totalIncome: 0,
+        totalExpense: 0,
+        netIncome: 0,
+        incomeCount: 0,
+        expenseCount: 0,
+        totalCount: 0,
         avgPerTransaction: 0
       };
     }
     
-    const total = expenses.reduce((sum, expense) => sum + parseFloat(expense.total_amount.toString()), 0)
-    const count = expenses.length
-    const avgPerTransaction = count > 0 ? total / count : 0
+    const income = transactions.filter(tx => tx.type === 'income')
+    const expenses = transactions.filter(tx => tx.type === 'expense')
+    
+    const totalIncome = income.reduce((sum, tx) => sum + tx.total_amount, 0)
+    const totalExpense = expenses.reduce((sum, tx) => sum + tx.total_amount, 0)
+    const netIncome = totalIncome - totalExpense
+    const totalCount = transactions.length
+    const avgPerTransaction = totalCount > 0 ? (totalIncome + totalExpense) / totalCount : 0
     
     return {
-      total: parseFloat(total.toFixed(2)),
-      count,
+      totalIncome: parseFloat(totalIncome.toFixed(2)),
+      totalExpense: parseFloat(totalExpense.toFixed(2)),
+      netIncome: parseFloat(netIncome.toFixed(2)),
+      incomeCount: income.length,
+      expenseCount: expenses.length,
+      totalCount,
       avgPerTransaction: parseFloat(avgPerTransaction.toFixed(2))
     }
   }
@@ -183,7 +250,7 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
         <CardContent className="p-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-4"></div>
-            <div className="text-gray-300">Loading expense data...</div>
+            <div className="text-gray-300">Loading financial data...</div>
           </div>
         </CardContent>
       </Card>
@@ -200,23 +267,46 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
     )
   }
 
-  const dailySpending = getDailySpendingData()
-  const categoryBreakdownData = getCategoryBreakdownData()
+  const dailyTransactionData = getDailyTransactionData()
   const stats = getTotalStatsData()
+  
+  // Get data based on selected view
+  const getViewData = () => {
+    if (selectedView === 'income') {
+      return {
+        categoryData: getCategoryBreakdownData('income'),
+        topStores: getTopStoresData('income'),
+        total: stats.totalIncome
+      }
+    } else if (selectedView === 'expense') {
+      return {
+        categoryData: getCategoryBreakdownData('expense'),
+        topStores: getTopStoresData('expense'),
+        total: stats.totalExpense
+      }
+    } else {
+      return {
+        categoryData: getCategoryBreakdownData(),
+        topStores: getTopStoresData(),
+        total: stats.totalIncome + stats.totalExpense
+      }
+    }
+  }
+  
+  const viewData = getViewData()
   
   const getCategoryBreakdown = () => {
     // Calculate percentages for category breakdown
-    if (!categoryBreakdownData || !stats || stats.total === 0) {
+    if (!viewData.categoryData || !viewData.total || viewData.total === 0) {
       return [];
     }
-    return categoryBreakdownData.map(item => ({
+    return viewData.categoryData.map(item => ({
       ...item,
-      percentage: parseFloat(((item.amount / stats.total) * 100).toFixed(1))
+      percentage: parseFloat(((item.amount / viewData.total) * 100).toFixed(1))
     }))
   }
   
   const categoryBreakdown = getCategoryBreakdown()
-  const topStores = getTopStoresData()
 
   return (
     <div className="space-y-6">
