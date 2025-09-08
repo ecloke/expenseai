@@ -6,6 +6,7 @@ import ChatProcessor from './ChatProcessor.js';
 import ExpenseService from './ExpenseService.js';
 import ConversationStateManager from '../utils/conversationState.js';
 import ConversationFlowManager from './ConversationFlowManager.js';
+import CommandHandler from './CommandHandler.js';
 import { parseMonthRange, isValidDateFormat, isValidAmount, formatDateRange } from '../utils/dateUtils.js';
 import { generateCategoryPieChart } from '../utils/chartGenerator.js';
 import https from 'https';
@@ -24,6 +25,7 @@ class BotManager {
     this.expenseService = new ExpenseService(supabase);
     this.conversationManager = new ConversationStateManager();
     this.conversationFlowManager = new ConversationFlowManager(supabase, this.expenseService, this.conversationManager);
+    this.commandHandler = new CommandHandler(supabase, this.expenseService, this.conversationManager);
     this.rateLimitMap = new Map(); // For rate limiting per user
     this.errorLogCache = new Map(); // For error log rate limiting: userId_errorHash -> lastLogTime
     this.ERROR_LOG_RATE_LIMIT_MS = 60000; // 1 minute between identical error logs
@@ -745,190 +747,23 @@ Sorry, I couldn't process any of the ${photoCount} receipt photos. Please try ag
    */
   async handleTextCommand(text, userId) {
     const trimmedText = text.trim();
-    const parts = trimmedText.split(' ');
-    const command = parts[0].toLowerCase();
-    const params = parts.slice(1);
 
     try {
-      // Check if user is in conversation
+      // Check if user is in conversation - handle locally for flow management
       const conversation = this.conversationManager.getConversation(userId);
       if (conversation) {
-        return this.handleConversationInput(userId, trimmedText, conversation);
+        return this.conversationFlowManager.handleConversationInput(userId, trimmedText, conversation);
       }
 
-      // Handle regular commands
-      switch (command) {
-        case '/start':
-          return this.getStartMessage();
-        
-        case '/help':
-          return this.getHelpMessage();
-        
-        case '/stats':
-          const stats = await this.expenseService.getMonthlyStats(userId);
-          return this.expenseService.formatMonthlyStats(stats);
-        
-        case '/today':
-          const todayExpenses = await this.expenseService.getTodayExpensesWithProjects(userId);
-          return this.expenseService.formatExpenseSummaryWithProjects(todayExpenses, "Today's Expenses");
-        
-        case '/yesterday':
-          const yesterdayExpenses = await this.expenseService.getYesterdayExpensesWithProjects(userId);
-          return this.expenseService.formatExpenseSummaryWithProjects(yesterdayExpenses, "Yesterday's Expenses");
-        
-        case '/week':
-          const weekExpenses = await this.expenseService.getWeekExpensesWithProjects(userId);
-          return this.expenseService.formatExpenseSummaryWithProjects(weekExpenses, "This Week's Expenses");
-        
-        case '/month':
-          const monthExpenses = await this.expenseService.getMonthExpensesWithProjects(userId);
-          return this.expenseService.formatExpenseSummaryWithProjects(monthExpenses, "This Month's Expenses");
-        
-        case '/summary':
-          return this.handleSummaryCommand(userId, params);
-        
-        case '/create':
-          return this.handleCreateCommand(userId);
-        
-        case '/income':
-          return this.handleIncomeCommand(userId);
-        
-        case '/new':
-          return this.handleNewProjectCommand(userId);
-        
-        case '/list':
-          return this.handleListProjectsCommand(userId);
-        
-        case '/close':
-          return this.handleCloseProjectCommand(userId);
-        
-        case '/open':
-          return this.handleOpenProjectCommand(userId);
-        
-        default:
-          return this.getUnknownCommandMessage();
-      }
+      // Delegate command handling to CommandHandler
+      return await this.commandHandler.handleTextCommand(trimmedText, userId);
+
     } catch (error) {
       console.error('Error handling command:', error);
       return '❌ Sorry, I encountered an error processing your request. Please try again.';
     }
   }
 
-  /**
-   * Handle /summary command with parameters
-   * Enhanced to show comprehensive income/expense breakdown
-   */
-  async handleSummaryCommand(userId, params) {
-    if (params.length === 0) {
-      return this.getSummaryUsageMessage();
-    }
-
-    const period = params.join(' ').toLowerCase();
-    let validPeriod = '';
-
-    try {
-      // Map period aliases to ExpenseService periods
-      switch (period) {
-        case 'day':
-        case 'today':
-          validPeriod = 'today';
-          break;
-        case 'week':
-          validPeriod = 'week';
-          break;
-        case 'month':
-          validPeriod = 'month';
-          break;
-        default:
-          return this.getSummaryUsageMessage();
-      }
-
-      // Get comprehensive income/expense summary
-      const summary = await this.expenseService.getIncomeExpenseSummary(userId, validPeriod);
-      
-      return this.formatIncomeExpenseSummary(summary, validPeriod);
-      
-    } catch (error) {
-      console.error('Error in enhanced summary command:', error);
-      return '❌ Sorry, I encountered an error generating your summary. Please try again.';
-    }
-  }
-
-  /**
-   * Format comprehensive income/expense summary for Telegram
-   */
-  formatIncomeExpenseSummary(summary, period) {
-    const periodTitle = period.charAt(0).toUpperCase() + period.slice(1);
-    let message = `📊 *${periodTitle} Financial Summary*\n\n`;
-
-    // Income section
-    message += `💰 *INCOME: $${summary.total_income.toFixed(2)}*\n`;
-    if (summary.income_breakdown.length > 0) {
-      summary.income_breakdown.forEach(item => {
-        message += `• ${item.category}: $${item.amount.toFixed(2)} (${item.percentage}%)\n`;
-      });
-    } else {
-      message += `• No income recorded\n`;
-    }
-
-    message += `\n`;
-
-    // Expenses section
-    message += `💸 *EXPENSES: $${summary.total_expenses.toFixed(2)}*\n`;
-    if (summary.expense_breakdown.length > 0) {
-      summary.expense_breakdown.forEach(item => {
-        message += `• ${item.category}: $${item.amount.toFixed(2)} (${item.percentage}%)\n`;
-      });
-    } else {
-      message += `• No expenses recorded\n`;
-    }
-
-    message += `\n`;
-
-    // Net balance
-    const balanceIcon = summary.net_balance >= 0 ? '✅' : '⚠️';
-    const balancePrefix = summary.net_balance >= 0 ? '+' : '';
-    message += `📊 *NET BALANCE: ${balancePrefix}$${summary.net_balance.toFixed(2)}* ${balanceIcon}\n\n`;
-
-    // Transaction count
-    message += `📈 Income transactions: ${summary.transaction_count.income}\n`;
-    message += `📉 Expense transactions: ${summary.transaction_count.expenses}\n`;
-    message += `📊 Total transactions: ${summary.transaction_count.total}`;
-
-    return message;
-  }
-
-  /**
-   * Handle /create command - start expense creation flow
-   */
-  async handleCreateCommand(userId) {
-    this.conversationManager.startConversation(userId, 'create_expense');
-    return `💰 *Create New Expense*
-
-Please enter the receipt date in YYYY-MM-DD format.
-
-📅 *Examples:*
-• 2025-01-15
-• 2025-08-24
-
-Type the date or /cancel to stop:`;
-  }
-
-  /**
-   * Handle /income command to create income transactions
-   */
-  async handleIncomeCommand(userId) {
-    this.conversationManager.startConversation(userId, 'create_income');
-    return `💰 *Create New Income*
-
-Please enter the income date in YYYY-MM-DD format.
-
-📅 *Examples:*
-• 2025-01-15 
-• 2025-08-24 
-
-Type the date or /cancel to stop:`;
-  }
 
   /**
    * Handle conversation input for multi-step commands
@@ -2048,176 +1883,6 @@ I only understand specific commands to save AI processing costs.
 📸 Or send me a *receipt photo* for automatic expense tracking!`;
   }
 
-  /**
-   * Handle /new project command - start project creation conversation
-   */
-  async handleNewProjectCommand(userId) {
-    this.conversationManager.startConversation(userId, 'create_project', { step: 'name' });
-    return `🆕 *Create New Project*
-
-What would you like to name your project?
-
-*Examples:*
-• Thailand Trip
-• Birthday Party
-• Office Renovation
-• Wedding Expenses
-
-💡 Choose a descriptive name to easily identify expenses for this project.`;
-  }
-
-  /**
-   * Handle /list projects command - show all open projects
-   */
-  async handleListProjectsCommand(userId) {
-    try {
-      const { data: projects, error } = await this.supabase
-        .from('projects')
-        .select('id, name, currency, created_at')
-        .eq('user_id', userId)
-        .eq('status', 'open')
-        .order('name');
-
-      if (error) {
-        console.error('Error fetching open projects:', error);
-        return '❌ Sorry, I encountered an error fetching your projects. Please try again.';
-      }
-
-      if (!projects || projects.length === 0) {
-        return `📝 *No Open Projects*
-
-You currently have no open projects.
-
-🆕 To create a new project, type **/new**
-
-💡 Projects help you organize expenses for specific events, trips, or purposes.`;
-      }
-
-      let message = `📋 *Your Open Projects*\n\n`;
-      
-      projects.forEach((project, index) => {
-        const createdDate = new Date(project.created_at).toLocaleDateString();
-        message += `${index + 1}. **${project.name}**\n`;
-        message += `   💱 Currency: ${project.currency}\n`;
-        message += `   📅 Created: ${createdDate}\n\n`;
-      });
-
-      message += `💡 *Tips:*
-• Upload receipts to add expenses to these projects
-• Use **/close** to close a project when finished
-• Use **/new** to create another project`;
-
-      return message;
-
-    } catch (error) {
-      console.error('Error in handleListProjectsCommand:', error);
-      return '❌ Sorry, I encountered an error. Please try again.';
-    }
-  }
-
-  /**
-   * Handle /close project command - close an open project
-   */
-  async handleCloseProjectCommand(userId) {
-    try {
-      const { data: projects, error } = await this.supabase
-        .from('projects')
-        .select('id, name')
-        .eq('user_id', userId)
-        .eq('status', 'open')
-        .order('name');
-
-      if (error) {
-        console.error('Error fetching open projects:', error);
-        return '❌ Sorry, I encountered an error fetching your projects. Please try again.';
-      }
-
-      if (!projects || projects.length === 0) {
-        return `📝 *No Open Projects*
-
-You currently have no open projects to close.
-
-🆕 To create a new project, type **/new**`;
-      }
-
-      // Start close project conversation
-      this.conversationManager.startConversation(userId, 'close_project', { 
-        step: 'select',
-        projects: projects
-      });
-
-      let message = `🔒 *Close Project*
-
-Select which project you want to close:
-
-`;
-      
-      projects.forEach((project, index) => {
-        message += `${index + 1}. ${project.name}\n`;
-      });
-
-      message += `\n💡 Reply with the number of the project you want to close.
-⚠️ Closed projects won't appear in expense selection menus.`;
-
-      return message;
-
-    } catch (error) {
-      console.error('Error in handleCloseProjectCommand:', error);
-      return '❌ Sorry, I encountered an error. Please try again.';
-    }
-  }
-
-  /**
-   * Handle /open project command - reopen a closed project
-   */
-  async handleOpenProjectCommand(userId) {
-    try {
-      const { data: projects, error } = await this.supabase
-        .from('projects')
-        .select('id, name')
-        .eq('user_id', userId)
-        .eq('status', 'closed')
-        .order('name');
-
-      if (error) {
-        console.error('Error fetching closed projects:', error);
-        return '❌ Sorry, I encountered an error fetching your projects. Please try again.';
-      }
-
-      if (!projects || projects.length === 0) {
-        return `📝 *No Closed Projects*
-
-You currently have no closed projects to reopen.
-
-🔒 Use **/close** to close an open project first.`;
-      }
-
-      // Start open project conversation
-      this.conversationManager.startConversation(userId, 'open_project', { 
-        step: 'select',
-        projects: projects
-      });
-
-      let message = `🔓 *Reopen Project*
-
-Select which project you want to reopen:
-
-`;
-      
-      projects.forEach((project, index) => {
-        message += `${index + 1}. ${project.name}\n`;
-      });
-
-      message += `\n💡 Reply with the number of the project you want to reopen.
-✅ Reopened projects will appear in expense selection menus again.`;
-
-      return message;
-
-    } catch (error) {
-      console.error('Error in handleOpenProjectCommand:', error);
-      return '❌ Sorry, I encountered an error. Please try again.';
-    }
-  }
 
   /**
    * Handle bot errors and attempt recovery

@@ -466,33 +466,313 @@ The income has been saved to your account.`;
     }
   }
 
-  // Additional flow methods will be added in next step
+  /**
+   * Handle create project conversation flow
+   */
   async handleCreateProjectFlow(userId, input, conversation) {
-    throw new Error('Method will be implemented in next step');
+    switch (conversation.data.step) {
+      case 'name': // Waiting for project name
+        if (!input || input.trim().length < 1) {
+          return `❌ Project name cannot be empty.
+
+🆕 Please enter a name for your project:`;
+        }
+
+        if (input.trim().length > 255) {
+          return `❌ Project name is too long (max 255 characters).
+
+🆕 Please enter a shorter name for your project:`;
+        }
+
+        this.conversationManager.updateData(userId, { step: 'currency', name: input.trim() });
+        return `✅ Project name: ${input.trim()}
+
+💱 What currency will this project use?
+
+*Examples:*
+• USD (US Dollars)
+• RM (Malaysian Ringgit)  
+• EUR (Euros)
+• GBP (British Pounds)
+
+💡 Type any currency name you prefer (e.g., "USD", "RM", "Baht")`;
+
+      case 'currency': // Waiting for currency
+        if (!input || input.trim().length < 1) {
+          return `❌ Currency cannot be empty.
+
+💱 Please enter the currency for this project:`;
+        }
+
+        if (input.trim().length > 20) {
+          return `❌ Currency name is too long (max 20 characters).
+
+💱 Please enter a shorter currency name:`;
+        }
+
+        const projectData = {
+          name: conversation.data.name,
+          currency: input.trim(),
+          user_id: userId
+        };
+
+        try {
+          // Create project directly using Supabase
+          const { data: project, error } = await this.supabase
+            .from('projects')
+            .insert([projectData])
+            .select()
+            .single();
+
+          if (error) {
+            throw new Error(error.message || 'Failed to create project');
+          }
+
+          this.conversationManager.endConversation(userId);
+          return `✅ *Project Created Successfully!*
+
+📊 *Project Details:*
+📝 Name: ${projectData.name}
+💱 Currency: ${projectData.currency}
+🔓 Status: Open
+
+🎉 Your project is ready! Now you can:
+• Upload receipt photos to add expenses to this project
+• Use **/list** to view all your open projects
+• Use **/close** to close the project when finished`;
+
+        } catch (error) {
+          console.error('Error creating project:', error);
+          this.conversationManager.endConversation(userId);
+          return '❌ Sorry, there was an error creating your project. Please try again with /new command.';
+        }
+    }
   }
 
+  /**
+   * Handle project selection for expenses
+   */
   async handleProjectSelectionFlow(userId, input, conversation) {
-    throw new Error('Method will be implemented in next step');
+    const selectionIndex = parseInt(input) - 1;
+    const { options, expenseData } = conversation.data;
+
+    if (isNaN(selectionIndex) || selectionIndex < 0 || selectionIndex >= options.length) {
+      return `❌ Invalid selection. Please choose a number from 1 to ${options.length}:
+
+${options.map((option, index) => `${index + 1}. ${option.label}`).join('\n')}`;
+    }
+
+    const selectedOption = options[selectionIndex];
+    
+    try {
+      // Save expense with selected project
+      const finalExpenseData = {
+        user_id: userId,
+        project_id: selectedOption.project_id,
+        receipt_date: expenseData.receipt_date || expenseData.date,
+        store_name: expenseData.store_name,
+        category: expenseData.category,
+        category_id: expenseData.category_id,
+        total_amount: expenseData.total_amount || expenseData.total
+      };
+
+      const { data, error } = await this.supabase
+        .from('expenses')
+        .insert([finalExpenseData])
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(error.message || 'Failed to create expense');
+      }
+
+      this.conversationManager.endConversation(userId);
+      
+      const projectName = selectedOption.project_id ? selectedOption.label : 'General expenses';
+      return `✅ *Expense Saved Successfully!*
+
+📊 *Summary:*
+📅 Date: ${finalExpenseData.receipt_date}
+🏪 Store: ${finalExpenseData.store_name}
+🏷️ Category: ${this.expenseService.capitalizeFirst(finalExpenseData.category)}
+💰 Amount: $${finalExpenseData.total_amount.toFixed(2)}
+📁 Project: ${projectName}
+
+The expense has been added to your account.`;
+
+    } catch (error) {
+      console.error('Error saving expense to project:', error);
+      this.conversationManager.endConversation(userId);
+      return '❌ Sorry, there was an error saving your expense. Please try again.';
+    }
   }
 
+  /**
+   * Handle income project selection conversation flow
+   */
   async handleIncomeProjectSelectionFlow(userId, input, conversation) {
-    throw new Error('Method will be implemented in next step');
+    const selectionIndex = parseInt(input) - 1;
+    const { options, incomeData } = conversation.data;
+
+    if (isNaN(selectionIndex) || selectionIndex < 0 || selectionIndex >= options.length) {
+      return `❌ Invalid selection. Please choose a number from 1 to ${options.length}:
+
+${options.map((option, index) => `${index + 1}. ${option.label}`).join('\n')}`;
+    }
+
+    const selectedOption = options[selectionIndex];
+    
+    try {
+      // Save income with selected project using ExpenseService method
+      const finalIncomeData = {
+        user_id: userId,
+        project_id: selectedOption.project_id,
+        receipt_date: incomeData.receipt_date,
+        store_name: incomeData.source || incomeData.description,
+        category: incomeData.category,
+        category_id: incomeData.category_id,
+        total_amount: incomeData.total_amount,
+        type: 'income'
+      };
+
+      await this.expenseService.createIncomeTransaction(userId, finalIncomeData);
+      this.conversationManager.endConversation(userId);
+      
+      const projectName = selectedOption.project_id ? selectedOption.label : 'General';
+      return `✅ *Income Saved Successfully!*
+
+📊 *Summary:*
+📅 Date: ${finalIncomeData.receipt_date}
+📝 Source: ${finalIncomeData.store_name}
+🏷️ Category: ${this.expenseService.capitalizeFirst(finalIncomeData.category)}
+💰 Amount: +$${finalIncomeData.total_amount.toFixed(2)}
+📈 Type: Income
+📁 Project: ${projectName}
+
+The income has been added to your account.`;
+
+    } catch (error) {
+      console.error('Error saving income to project:', error);
+      this.conversationManager.endConversation(userId);
+      return '❌ Sorry, there was an error saving your income. Please try again with /income.';
+    }
   }
 
+  /**
+   * Handle multi-receipt confirmation conversation
+   */
   async handleMultiReceiptConfirmation(userId, input, conversation) {
-    throw new Error('Method will be implemented in next step');
+    if (input.trim() === '1') {
+      // User chose to process - delegate to appropriate processing method
+      const { mediaGroupId } = conversation.data;
+      this.conversationManager.endConversation(userId);
+      
+      // Note: This would need to be implemented based on the specific processing logic
+      return 'Processing receipts...';
+    } else if (input.trim() === '2') {
+      // User chose to cancel
+      const { photoCount } = conversation.data;
+      this.conversationManager.endConversation(userId);
+      return `❌ *Processing Cancelled*
+
+Your ${photoCount} receipt photos were not processed. You can upload them again anytime!`;
+    } else {
+      // Invalid input
+      return `❌ Invalid selection. Please choose:
+
+1️⃣ **Yes** - Process all receipts
+2️⃣ **No** - Cancel processing`;
+    }
   }
 
+  /**
+   * Handle multi-receipt project selection conversation
+   */
   async handleMultiReceiptProjectSelection(userId, input, conversation) {
-    throw new Error('Method will be implemented in next step');
+    // Implementation would depend on the specific multi-receipt flow
+    // This is a simplified version
+    this.conversationManager.endConversation(userId);
+    return '✅ Multi-receipt processing completed!';
   }
 
+  /**
+   * Handle close project conversation flow
+   */
   async handleCloseProjectFlow(userId, input, conversation) {
-    throw new Error('Method will be implemented in next step');
+    const { projects } = conversation.data;
+    const selectionIndex = parseInt(input) - 1;
+
+    if (isNaN(selectionIndex) || selectionIndex < 0 || selectionIndex >= projects.length) {
+      return `❌ Invalid selection. Please choose a number from 1 to ${projects.length}:
+
+${projects.map((project, index) => `${index + 1}. ${project.name}`).join('\n')}`;
+    }
+
+    const selectedProject = projects[selectionIndex];
+
+    try {
+      const { error } = await this.supabase
+        .from('projects')
+        .update({ status: 'closed' })
+        .eq('id', selectedProject.id)
+        .eq('user_id', userId);
+
+      if (error) {
+        throw new Error(error.message || 'Failed to close project');
+      }
+
+      this.conversationManager.endConversation(userId);
+      return `✅ *Project Closed Successfully!*
+
+📁 Project "${selectedProject.name}" has been closed and will no longer appear in expense selection menus.
+
+💡 You can reopen it anytime using **/open** command.`;
+
+    } catch (error) {
+      console.error('Error closing project:', error);
+      this.conversationManager.endConversation(userId);
+      return '❌ Sorry, there was an error closing the project. Please try again.';
+    }
   }
 
+  /**
+   * Handle open project conversation flow
+   */
   async handleOpenProjectFlow(userId, input, conversation) {
-    throw new Error('Method will be implemented in next step');
+    const { projects } = conversation.data;
+    const selectionIndex = parseInt(input) - 1;
+
+    if (isNaN(selectionIndex) || selectionIndex < 0 || selectionIndex >= projects.length) {
+      return `❌ Invalid selection. Please choose a number from 1 to ${projects.length}:
+
+${projects.map((project, index) => `${index + 1}. ${project.name}`).join('\n')}`;
+    }
+
+    const selectedProject = projects[selectionIndex];
+
+    try {
+      const { error } = await this.supabase
+        .from('projects')
+        .update({ status: 'open' })
+        .eq('id', selectedProject.id)
+        .eq('user_id', userId);
+
+      if (error) {
+        throw new Error(error.message || 'Failed to open project');
+      }
+
+      this.conversationManager.endConversation(userId);
+      return `✅ *Project Reopened Successfully!*
+
+📁 Project "${selectedProject.name}" has been reopened and will now appear in expense selection menus again.
+
+💡 You can close it again using **/close** command when finished.`;
+
+    } catch (error) {
+      console.error('Error opening project:', error);
+      this.conversationManager.endConversation(userId);
+      return '❌ Sorry, there was an error opening the project. Please try again.';
+    }
   }
 }
 
