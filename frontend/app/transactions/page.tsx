@@ -119,7 +119,7 @@ export default function Transactions() {
       }
 
       // Fetch transactions from the new API
-      const response = await fetch(`/api/expenses?${params.toString()}`)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/expenses?${params.toString()}`)
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }

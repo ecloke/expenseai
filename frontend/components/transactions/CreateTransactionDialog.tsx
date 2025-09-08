@@ -74,7 +74,7 @@ export function CreateTransactionDialog({
 
   const loadCategories = async (type: TransactionType) => {
     try {
-      const response = await fetch(`/api/categories?user_id=${userId}&type=${type}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories?user_id=${userId}&type=${type}`);
       if (!response.ok) throw new Error('Failed to load categories');
       
       const result = await response.json();
@@ -138,7 +138,7 @@ export function CreateTransactionDialog({
         )
       };
 
-      const response = await fetch('/api/expenses', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/expenses`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
