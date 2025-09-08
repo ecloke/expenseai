@@ -287,7 +287,7 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
     } else {
       return {
         categoryData: getCategoryBreakdownData(),
-        topStores: getTopStoresData(),
+        topStores: getTopStoresData('expense'), // Only show expense stores
         total: stats.totalIncome + stats.totalExpense
       }
     }
