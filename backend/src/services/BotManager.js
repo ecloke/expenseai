@@ -3132,6 +3132,109 @@ Sorry, I couldn't process any of the ${photoCount} receipt photos. Please try ag
   }
 
   /**
+   * Broadcast message to all users with valid chat_id
+   */
+  async broadcastMessage(message, options = {}) {
+    console.log('📢 Starting broadcast message to all users...');
+    
+    try {
+      // Get all users with chat_id populated
+      const { data: sessions, error } = await this.supabase
+        .from('bot_sessions')
+        .select('user_id, chat_id, bot_username')
+        .eq('is_active', true)
+        .not('chat_id', 'is', null);
+
+      if (error) {
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      if (!sessions || sessions.length === 0) {
+        console.log('📭 No users with chat_id found for broadcasting');
+        return { success: 0, failed: 0, total: 0 };
+      }
+
+      console.log(`📊 Found ${sessions.length} users to broadcast to`);
+
+      const results = {
+        success: 0,
+        failed: 0,
+        total: sessions.length,
+        errors: []
+      };
+
+      // Send message to each user
+      for (const session of sessions) {
+        try {
+          await this.sendDirectMessage(session.user_id, session.chat_id, message, options);
+          results.success++;
+          console.log(`✅ Sent to user ${session.user_id} (${session.bot_username})`);
+          
+          // Add small delay to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 100));
+        } catch (error) {
+          results.failed++;
+          results.errors.push({
+            user_id: session.user_id,
+            error: error.message
+          });
+          console.error(`❌ Failed to send to user ${session.user_id}:`, error.message);
+        }
+      }
+
+      console.log(`📊 Broadcast complete: ${results.success}/${results.total} successful`);
+      return results;
+
+    } catch (error) {
+      console.error('❌ Broadcast failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send direct message to a specific user
+   */
+  async sendDirectMessage(userId, chatId, message, options = {}) {
+    try {
+      // Get user's bot token from config
+      const config = await this.getUserConfig(userId);
+      if (!config || !config.telegram_bot_token) {
+        throw new Error(`No bot token found for user ${userId}`);
+      }
+
+      // Send via Telegram Bot API
+      const botToken = decrypt(config.telegram_bot_token);
+      const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+      
+      const payload = {
+        chat_id: chatId,
+        text: message,
+        parse_mode: options.parse_mode || 'Markdown',
+        disable_web_page_preview: options.disable_web_page_preview || true
+      };
+
+      const response = await fetch(telegramUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Telegram API error: ${errorData.description || response.statusText}`);
+      }
+
+      return await response.json();
+
+    } catch (error) {
+      console.error(`Error sending direct message to user ${userId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
    * Graceful shutdown
    */
   async shutdown() {
