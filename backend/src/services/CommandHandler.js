@@ -107,7 +107,12 @@ class CommandHandler {
       let summary;
       if (validPeriod === 'custom' && customRange) {
         // Use custom date range - get raw transactions and build summary
-        const transactions = await this.expenseService.getExpensesByDateRangeWithProjects(userId, customRange.startDate, customRange.endDate);
+        const expenseData = await this.expenseService.getExpensesByDateRangeWithProjects(userId, customRange.startDate, customRange.endDate);
+        // Flatten the structured data to get all transactions
+        const transactions = [
+          ...(expenseData.general || []),
+          ...((expenseData.projects || []).flatMap(p => p.expenses || []))
+        ];
         summary = this.buildCustomSummary(transactions, formatDateRange(customRange));
       } else {
         // Use predefined period
