@@ -58,6 +58,20 @@ export function DateRangePicker({ startDate, endDate, onDateChange, className = 
     setIsOpen(false)
   }
 
+  const handlePresetRange = (days: number) => {
+    const end = new Date()
+    const start = new Date()
+    start.setDate(start.getDate() - days + 1) // Include today
+    
+    const startStr = format(start, 'yyyy-MM-dd')
+    const endStr = format(end, 'yyyy-MM-dd')
+    
+    setTempStartDate(startStr)
+    setTempEndDate(endStr)
+    onDateChange(start, end)
+    setIsOpen(false)
+  }
+
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
       <button
@@ -75,25 +89,62 @@ export function DateRangePicker({ startDate, endDate, onDateChange, className = 
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-gray-700 border border-gray-600 rounded-md shadow-lg p-4">
+        <div className="absolute z-50 w-80 mt-1 bg-gray-700 border border-gray-600 rounded-md shadow-lg p-4">
           <div className="space-y-4">
+            {/* Quick Presets */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Start Date</label>
-              <input
-                type="date"
-                value={tempStartDate}
-                onChange={(e) => setTempStartDate(e.target.value)}
-                className="w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20"
-              />
+              <label className="block text-sm font-medium text-gray-300 mb-2">Quick Select</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => handlePresetRange(7)}
+                  className="px-2 py-1 text-xs bg-gray-600 text-gray-300 rounded hover:bg-gray-500 hover:text-white transition-colors"
+                >
+                  Last 7 days
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlePresetRange(30)}
+                  className="px-2 py-1 text-xs bg-gray-600 text-gray-300 rounded hover:bg-gray-500 hover:text-white transition-colors"
+                >
+                  Last 30 days
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlePresetRange(90)}
+                  className="px-2 py-1 text-xs bg-gray-600 text-gray-300 rounded hover:bg-gray-500 hover:text-white transition-colors"
+                >
+                  Last 90 days
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlePresetRange(365)}
+                  className="px-2 py-1 text-xs bg-gray-600 text-gray-300 rounded hover:bg-gray-500 hover:text-white transition-colors"
+                >
+                  Last year
+                </button>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">End Date</label>
-              <input
-                type="date"
-                value={tempEndDate}
-                onChange={(e) => setTempEndDate(e.target.value)}
-                className="w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20"
-              />
+            
+            <div className="border-t border-gray-600 pt-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Start Date</label>
+                <input
+                  type="date"
+                  value={tempStartDate}
+                  onChange={(e) => setTempStartDate(e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20"
+                />
+              </div>
+              <div className="mt-3">
+                <label className="block text-sm font-medium text-gray-300 mb-2">End Date</label>
+                <input
+                  type="date"
+                  value={tempEndDate}
+                  onChange={(e) => setTempEndDate(e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20"
+                />
+              </div>
             </div>
             <div className="flex justify-between gap-2">
               <button

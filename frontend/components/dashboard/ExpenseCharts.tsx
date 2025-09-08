@@ -35,6 +35,8 @@ import {
 import { Expense } from '@/types'
 import { CHART_COLORS, TimeRange } from '@/lib/constants'
 import { getDateRange, formatDateForAPI } from '@/lib/dateUtils'
+import { format } from 'date-fns'
+import { DateRangePicker } from '@/components/ui/date-range-picker'
 
 interface ExpenseChartsProps {
   userId: string
@@ -57,6 +59,7 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState<TimeRange>('month')
+  const [customDateRange, setCustomDateRange] = useState<{ start: Date; end: Date } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [selectedView, setSelectedView] = useState<'overview' | 'income' | 'expense'>('overview')
 
@@ -64,7 +67,7 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
     if (userId) {
       loadTransactions()
     }
-  }, [userId, timeRange, projectId])
+  }, [userId, timeRange, projectId, customDateRange])
 
   const loadTransactions = async () => {
     try {
@@ -78,9 +81,12 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
       })
 
       // Apply time range filter
-      const dateRange = getDateRange(timeRange)
+      const dateRange = getDateRange(timeRange, customDateRange || undefined)
       if (dateRange) {
         params.append('start_date', formatDateForAPI(dateRange.start))
+        if (dateRange.end && dateRange.end !== dateRange.start) {
+          params.append('end_date', formatDateForAPI(dateRange.end))
+        }
       }
 
       // Fetch transactions from the new API
@@ -311,17 +317,42 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
   return (
     <div className="space-y-6">
       {/* Time Range Selector */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
         <h2 className="text-2xl font-bold text-white">Expense Analytics</h2>
-        <Tabs value={timeRange} onValueChange={(value) => setTimeRange(value as any)}>
-          <TabsList className="bg-gray-800 border-gray-600">
-            <TabsTrigger value="today" className="text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">Today</TabsTrigger>
-            <TabsTrigger value="week" className="text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">This Week</TabsTrigger>
-            <TabsTrigger value="month" className="text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">This Month</TabsTrigger>
-            <TabsTrigger value="year" className="text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">This Year</TabsTrigger>
-            <TabsTrigger value="all" className="text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">All Time</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+          <Tabs value={timeRange} onValueChange={(value) => {
+            const newRange = value as TimeRange
+            setTimeRange(newRange)
+            if (newRange !== 'custom') {
+              setCustomDateRange(null)
+            }
+          }}>
+            <TabsList className="bg-gray-800 border-gray-600">
+              <TabsTrigger value="today" className="text-xs text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">Today</TabsTrigger>
+              <TabsTrigger value="week" className="text-xs text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">Week</TabsTrigger>
+              <TabsTrigger value="month" className="text-xs text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">Month</TabsTrigger>
+              <TabsTrigger value="year" className="text-xs text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">Year</TabsTrigger>
+              <TabsTrigger value="all" className="text-xs text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">All Time</TabsTrigger>
+              <TabsTrigger value="custom" className="text-xs text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">Custom</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          
+          {/* Custom Date Range Picker */}
+          {timeRange === 'custom' && (
+            <DateRangePicker
+              startDate={customDateRange?.start || null}
+              endDate={customDateRange?.end || null}
+              onDateChange={(start, end) => {
+                if (start && end) {
+                  setCustomDateRange({ start, end })
+                } else {
+                  setCustomDateRange(null)
+                }
+              }}
+              className="w-full sm:w-64"
+            />
+          )}
+        </div>
       </div>
 
       {/* Summary Stats */}
@@ -333,7 +364,17 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-white">{currency}{stats.totalExpense}</div>
-            <p className="text-xs text-gray-400 mt-1">This {timeRange === 'week' ? 'week' : timeRange === 'month' ? 'month' : 'period'}</p>
+            <p className="text-xs text-gray-400 mt-1">
+              {timeRange === 'today' ? 'Today' : 
+               timeRange === 'week' ? 'This week' : 
+               timeRange === 'month' ? 'This month' :
+               timeRange === 'year' ? 'This year' :
+               timeRange === 'custom' && customDateRange ? 
+                 (customDateRange.start.toDateString() === customDateRange.end.toDateString() ? 
+                   format(customDateRange.start, 'MMM dd, yyyy') :
+                   `${format(customDateRange.start, 'MMM dd')} - ${format(customDateRange.end, 'MMM dd, yyyy')}`) :
+               timeRange === 'all' ? 'All time' : 'Selected period'}
+            </p>
           </CardContent>
         </Card>
         
@@ -411,7 +452,19 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
               <Target className="h-5 w-5 text-blue-400" />
               Income Statement
             </CardTitle>
-            <CardDescription className="text-gray-400">Financial breakdown for {timeRange === 'today' ? 'today' : timeRange === 'week' ? 'this week' : timeRange === 'month' ? 'this month' : timeRange === 'year' ? 'this year' : 'all time'}</CardDescription>
+            <CardDescription className="text-gray-400">
+              Financial breakdown for {
+                timeRange === 'today' ? 'today' : 
+                timeRange === 'week' ? 'this week' : 
+                timeRange === 'month' ? 'this month' : 
+                timeRange === 'year' ? 'this year' :
+                timeRange === 'custom' && customDateRange ? 
+                  (customDateRange.start.toDateString() === customDateRange.end.toDateString() ? 
+                    format(customDateRange.start, 'MMM dd, yyyy') :
+                    `${format(customDateRange.start, 'MMM dd')} - ${format(customDateRange.end, 'MMM dd, yyyy')}`) :
+                timeRange === 'all' ? 'all time' : 'selected period'
+              }
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">

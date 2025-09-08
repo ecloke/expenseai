@@ -10,7 +10,7 @@ import { MALAYSIA_TIMEZONE, TimeRange } from './constants';
 /**
  * Get date range based on time range type
  */
-export const getDateRange = (range: TimeRange) => {
+export const getDateRange = (range: TimeRange, customRange?: { start: Date; end: Date }) => {
   const now = new Date();
   
   switch (range) {
@@ -34,6 +34,8 @@ export const getDateRange = (range: TimeRange) => {
         start: startOfYear(now),
         end: now
       };
+    case 'custom':
+      return customRange || null;
     case 'all':
     default:
       return null;
