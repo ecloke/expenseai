@@ -324,7 +324,7 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
       {/* Time Range Selector */}
       <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
         <h2 className="text-2xl font-bold text-white">Expense Analytics</h2>
-        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center" style="position: relative; display: inline-block;">
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center relative inline-block">
           <Tabs value={timeRange} onValueChange={(value) => {
             const newRange = value as TimeRange
             setTimeRange(newRange)
@@ -341,9 +341,10 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
               <TabsTrigger value="custom" className="text-xs text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">Custom</TabsTrigger>
             </TabsList>
           </Tabs>
-          {/* Simple dropdown below Custom tab */}
-        {timeRange === 'custom' && (
-          <div className="mt-4 p-4 bg-gray-700 border border-gray-600 rounded-md max-w-sm" style="margin-top: 5px; position: absolute; right: 0;"> 
+          
+          {/* Quick select INSIDE the flex container */}
+          {timeRange === 'custom' && (
+            <div style={{ marginTop: '5px', position: 'absolute', right: '0' }} className="p-4 bg-gray-700 border border-gray-600 rounded-md w-80 z-50">
             <div className="space-y-4">
               {/* Quick Presets */}
               <div>
@@ -438,8 +439,8 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
                 </div>
               </div>
             </div>
-          </div>
-        )}
+            </div>
+          )}
         </div>
       </div>
 
