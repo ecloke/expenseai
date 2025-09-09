@@ -344,20 +344,22 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
           
         </div>
 
-        {/* Inline Custom Date Range Picker - Shows below tabs when Custom is selected */}
+        {/* Absolute positioned date picker - overlays without taking layout space */}
         {timeRange === 'custom' && (
-          <InlineDateRangePicker
-            startDate={customDateRange?.start || null}
-            endDate={customDateRange?.end || null}
-            onDateChange={(start, end) => {
-              if (start && end) {
-                setCustomDateRange({ start, end })
-              } else {
-                setCustomDateRange(null)
-              }
-            }}
-            className="max-w-md"
-          />
+          <div className="relative">
+            <InlineDateRangePicker
+              startDate={customDateRange?.start || null}
+              endDate={customDateRange?.end || null}
+              onDateChange={(start, end) => {
+                if (start && end) {
+                  setCustomDateRange({ start, end })
+                } else {
+                  setCustomDateRange(null)
+                }
+              }}
+              className="absolute top-2 right-0 z-50 w-80"
+            />
+          </div>
         )}
       </div>
 

@@ -45,7 +45,7 @@ export function InlineDateRangePicker({ startDate, endDate, onDateChange, classN
   }
 
   return (
-    <div className={`mt-4 bg-gray-700 border border-gray-600 rounded-md shadow-lg p-4 ${className}`}>
+    <div className={`bg-gray-700 border border-gray-600 rounded-md shadow-lg p-4 ${className}`}>
       <div className="space-y-4">
         {/* Quick Presets */}
         <div>
