@@ -34,9 +34,9 @@ import {
 } from 'lucide-react'
 import { Expense } from '@/types'
 import { CHART_COLORS, TimeRange } from '@/lib/constants'
-import { getDateRange, formatDateForAPI } from '@/lib/dateUtils'
+import { getDateRange, formatDateForAPI, getDaysAgoString, getMonthStartString } from '@/lib/dateUtils'
 import { format } from 'date-fns'
-import { DashboardDateRangePicker } from '@/components/dashboard/DashboardDateRangePicker'
+import { DateRangePicker } from '@/components/ui/date-range-picker'
 
 interface ExpenseChartsProps {
   userId: string
@@ -73,19 +73,24 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
     try {
       setLoading(true)
       
-      // Build query parameters
+      // Build query parameters - MATCH TRANSACTIONS PAGE EXACTLY
       const params = new URLSearchParams({
         user_id: userId,
         limit: '1000',
         offset: '0'
       })
 
-      // Apply time range filter
-      const dateRange = getDateRange(timeRange, customDateRange || undefined)
-      if (dateRange) {
-        params.append('start_date', formatDateForAPI(dateRange.start))
-        if (dateRange.end && dateRange.end !== dateRange.start) {
-          params.append('end_date', formatDateForAPI(dateRange.end))
+      // Apply time range filter - EXACT SAME LOGIC AS TRANSACTIONS PAGE
+      if (timeRange === 'week') {
+        params.append('start_date', getDaysAgoString(7))
+      } else if (timeRange === 'month') {
+        params.append('start_date', getMonthStartString())
+      } else if (timeRange === 'custom') {
+        if (customDateRange?.start) {
+          params.append('start_date', formatDateForAPI(customDateRange.start))
+        }
+        if (customDateRange?.end) {
+          params.append('end_date', formatDateForAPI(customDateRange.end))
         }
       }
 
@@ -339,18 +344,20 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
           
           {/* Custom Date Range Picker */}
           {timeRange === 'custom' && (
-            <DashboardDateRangePicker
-              startDate={customDateRange?.start || null}
-              endDate={customDateRange?.end || null}
-              onDateChange={(start, end) => {
-                if (start && end) {
-                  setCustomDateRange({ start, end })
-                } else {
-                  setCustomDateRange(null)
-                }
-              }}
-              className="w-full sm:w-64"
-            />
+            <div className="relative">
+              <DateRangePicker
+                startDate={customDateRange?.start || null}
+                endDate={customDateRange?.end || null}
+                onDateChange={(start, end) => {
+                  if (start && end) {
+                    setCustomDateRange({ start, end })
+                  } else {
+                    setCustomDateRange(null)
+                  }
+                }}
+                className="w-full sm:w-64"
+              />
+            </div>
           )}
         </div>
       </div>
