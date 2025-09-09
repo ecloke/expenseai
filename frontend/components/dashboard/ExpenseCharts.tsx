@@ -338,7 +338,7 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
               <TabsTrigger value="month" className="text-xs text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">Month</TabsTrigger>
               <TabsTrigger value="year" className="text-xs text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">Year</TabsTrigger>
               <TabsTrigger value="all" className="text-xs text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">All Time</TabsTrigger>
-              <TabsTrigger value="custom" className="text-xs text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">Custom</TabsTrigger>
+              <TabsTrigger value="custom" className="text-xs text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-red-600 data-[state=active]:text-white">Custom</TabsTrigger>
             </TabsList>
           </Tabs>
           
