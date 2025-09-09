@@ -36,7 +36,7 @@ import { Expense } from '@/types'
 import { CHART_COLORS, TimeRange } from '@/lib/constants'
 import { getDateRange, formatDateForAPI } from '@/lib/dateUtils'
 import { format } from 'date-fns'
-import { DateRangePicker } from '@/components/ui/date-range-picker'
+import { DashboardDateRangePicker } from '@/components/dashboard/DashboardDateRangePicker'
 
 interface ExpenseChartsProps {
   userId: string
@@ -339,7 +339,7 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
           
           {/* Custom Date Range Picker */}
           {timeRange === 'custom' && (
-            <DateRangePicker
+            <DashboardDateRangePicker
               startDate={customDateRange?.start || null}
               endDate={customDateRange?.end || null}
               onDateChange={(start, end) => {
