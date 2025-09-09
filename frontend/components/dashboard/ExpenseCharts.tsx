@@ -344,21 +344,103 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
           
         </div>
 
-        {/* Absolute positioned date picker - overlays without taking layout space */}
+        {/* Simple dropdown below Custom tab */}
         {timeRange === 'custom' && (
-          <div className="relative">
-            <InlineDateRangePicker
-              startDate={customDateRange?.start || null}
-              endDate={customDateRange?.end || null}
-              onDateChange={(start, end) => {
-                if (start && end) {
-                  setCustomDateRange({ start, end })
-                } else {
-                  setCustomDateRange(null)
-                }
-              }}
-              className="absolute top-2 right-0 z-50 w-80"
-            />
+          <div className="mt-4 p-4 bg-gray-700 border border-gray-600 rounded-md max-w-sm">
+            <div className="space-y-4">
+              {/* Quick Presets */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Quick Select</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const end = new Date()
+                      const start = new Date()
+                      start.setDate(start.getDate() - 6) // Last 7 days
+                      setCustomDateRange({ start, end })
+                    }}
+                    className="px-2 py-1 text-xs bg-gray-600 text-gray-300 rounded hover:bg-gray-500 hover:text-white transition-colors"
+                  >
+                    Last 7 days
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const end = new Date()
+                      const start = new Date()
+                      start.setDate(start.getDate() - 29) // Last 30 days
+                      setCustomDateRange({ start, end })
+                    }}
+                    className="px-2 py-1 text-xs bg-gray-600 text-gray-300 rounded hover:bg-gray-500 hover:text-white transition-colors"
+                  >
+                    Last 30 days
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const end = new Date()
+                      const start = new Date()
+                      start.setDate(start.getDate() - 89) // Last 90 days
+                      setCustomDateRange({ start, end })
+                    }}
+                    className="px-2 py-1 text-xs bg-gray-600 text-gray-300 rounded hover:bg-gray-500 hover:text-white transition-colors"
+                  >
+                    Last 90 days
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const end = new Date()
+                      const start = new Date()
+                      start.setDate(start.getDate() - 364) // Last year
+                      setCustomDateRange({ start, end })
+                    }}
+                    className="px-2 py-1 text-xs bg-gray-600 text-gray-300 rounded hover:bg-gray-500 hover:text-white transition-colors"
+                  >
+                    Last year
+                  </button>
+                </div>
+              </div>
+              
+              {/* Custom Date Inputs */}
+              <div className="border-t border-gray-600 pt-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Start Date</label>
+                  <input
+                    type="date"
+                    value={customDateRange?.start ? format(customDateRange.start, 'yyyy-MM-dd') : ''}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        const newStart = new Date(e.target.value)
+                        setCustomDateRange({ 
+                          start: newStart, 
+                          end: customDateRange?.end || newStart 
+                        })
+                      }
+                    }}
+                    className="w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md focus:border-blue-500"
+                  />
+                </div>
+                <div className="mt-3">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">End Date</label>
+                  <input
+                    type="date"
+                    value={customDateRange?.end ? format(customDateRange.end, 'yyyy-MM-dd') : ''}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        const newEnd = new Date(e.target.value)
+                        setCustomDateRange({ 
+                          start: customDateRange?.start || newEnd, 
+                          end: newEnd 
+                        })
+                      }
+                    }}
+                    className="w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
