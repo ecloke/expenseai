@@ -36,7 +36,7 @@ import { Expense } from '@/types'
 import { CHART_COLORS, TimeRange } from '@/lib/constants'
 import { getDateRange, formatDateForAPI, getDaysAgoString, getMonthStartString } from '@/lib/dateUtils'
 import { format } from 'date-fns'
-import { DashboardDateRangePicker } from '@/components/dashboard/DashboardDateRangePicker'
+import { InlineDateRangePicker } from '@/components/dashboard/InlineDateRangePicker'
 
 interface ExpenseChartsProps {
   userId: string
@@ -342,22 +342,23 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
             </TabsList>
           </Tabs>
           
-          {/* Custom Date Range Picker */}
-          {timeRange === 'custom' && (
-            <DashboardDateRangePicker
-              startDate={customDateRange?.start || null}
-              endDate={customDateRange?.end || null}
-              onDateChange={(start, end) => {
-                if (start && end) {
-                  setCustomDateRange({ start, end })
-                } else {
-                  setCustomDateRange(null)
-                }
-              }}
-              className="w-full sm:w-64"
-            />
-          )}
         </div>
+
+        {/* Inline Custom Date Range Picker - Shows below tabs when Custom is selected */}
+        {timeRange === 'custom' && (
+          <InlineDateRangePicker
+            startDate={customDateRange?.start || null}
+            endDate={customDateRange?.end || null}
+            onDateChange={(start, end) => {
+              if (start && end) {
+                setCustomDateRange({ start, end })
+              } else {
+                setCustomDateRange(null)
+              }
+            }}
+            className="max-w-md"
+          />
+        )}
       </div>
 
       {/* Summary Stats */}
