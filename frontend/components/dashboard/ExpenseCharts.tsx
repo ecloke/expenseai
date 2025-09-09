@@ -344,7 +344,7 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
           
           {/* Quick select INSIDE the flex container */}
           {timeRange === 'custom' && (
-            <div style={{ marginTop: '5px', position: 'absolute', right: '0' }} className="p-4 bg-gray-700 border border-gray-600 rounded-md w-80 z-50">
+            <div style={{ marginTop: '5px', position: 'absolute', right: '0', top: '40px' }} className="p-4 bg-gray-700 border border-gray-600 rounded-md w-80 z-50">
             <div className="space-y-4">
               {/* Quick Presets */}
               <div>
