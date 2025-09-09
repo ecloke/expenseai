@@ -36,7 +36,7 @@ import { Expense } from '@/types'
 import { CHART_COLORS, TimeRange } from '@/lib/constants'
 import { getDateRange, formatDateForAPI, getDaysAgoString, getMonthStartString } from '@/lib/dateUtils'
 import { format } from 'date-fns'
-import { DateRangePicker } from '@/components/ui/date-range-picker'
+import { DashboardDateRangePicker } from '@/components/dashboard/DashboardDateRangePicker'
 
 interface ExpenseChartsProps {
   userId: string
@@ -338,26 +338,24 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
               <TabsTrigger value="month" className="text-xs text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">Month</TabsTrigger>
               <TabsTrigger value="year" className="text-xs text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">Year</TabsTrigger>
               <TabsTrigger value="all" className="text-xs text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">All Time</TabsTrigger>
-              <TabsTrigger value="custom" className="text-xs text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-red-600 data-[state=active]:text-white">Custom</TabsTrigger>
+              <TabsTrigger value="custom" className="text-xs text-gray-300 hover:bg-gray-700 hover:text-white data-[state=active]:bg-blue-600 data-[state=active]:text-white">Custom</TabsTrigger>
             </TabsList>
           </Tabs>
           
           {/* Custom Date Range Picker */}
           {timeRange === 'custom' && (
-            <div className="relative">
-              <DateRangePicker
-                startDate={customDateRange?.start || null}
-                endDate={customDateRange?.end || null}
-                onDateChange={(start, end) => {
-                  if (start && end) {
-                    setCustomDateRange({ start, end })
-                  } else {
-                    setCustomDateRange(null)
-                  }
-                }}
-                className="w-full sm:w-64"
-              />
-            </div>
+            <DashboardDateRangePicker
+              startDate={customDateRange?.start || null}
+              endDate={customDateRange?.end || null}
+              onDateChange={(start, end) => {
+                if (start && end) {
+                  setCustomDateRange({ start, end })
+                } else {
+                  setCustomDateRange(null)
+                }
+              }}
+              className="w-full sm:w-64"
+            />
           )}
         </div>
       </div>

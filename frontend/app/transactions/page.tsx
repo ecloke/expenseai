@@ -154,7 +154,7 @@ export default function Transactions() {
       }
 
       setExpenses(transactions)
-      setTotalCount(result.meta?.total || transactions.length)
+      setTotalCount(transactions.length)
       setError(null)
     } catch (error) {
       console.error('Error loading expenses:', error)
