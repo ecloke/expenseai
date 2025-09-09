@@ -89,7 +89,7 @@ export function DateRangePicker({ startDate, endDate, onDateChange, className = 
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 w-72 sm:w-80 mt-1 bg-gray-700 border border-gray-600 rounded-md shadow-lg p-4 right-0 md:left-0">
+        <div className="absolute z-50 w-72 sm:w-80 mt-1 bg-gray-700 border border-gray-600 rounded-md shadow-lg p-4 left-0">
           <div className="space-y-4">
             {/* Quick Presets */}
             <div>

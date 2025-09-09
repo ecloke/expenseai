@@ -39,8 +39,8 @@ export function parseMonthRange(rangeText) {
       return {
         startMonth: month,
         endMonth: month,
-        startDate: startDate.toISOString().split('T')[0],
-        endDate: endDate.toISOString().split('T')[0],
+        startDate: startDate.toLocaleString('sv-SE', { timeZone: 'Asia/Kuala_Lumpur' }).split(' ')[0],
+        endDate: endDate.toLocaleString('sv-SE', { timeZone: 'Asia/Kuala_Lumpur' }).split(' ')[0],
         year: currentYear
       };
     }
@@ -71,8 +71,8 @@ export function parseMonthRange(rangeText) {
   return {
     startMonth,
     endMonth,
-    startDate: startDate.toISOString().split('T')[0],
-    endDate: endDate.toISOString().split('T')[0],
+    startDate: startDate.toLocaleString('sv-SE', { timeZone: 'Asia/Kuala_Lumpur' }).split(' ')[0],
+    endDate: endDate.toLocaleString('sv-SE', { timeZone: 'Asia/Kuala_Lumpur' }).split(' ')[0],
     year: currentYear
   };
 }
@@ -162,53 +162,53 @@ export function formatDateRange(range) {
 }
 
 /**
- * Get today's date as YYYY-MM-DD string
+ * Get today's date as YYYY-MM-DD string in Malaysia timezone
  * @returns {string} - Today's date
  */
 export function getTodayString() {
-  return new Date().toISOString().split('T')[0];
+  return new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Kuala_Lumpur' }).split(' ')[0];
 }
 
 /**
- * Get yesterday's date as YYYY-MM-DD string
+ * Get yesterday's date as YYYY-MM-DD string in Malaysia timezone
  * @returns {string} - Yesterday's date
  */
 export function getYesterdayString() {
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  return yesterday.toISOString().split('T')[0];
+  return yesterday.toLocaleString('sv-SE', { timeZone: 'Asia/Kuala_Lumpur' }).split(' ')[0];
 }
 
 /**
- * Get date N days ago as YYYY-MM-DD string
+ * Get date N days ago as YYYY-MM-DD string in Malaysia timezone
  * @param {number} days - Number of days ago
  * @returns {string} - Date string
  */
 export function getDaysAgoString(days) {
   const date = new Date();
   date.setDate(date.getDate() - days);
-  return date.toISOString().split('T')[0];
+  return date.toLocaleString('sv-SE', { timeZone: 'Asia/Kuala_Lumpur' }).split(' ')[0];
 }
 
 /**
- * Get start of current week (Sunday) as YYYY-MM-DD string
+ * Get start of current week (Sunday) as YYYY-MM-DD string in Malaysia timezone
  * @returns {string} - Week start date
  */
 export function getWeekStartString() {
   const today = new Date();
   const startOfWeek = new Date(today);
   startOfWeek.setDate(today.getDate() - today.getDay());
-  return startOfWeek.toISOString().split('T')[0];
+  return startOfWeek.toLocaleString('sv-SE', { timeZone: 'Asia/Kuala_Lumpur' }).split(' ')[0];
 }
 
 /**
- * Get start of current month as YYYY-MM-DD string
+ * Get start of current month as YYYY-MM-DD string in Malaysia timezone
  * @returns {string} - Month start date
  */
 export function getMonthStartString() {
   const today = new Date();
   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  return startOfMonth.toISOString().split('T')[0];
+  return startOfMonth.toLocaleString('sv-SE', { timeZone: 'Asia/Kuala_Lumpur' }).split(' ')[0];
 }
 
 /**
