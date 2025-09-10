@@ -277,7 +277,7 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
     const totalExpense = expenses.reduce((sum, tx) => sum + tx.total_amount, 0)
     const netIncome = totalIncome - totalExpense
     const totalCount = transactions.length
-    const avgPerTransaction = totalCount > 0 ? (totalIncome + totalExpense) / totalCount : 0
+    const avgPerTransaction = expenses.length > 0 ? totalExpense / expenses.length : 0
     
     return {
       totalIncome: parseFloat(totalIncome.toFixed(2)),
@@ -400,6 +400,47 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
                     onChange={(e) => setTempEndDate(e.target.value)}
                     className="w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md focus:border-blue-500"
                   />
+                </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex justify-between gap-2 mt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTempStartDate('')
+                    setTempEndDate('')
+                    setCustomDateRange(null)
+                  }}
+                  className="px-3 py-1 text-sm text-gray-300 hover:text-white transition-colors"
+                >
+                  Clear
+                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // Reset temp inputs to current range values
+                      setTempStartDate(customDateRange?.start ? format(customDateRange.start, 'yyyy-MM-dd') : '')
+                      setTempEndDate(customDateRange?.end ? format(customDateRange.end, 'yyyy-MM-dd') : '')
+                    }}
+                    className="px-3 py-1 text-sm border border-gray-600 text-gray-300 rounded hover:bg-gray-600 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (tempStartDate && tempEndDate) {
+                        const startDate = new Date(tempStartDate)
+                        const endDate = new Date(tempEndDate)
+                        setCustomDateRange({ start: startDate, end: endDate })
+                      }
+                    }}
+                    className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                  >
+                    Apply
+                  </button>
                 </div>
               </div>
             </div>
