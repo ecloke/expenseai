@@ -130,6 +130,12 @@ export function CreateTransactionDialog({
         return;
       }
 
+      console.log('DEBUG - Category info:', {
+        selectedCategoryId: formData.category_id,
+        selectedCategory: selectedCategory,
+        categories: categories
+      });
+
       const payload = {
         user_id: userId,
         type: formData.type,
@@ -145,6 +151,8 @@ export function CreateTransactionDialog({
             }
         )
       };
+
+      console.log('DEBUG - Payload being sent:', payload);
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/expenses`, {
         method: 'POST',
