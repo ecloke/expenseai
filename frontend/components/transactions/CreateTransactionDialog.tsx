@@ -127,7 +127,7 @@ export function CreateTransactionDialog({
         user_id: userId,
         type: formData.type,
         receipt_date: formData.receipt_date,
-        category_id: formData.category_id,
+        category: formData.category_id, // Backend expects 'category' not 'category_id'
         total_amount: parseFloat(formData.total_amount),
         ...(transactionType === 'expense' 
           ? { store_name: formData.store_name.trim() }
@@ -189,7 +189,7 @@ export function CreateTransactionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] bg-gray-800 border-gray-700 text-white">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
@@ -214,9 +214,9 @@ export function CreateTransactionDialog({
 
           {/* Error Alert */}
           {error && (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="bg-red-900/50 border-red-800 text-red-200">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription className="text-red-200">{error}</AlertDescription>
             </Alert>
           )}
 
@@ -228,6 +228,7 @@ export function CreateTransactionDialog({
               type="date"
               value={formData.receipt_date}
               onChange={(e) => handleInputChange('receipt_date', e.target.value)}
+              className="bg-gray-700 border-gray-600 text-white [color-scheme:dark]"
               required
             />
           </div>
@@ -241,6 +242,7 @@ export function CreateTransactionDialog({
                 placeholder="e.g., Walmart, Starbucks, Target..."
                 value={formData.store_name}
                 onChange={(e) => handleInputChange('store_name', e.target.value)}
+                className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
                 required
               />
             </div>
@@ -252,6 +254,7 @@ export function CreateTransactionDialog({
                 placeholder="e.g., Monthly salary, Freelance payment..."
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
+                className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
                 required
               />
             </div>
@@ -278,7 +281,7 @@ export function CreateTransactionDialog({
           <div className="space-y-2">
             <Label htmlFor="amount">Amount</Label>
             <div className="relative">
-              <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
                 id="amount"
                 type="number"
@@ -287,7 +290,7 @@ export function CreateTransactionDialog({
                 placeholder="0.00"
                 value={formData.total_amount}
                 onChange={(e) => handleInputChange('total_amount', e.target.value)}
-                className="pl-10"
+                className="pl-10 bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
                 required
               />
             </div>
