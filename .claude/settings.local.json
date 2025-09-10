@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(brew install:*)",
+      "Bash(curl:*)",
+      "Bash(java:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,6 +1,6 @@
 import TelegramBot from 'node-telegram-bot-api';
 
-const token = '***REMOVED***';
+const token = process.env.TELEGRAM_BOT_TOKEN;
 const chatId = '7867480884'; // Your chat ID from the error log
 
 const bot = new TelegramBot(token);

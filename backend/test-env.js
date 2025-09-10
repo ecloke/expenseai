@@ -1,15 +1,16 @@
 // Set environment variables
-process.env.TELEGRAM_BOT_TOKEN = '***REMOVED***';
-process.env.SUPABASE_URL = '***REMOVED***';
-process.env.SUPABASE_ANON_KEY = '***REMOVED***';
-process.env.GEMINI_API_KEY = '***REMOVED***';
+// Environment variables should be set in your .env file
+// process.env.TELEGRAM_BOT_TOKEN = 'your_telegram_bot_token';
+// process.env.SUPABASE_URL = 'your_supabase_url';
+// process.env.SUPABASE_ANON_KEY = 'your_supabase_anon_key';
+// process.env.GEMINI_API_KEY = 'your_gemini_api_key';
 process.env.NODE_ENV = 'development';
 
 import TelegramBot from 'node-telegram-bot-api';
 import BotManager from './src/services/BotManager.js';
 import { createClient } from '@supabase/supabase-js';
 
-const token = '***REMOVED***';
+const token = process.env.TELEGRAM_BOT_TOKEN;
 const chatId = '7867480884';
 
 const bot = new TelegramBot(token);

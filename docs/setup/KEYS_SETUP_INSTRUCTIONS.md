@@ -15,8 +15,8 @@ After you create your Supabase project:
 1. Go to **Project Settings** → **API**
 2. Copy these values:
    - **Project URL**: `https://abc123xyz.supabase.co`
-   - **anon public**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
-   - **service_role**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
+   - **anon public**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` (your actual key)
+   - **service_role**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` (your actual key)
 
 3. **Put them in BOTH files**:
    - `backend/.env.production` → `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`

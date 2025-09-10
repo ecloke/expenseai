@@ -117,7 +117,7 @@
 #### Deployment Architecture (WORKING):
 - **Frontend**: https://wodebi.netlify.app (Netlify)
 - **Backend**: https://expenseai-production.up.railway.app (Railway)
-- **Database**: ***REMOVED*** (Supabase)
+- **Database**: https://[your-project-id].supabase.co (Supabase)
 - **Authentication**: Supabase Auth with email confirmation disabled
 - **Environment Variables**: Properly configured on all platforms
 
@@ -156,7 +156,7 @@ expense-tracker/
 NODE_ENV=production
 PORT=3000
 FRONTEND_URL=https://wodebi.netlify.app
-SUPABASE_URL=***REMOVED***
+SUPABASE_URL=https://[your-project-id].supabase.co
 SUPABASE_ANON_KEY=[configured]
 SUPABASE_SERVICE_ROLE_KEY=[configured]
 GOOGLE_CLIENT_ID=[configured]
@@ -169,7 +169,7 @@ LOG_LEVEL=info
 
 ### Frontend Environment (Netlify) ✅
 ```env
-NEXT_PUBLIC_SUPABASE_URL=***REMOVED***
+NEXT_PUBLIC_SUPABASE_URL=https://[your-project-id].supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=[configured]
 NEXT_PUBLIC_API_URL=https://expenseai-production.up.railway.app
 ```
@@ -234,7 +234,7 @@ Ready for comprehensive testing:
 ## Current Production URLs
 - **Frontend**: https://wodebi.netlify.app
 - **Backend**: https://expenseai-production.up.railway.app
-- **Database**: https://supabase.com/dashboard/project/***REMOVED***
+- **Database**: https://supabase.com/dashboard/project/[your-project-id]
 
 ---
 **Last Updated**: Current session (Setup wizard rebuild complete)

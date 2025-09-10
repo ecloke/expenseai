@@ -2,11 +2,11 @@ import TelegramBot from 'node-telegram-bot-api';
 import BotManager from './src/services/BotManager.js';
 import { createClient } from '@supabase/supabase-js';
 
-const token = '***REMOVED***';
-const chatId = '7867480884';
+const token = process.env.TELEGRAM_BOT_TOKEN;
+const chatId = process.env.TELEGRAM_CHAT_ID;
 
-const supabaseUrl = '***REMOVED***';
-const supabaseKey = '***REMOVED***';
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
 const bot = new TelegramBot(token);
 const supabase = createClient(supabaseUrl, supabaseKey);

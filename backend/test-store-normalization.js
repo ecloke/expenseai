@@ -2,8 +2,8 @@ import { createClient } from '@supabase/supabase-js';
 import { getTopStoresNormalized, normalizeStoreName } from './src/utils/storeNormalizer.js';
 
 const supabase = createClient(
-  '***REMOVED***',
-  '***REMOVED***'
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 async function testStoreNormalization() {
