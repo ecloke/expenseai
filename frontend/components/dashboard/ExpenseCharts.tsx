@@ -34,7 +34,7 @@ import {
 } from 'lucide-react'
 import { Expense } from '@/types'
 import { CHART_COLORS, TimeRange } from '@/lib/constants'
-import { getDateRange, formatDateForAPI, getDaysAgoString, getMonthStartString } from '@/lib/dateUtils'
+import { getDateRange, formatDateForAPI, getDaysAgoString, getMonthStartString, getTodayString } from '@/lib/dateUtils'
 import { format } from 'date-fns'
 import { InlineDateRangePicker } from '@/components/dashboard/InlineDateRangePicker'
 
@@ -60,8 +60,35 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
   const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState<TimeRange>('month')
   const [customDateRange, setCustomDateRange] = useState<{ start: Date; end: Date } | null>(null)
+  const [tempStartDate, setTempStartDate] = useState('')
+  const [tempEndDate, setTempEndDate] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [selectedView, setSelectedView] = useState<'overview' | 'income' | 'expense'>('overview')
+
+  // Sync temp date inputs with customDateRange when switching to custom mode
+  useEffect(() => {
+    if (timeRange === 'custom') {
+      setTempStartDate(customDateRange?.start ? format(customDateRange.start, 'yyyy-MM-dd') : '')
+      setTempEndDate(customDateRange?.end ? format(customDateRange.end, 'yyyy-MM-dd') : '')
+    }
+  }, [timeRange, customDateRange])
+
+  // Debounce date range updates to prevent constant API calls while typing
+  useEffect(() => {
+    if (timeRange === 'custom') {
+      const debounceTimer = setTimeout(() => {
+        if (tempStartDate && tempEndDate) {
+          const startDate = new Date(tempStartDate)
+          const endDate = new Date(tempEndDate)
+          setCustomDateRange({ start: startDate, end: endDate })
+        } else if (!tempStartDate && !tempEndDate) {
+          setCustomDateRange(null)
+        }
+      }, 1000) // 1 second debounce
+
+      return () => clearTimeout(debounceTimer)
+    }
+  }, [tempStartDate, tempEndDate, timeRange])
 
   useEffect(() => {
     if (userId) {
@@ -81,10 +108,17 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
       })
 
       // Apply time range filter - EXACT SAME LOGIC AS TRANSACTIONS PAGE
-      if (timeRange === 'week') {
-        params.append('start_date', getDaysAgoString(7))
+      if (timeRange === 'today') {
+        const todayString = getTodayString()
+        params.append('start_date', todayString)
+        params.append('end_date', todayString)
+      } else if (timeRange === 'week') {
+        params.append('start_date', getDaysAgoString(6)) // Last 7 days including today
       } else if (timeRange === 'month') {
         params.append('start_date', getMonthStartString())
+      } else if (timeRange === 'year') {
+        const yearStart = new Date().getFullYear() + '-01-01'
+        params.append('start_date', yearStart)
       } else if (timeRange === 'custom') {
         if (customDateRange?.start) {
           params.append('start_date', formatDateForAPI(customDateRange.start))
@@ -93,6 +127,7 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
           params.append('end_date', formatDateForAPI(customDateRange.end))
         }
       }
+      // timeRange === 'all' means no date filtering (shows all data)
 
       // Fetch transactions from the new API
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/expenses?${params.toString()}`)
@@ -346,77 +381,14 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
           {timeRange === 'custom' && (
             <div style={{ marginTop: '5px', position: 'absolute', right: '0', top: '40px' }} className="p-4 bg-gray-700 border border-gray-600 rounded-md w-80 z-50">
             <div className="space-y-4">
-              {/* Quick Presets */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Quick Select</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const end = new Date()
-                      const start = new Date()
-                      start.setDate(start.getDate() - 6) // Last 7 days
-                      setCustomDateRange({ start, end })
-                    }}
-                    className="px-2 py-1 text-xs bg-gray-600 text-gray-300 rounded hover:bg-gray-500 hover:text-white transition-colors"
-                  >
-                    Last 7 days
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const end = new Date()
-                      const start = new Date()
-                      start.setDate(start.getDate() - 29) // Last 30 days
-                      setCustomDateRange({ start, end })
-                    }}
-                    className="px-2 py-1 text-xs bg-gray-600 text-gray-300 rounded hover:bg-gray-500 hover:text-white transition-colors"
-                  >
-                    Last 30 days
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const end = new Date()
-                      const start = new Date()
-                      start.setDate(start.getDate() - 89) // Last 90 days
-                      setCustomDateRange({ start, end })
-                    }}
-                    className="px-2 py-1 text-xs bg-gray-600 text-gray-300 rounded hover:bg-gray-500 hover:text-white transition-colors"
-                  >
-                    Last 90 days
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const end = new Date()
-                      const start = new Date()
-                      start.setDate(start.getDate() - 364) // Last year
-                      setCustomDateRange({ start, end })
-                    }}
-                    className="px-2 py-1 text-xs bg-gray-600 text-gray-300 rounded hover:bg-gray-500 hover:text-white transition-colors"
-                  >
-                    Last year
-                  </button>
-                </div>
-              </div>
-              
               {/* Custom Date Inputs */}
-              <div className="border-t border-gray-600 pt-3">
+              <div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Start Date</label>
                   <input
                     type="date"
-                    value={customDateRange?.start ? format(customDateRange.start, 'yyyy-MM-dd') : ''}
-                    onChange={(e) => {
-                      if (e.target.value) {
-                        const newStart = new Date(e.target.value)
-                        setCustomDateRange({ 
-                          start: newStart, 
-                          end: customDateRange?.end || newStart 
-                        })
-                      }
-                    }}
+                    value={tempStartDate}
+                    onChange={(e) => setTempStartDate(e.target.value)}
                     className="w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md focus:border-blue-500"
                   />
                 </div>
@@ -424,16 +396,8 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
                   <label className="block text-sm font-medium text-gray-300 mb-2">End Date</label>
                   <input
                     type="date"
-                    value={customDateRange?.end ? format(customDateRange.end, 'yyyy-MM-dd') : ''}
-                    onChange={(e) => {
-                      if (e.target.value) {
-                        const newEnd = new Date(e.target.value)
-                        setCustomDateRange({ 
-                          start: customDateRange?.start || newEnd, 
-                          end: newEnd 
-                        })
-                      }
-                    }}
+                    value={tempEndDate}
+                    onChange={(e) => setTempEndDate(e.target.value)}
                     className="w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md focus:border-blue-500"
                   />
                 </div>
