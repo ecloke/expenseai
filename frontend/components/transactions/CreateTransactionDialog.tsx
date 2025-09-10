@@ -123,11 +123,19 @@ export function CreateTransactionDialog({
     setError('');
 
     try {
+      // Find the category name from the selected category ID
+      const selectedCategory = categories.find(cat => cat.id === formData.category_id);
+      if (!selectedCategory) {
+        setError('Invalid category selected');
+        return;
+      }
+
       const payload = {
         user_id: userId,
         type: formData.type,
         receipt_date: formData.receipt_date,
-        category: formData.category_id, // Backend expects 'category' not 'category_id'
+        category: selectedCategory.name, // Send category NAME, not ID
+        category_id: formData.category_id, // Also send ID for backend reference
         total_amount: parseFloat(formData.total_amount),
         ...(transactionType === 'expense' 
           ? { store_name: formData.store_name.trim() }
