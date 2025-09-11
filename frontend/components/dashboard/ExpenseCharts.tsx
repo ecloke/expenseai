@@ -73,22 +73,7 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
     }
   }, [timeRange, customDateRange])
 
-  // Debounce date range updates to prevent constant API calls while typing
-  useEffect(() => {
-    if (timeRange === 'custom') {
-      const debounceTimer = setTimeout(() => {
-        if (tempStartDate && tempEndDate) {
-          const startDate = new Date(tempStartDate)
-          const endDate = new Date(tempEndDate)
-          setCustomDateRange({ start: startDate, end: endDate })
-        } else if (!tempStartDate && !tempEndDate) {
-          setCustomDateRange(null)
-        }
-      }, 1000) // 1 second debounce
-
-      return () => clearTimeout(debounceTimer)
-    }
-  }, [tempStartDate, tempEndDate, timeRange])
+  // Remove auto-filtering - user must click Apply button
 
   useEffect(() => {
     if (userId) {
@@ -420,9 +405,10 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
                   <button
                     type="button"
                     onClick={() => {
-                      // Reset temp inputs to current range values
+                      // Reset temp inputs to current range values and close dialog
                       setTempStartDate(customDateRange?.start ? format(customDateRange.start, 'yyyy-MM-dd') : '')
                       setTempEndDate(customDateRange?.end ? format(customDateRange.end, 'yyyy-MM-dd') : '')
+                      setTimeRange('month') // Switch back to month view to close dialog
                     }}
                     className="px-3 py-1 text-sm border border-gray-600 text-gray-300 rounded hover:bg-gray-600 transition-colors"
                   >
@@ -435,6 +421,8 @@ export default function ExpenseCharts({ userId, projectId, currency = '$' }: Exp
                         const startDate = new Date(tempStartDate)
                         const endDate = new Date(tempEndDate)
                         setCustomDateRange({ start: startDate, end: endDate })
+                        // Close dialog by switching away from custom then back
+                        setTimeout(() => setTimeRange('month'), 100)
                       }
                     }}
                     className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"

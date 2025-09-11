@@ -5,7 +5,8 @@
       "Bash(brew install:*)",
       "Bash(curl:*)",
       "Bash(java:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git remote add:*)"
     ],
     "deny": [],
     "ask": []
