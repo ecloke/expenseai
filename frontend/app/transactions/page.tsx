@@ -701,7 +701,7 @@ export default function Transactions() {
 
         {/* Edit Dialog */}
         <Dialog open={!!editingExpense} onOpenChange={(open) => !open && setEditingExpense(null)}>
-          <DialogContent className="bg-gray-800 border-gray-700 text-white">
+          <DialogContent className="bg-gray-800 border-gray-700 text-white" onOpenAutoFocus={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle>Edit Transaction</DialogTitle>
               <DialogDescription className="text-gray-400">
@@ -715,16 +715,10 @@ export default function Transactions() {
                 </Label>
                 <Input
                   id="edit-date"
-                  type="text"
-                  placeholder="YYYY-MM-DD"
-                  pattern="\d{4}-\d{2}-\d{2}"
+                  type="date"
                   value={editForm.receipt_date}
                   onChange={(e) => setEditForm({ ...editForm, receipt_date: e.target.value })}
                   className="col-span-3 bg-gray-700 border-gray-600 text-white"
-                  onFocus={(e) => {
-                    // Only change to date type when user actually clicks/focuses
-                    e.target.type = 'date'
-                  }}
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">

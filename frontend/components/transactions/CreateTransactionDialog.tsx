@@ -197,7 +197,7 @@ export function CreateTransactionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] bg-gray-800 border-gray-700 text-white">
+      <DialogContent className="sm:max-w-[500px] bg-gray-800 border-gray-700 text-white" onOpenAutoFocus={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
@@ -233,17 +233,11 @@ export function CreateTransactionDialog({
             <Label htmlFor="date">Date</Label>
             <Input
               id="date"
-              type="text"
-              placeholder="YYYY-MM-DD"
-              pattern="\d{4}-\d{2}-\d{2}"
+              type="date"
               value={formData.receipt_date}
               onChange={(e) => handleInputChange('receipt_date', e.target.value)}
-              className="bg-gray-700 border-gray-600 text-white"
+              className="bg-gray-700 border-gray-600 text-white [color-scheme:dark]"
               required
-              onFocus={(e) => {
-                // Only change to date type when user actually clicks/focuses
-                e.target.type = 'date'
-              }}
             />
           </div>
 
