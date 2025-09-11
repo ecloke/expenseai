@@ -238,6 +238,7 @@ export function CreateTransactionDialog({
               onChange={(e) => handleInputChange('receipt_date', e.target.value)}
               className="bg-gray-700 border-gray-600 text-white [color-scheme:dark]"
               required
+              autoFocus={false}
             />
           </div>
 

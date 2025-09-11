@@ -719,6 +719,7 @@ export default function Transactions() {
                   value={editForm.receipt_date}
                   onChange={(e) => setEditForm({ ...editForm, receipt_date: e.target.value })}
                   className="col-span-3 bg-gray-700 border-gray-600 text-white"
+                  autoFocus={false}
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
