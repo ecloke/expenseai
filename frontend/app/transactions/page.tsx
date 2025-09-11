@@ -709,6 +709,8 @@ export default function Transactions() {
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
+              {/* Hidden input to prevent date field auto-focus */}
+              <input type="text" style={{ position: 'absolute', left: '-9999px', opacity: 0, pointerEvents: 'none' }} tabIndex={-1} />
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="edit-date" className="text-right text-gray-300">
                   Date
@@ -720,6 +722,7 @@ export default function Transactions() {
                   onChange={(e) => setEditForm({ ...editForm, receipt_date: e.target.value })}
                   className="col-span-3 bg-gray-700 border-gray-600 text-white"
                   autoFocus={false}
+                  tabIndex={1}
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
