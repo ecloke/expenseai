@@ -220,9 +220,6 @@ export function CreateTransactionDialog({
             </TabsList>
           </Tabs>
 
-          {/* Hidden input to prevent date field auto-focus */}
-          <input type="text" style={{ position: 'absolute', left: '-9999px', opacity: 0, pointerEvents: 'none' }} tabIndex={-1} />
-
           {/* Error Alert */}
           {error && (
             <Alert variant="destructive" className="bg-red-900/50 border-red-800 text-red-200">
@@ -236,13 +233,17 @@ export function CreateTransactionDialog({
             <Label htmlFor="date">Date</Label>
             <Input
               id="date"
-              type="date"
+              type="text"
+              placeholder="YYYY-MM-DD"
+              pattern="\d{4}-\d{2}-\d{2}"
               value={formData.receipt_date}
               onChange={(e) => handleInputChange('receipt_date', e.target.value)}
-              className="bg-gray-700 border-gray-600 text-white [color-scheme:dark]"
+              className="bg-gray-700 border-gray-600 text-white"
               required
-              autoFocus={false}
-              tabIndex={1}
+              onFocus={(e) => {
+                // Only change to date type when user actually clicks/focuses
+                e.target.type = 'date'
+              }}
             />
           </div>
 
