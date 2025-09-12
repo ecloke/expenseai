@@ -767,6 +767,7 @@ Sorry, I couldn't process any of the ${photoCount} receipt photos. Please try ag
 
   /**
    * Handle conversation input for multi-step commands
+   * All conversation flows now handled by ConversationFlowManager
    */
   async handleConversationInput(userId, input, conversation) {
     if (input.toLowerCase() === '/cancel') {
@@ -774,31 +775,8 @@ Sorry, I couldn't process any of the ${photoCount} receipt photos. Please try ag
       return '❌ Operation cancelled.';
     }
 
-    // For create_expense and create_income flows, delegate to ConversationFlowManager
-    if (conversation.type === 'create_expense' || conversation.type === 'create_income') {
-      return this.conversationFlowManager.handleConversationInput(userId, input, conversation);
-    }
-    
-    // Keep other flows in BotManager for now (to be extracted later)
-    switch (conversation.type) {
-      case 'create_project':
-        return this.handleCreateProjectFlow(userId, input, conversation);
-      case 'close_project':
-        return this.handleCloseProjectFlow(userId, input, conversation);
-      case 'open_project':
-        return this.handleOpenProjectFlow(userId, input, conversation);
-      case 'project_selection':
-        return this.handleProjectSelectionFlow(userId, input, conversation);
-      case 'income_project_selection':
-        return this.handleIncomeProjectSelectionFlow(userId, input, conversation);
-      case 'multi_receipt_confirmation':
-        return this.handleMultiReceiptConfirmation(userId, input, conversation);
-      case 'multi_receipt_project_selection':
-        return this.handleMultiReceiptProjectSelection(userId, input, conversation);
-      default:
-        this.conversationManager.endConversation(userId);
-        return '❌ Unknown conversation type. Please try again.';
-    }
+    // Delegate ALL conversation flows to ConversationFlowManager
+    return this.conversationFlowManager.handleConversationInput(userId, input, conversation);
   }
 
   /**
