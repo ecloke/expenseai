@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Table,
   TableBody,
