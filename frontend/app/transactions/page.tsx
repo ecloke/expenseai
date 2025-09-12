@@ -45,7 +45,10 @@ export default function Transactions() {
   const [user, setUser] = useState<any>(null)
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
   const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null)
+  const [editTransactionType, setEditTransactionType] = useState<'income' | 'expense'>('expense')
+  const [editCategories, setEditCategories] = useState<any[]>([])
   const [editForm, setEditForm] = useState({
+    type: 'expense' as 'income' | 'expense',
     receipt_date: '',
     store_name: '',
     category: '',
@@ -186,6 +189,25 @@ export default function Transactions() {
     }
   }
 
+  const loadEditCategories = async (type: 'income' | 'expense') => {
+    if (!user) return
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories?user_id=${user.id}&type=${type}`)
+      if (!response.ok) throw new Error('Failed to load categories')
+      
+      const result = await response.json()
+      if (result.success) {
+        setEditCategories(result.data)
+      } else {
+        throw new Error(result.message || 'Failed to load categories')
+      }
+    } catch (err) {
+      console.error('Error loading edit categories:', err)
+      setEditCategories([])
+    }
+  }
+
   const totalPages = Math.ceil(totalCount / itemsPerPage)
 
   const formatAmount = (expense: any) => {
@@ -256,13 +278,20 @@ export default function Transactions() {
   }
 
   const handleEdit = (expense: Expense) => {
+    const transactionType = (expense.type || expense.transaction_type || 'expense') as 'income' | 'expense'
+    
     setEditingExpense(expense)
+    setEditTransactionType(transactionType)
     setEditForm({
+      type: transactionType,
       receipt_date: expense.receipt_date,
       store_name: expense.store_name,
       category: expense.category,
       total_amount: parseFloat(expense.total_amount.toString())
     })
+
+    // Load categories for the transaction type
+    loadEditCategories(transactionType)
   }
 
   const handleDelete = (expense: Expense) => {
@@ -299,6 +328,7 @@ export default function Transactions() {
       const { error } = await supabase
         .from('expenses')
         .update({
+          type: editForm.type,
           receipt_date: editForm.receipt_date,
           store_name: editForm.store_name,
           category: editForm.category,
@@ -708,57 +738,79 @@ export default function Transactions() {
                 Make changes to your transaction record
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-date" className="text-right text-gray-300">
-                  Date
-                </Label>
-                <Input
-                  id="edit-date"
-                  type="date"
-                  value={editForm.receipt_date}
-                  onChange={(e) => setEditForm({ ...editForm, receipt_date: e.target.value })}
-                  className="col-span-3 bg-gray-700 border-gray-600 text-white"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-store" className="text-right text-gray-300">
-                  Store
-                </Label>
-                <Input
-                  id="edit-store"
-                  value={editForm.store_name}
-                  onChange={(e) => setEditForm({ ...editForm, store_name: e.target.value })}
-                  className="col-span-3 bg-gray-700 border-gray-600 text-white"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-category" className="text-right text-gray-300">
-                  Category
-                </Label>
-                <SimpleSelect
-                  value={editForm.category}
-                  onValueChange={(value) => setEditForm({ ...editForm, category: value })}
-                  options={categoriesOnly.map(category => ({
-                    value: category.value,
-                    label: category.label
-                  }))}
-                  placeholder="Select category"
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-amount" className="text-right text-gray-300">
-                  Amount
-                </Label>
-                <Input
-                  id="edit-amount"
-                  type="number"
-                  step="0.01"
-                  value={editForm.total_amount}
-                  onChange={(e) => setEditForm({ ...editForm, total_amount: parseFloat(e.target.value) || 0 })}
-                  className="col-span-3 bg-gray-700 border-gray-600 text-white"
-                />
+            <div className="space-y-4">
+              {/* Transaction Type Tabs */}
+              <Tabs value={editTransactionType} onValueChange={(value) => {
+                const newType = value as 'income' | 'expense'
+                setEditTransactionType(newType)
+                setEditForm({ ...editForm, type: newType, category: '' })
+                loadEditCategories(newType)
+              }}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="expense" className="flex items-center gap-2">
+                    <TrendingDown className="h-4 w-4" />
+                    Expense
+                  </TabsTrigger>
+                  <TabsTrigger value="income" className="flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4" />
+                    Income
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-date" className="text-right text-gray-300">
+                    Date
+                  </Label>
+                  <Input
+                    id="edit-date"
+                    type="date"
+                    value={editForm.receipt_date}
+                    onChange={(e) => setEditForm({ ...editForm, receipt_date: e.target.value })}
+                    className="col-span-3 bg-gray-700 border-gray-600 text-white"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-store" className="text-right text-gray-300">
+                    {editTransactionType === 'expense' ? 'Store' : 'Description'}
+                  </Label>
+                  <Input
+                    id="edit-store"
+                    placeholder={editTransactionType === 'expense' ? 'e.g., Walmart, Starbucks' : 'e.g., Monthly salary, Freelance payment'}
+                    value={editForm.store_name}
+                    onChange={(e) => setEditForm({ ...editForm, store_name: e.target.value })}
+                    className="col-span-3 bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-category" className="text-right text-gray-300">
+                    Category
+                  </Label>
+                  <SimpleSelect
+                    value={editForm.category}
+                    onValueChange={(value) => setEditForm({ ...editForm, category: value })}
+                    options={editCategories.map(category => ({
+                      value: category.name,
+                      label: category.name
+                    }))}
+                    placeholder={`Select ${editTransactionType} category`}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-amount" className="text-right text-gray-300">
+                    Amount
+                  </Label>
+                  <Input
+                    id="edit-amount"
+                    type="number"
+                    step="0.01"
+                    value={editForm.total_amount}
+                    onChange={(e) => setEditForm({ ...editForm, total_amount: parseFloat(e.target.value) || 0 })}
+                    className="col-span-3 bg-gray-700 border-gray-600 text-white"
+                  />
+                </div>
               </div>
             </div>
             <DialogFooter>
