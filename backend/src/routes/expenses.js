@@ -31,17 +31,20 @@ router.get('/', async (req, res) => {
     // If type filtering is requested, use the specialized method
     if (type) {
       const transactions = await expenseService.getTransactionsByType(
-        user_id, 
-        type, 
-        start_date, 
+        user_id,
+        type,
+        start_date,
         end_date
       );
 
+      const totalCount = transactions.length;
+      const paginatedTransactions = transactions.slice(parseInt(offset), parseInt(offset) + parseInt(limit));
+
       return res.json({
         success: true,
-        data: transactions.slice(parseInt(offset), parseInt(offset) + parseInt(limit)),
+        data: paginatedTransactions,
         meta: {
-          total: transactions.length,
+          total: totalCount,
           type_filter: type,
           limit: parseInt(limit),
           offset: parseInt(offset)
@@ -50,28 +53,47 @@ router.get('/', async (req, res) => {
     }
 
     // Get all transactions without type filtering
-    let query = supabase
+    let baseQuery = supabase
+      .from('expenses')
+      .select('id')
+      .eq('user_id', user_id);
+
+    let dataQuery = supabase
       .from('expenses')
       .select('*, categories(id, name, type)')
       .eq('user_id', user_id);
 
     // Add date filtering if provided
     if (start_date) {
-      query = query.gte('receipt_date', start_date);
+      baseQuery = baseQuery.gte('receipt_date', start_date);
+      dataQuery = dataQuery.gte('receipt_date', start_date);
     }
     if (end_date) {
-      query = query.lte('receipt_date', end_date);
+      baseQuery = baseQuery.lte('receipt_date', end_date);
+      dataQuery = dataQuery.lte('receipt_date', end_date);
     }
 
-    const { data: transactions, error } = await query
+    // Get total count
+    const { count: totalCount, error: countError } = await baseQuery.select('id', { count: 'exact' });
+
+    if (countError) {
+      console.error('Error fetching transaction count:', countError);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch transaction count'
+      });
+    }
+
+    // Get paginated data
+    const { data: transactions, error } = await dataQuery
       .order('receipt_date', { ascending: false })
       .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
 
     if (error) {
       console.error('Error fetching transactions:', error);
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Failed to fetch transactions' 
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch transactions'
       });
     }
 
@@ -87,7 +109,7 @@ router.get('/', async (req, res) => {
       success: true,
       data: enhancedTransactions,
       meta: {
-        total: enhancedTransactions.length,
+        total: totalCount,
         type_filter: 'all',
         limit: parseInt(limit),
         offset: parseInt(offset)
