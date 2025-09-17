@@ -55,12 +55,30 @@ router.get('/', async (req, res) => {
       .select('*, categories(id, name, type)')
       .eq('user_id', user_id);
 
+    // Build count query with same filters
+    let countQuery = supabase
+      .from('expenses')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user_id);
+
     // Add date filtering if provided
     if (start_date) {
       query = query.gte('receipt_date', start_date);
+      countQuery = countQuery.gte('receipt_date', start_date);
     }
     if (end_date) {
       query = query.lte('receipt_date', end_date);
+      countQuery = countQuery.lte('receipt_date', end_date);
+    }
+
+    // Get total count first
+    const { count: totalCount, error: countError } = await countQuery;
+    if (countError) {
+      console.error('Error fetching count:', countError);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch transaction count'
+      });
     }
 
     const { data: transactions, error } = await query
@@ -87,7 +105,7 @@ router.get('/', async (req, res) => {
       success: true,
       data: enhancedTransactions,
       meta: {
-        total: enhancedTransactions.length,
+        total: totalCount,
         type_filter: 'all',
         limit: parseInt(limit),
         offset: parseInt(offset)

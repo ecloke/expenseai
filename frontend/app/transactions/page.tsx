@@ -134,11 +134,12 @@ export default function Transactions() {
       }
 
       let transactions = result.data || []
+      const serverTotalCount = result.meta?.total || 0
 
       // Apply client-side filters for backward compatibility
       if (searchTerm.trim()) {
         const searchLower = searchTerm.toLowerCase()
-        transactions = transactions.filter((tx: any) => 
+        transactions = transactions.filter((tx: any) =>
           tx.store_name?.toLowerCase().includes(searchLower) ||
           tx.category?.toLowerCase().includes(searchLower) ||
           tx.category_name?.toLowerCase().includes(searchLower)
@@ -146,7 +147,7 @@ export default function Transactions() {
       }
 
       if (categoryFilter !== 'all') {
-        transactions = transactions.filter((tx: any) => 
+        transactions = transactions.filter((tx: any) =>
           tx.category === categoryFilter || tx.category_name === categoryFilter
         )
       }
@@ -158,7 +159,10 @@ export default function Transactions() {
       }
 
       setExpenses(transactions)
-      setTotalCount(transactions.length)
+
+      // Smart total count: use server count if no client-side filters, otherwise use filtered count
+      const hasClientFilters = searchTerm.trim() || categoryFilter !== 'all' || projectFilter !== 'all'
+      setTotalCount(hasClientFilters ? transactions.length : serverTotalCount)
       setError(null)
     } catch (error) {
       console.error('Error loading expenses:', error)
