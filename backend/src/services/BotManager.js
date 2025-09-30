@@ -1585,24 +1585,36 @@ I only understand specific commands to save AI processing costs.
   async updateBotSessionIfNeeded(userId, botUsername, isActive, chatId = null) {
     try {
       // First check current session to see if update is needed
-      const { data: currentSession } = await this.supabase
+      const { data: currentSession, error: fetchError } = await this.supabase
         .from('bot_sessions')
         .select('chat_id, active, bot_username')
         .eq('user_id', userId)
         .single();
 
-      // Only update if something actually changed
-      if (currentSession) {
-        const chatIdChanged = chatId !== null && currentSession.chat_id !== chatId;
-        const activeChanged = currentSession.active !== isActive;
-        const botUsernameChanged = currentSession.bot_username !== botUsername;
+      // If error fetching (record doesn't exist), proceed with update
+      if (fetchError && fetchError.code === 'PGRST116') {
+        await this.updateBotSession(userId, botUsername, isActive, chatId);
+        return;
+      }
 
-        if (!chatIdChanged && !activeChanged && !botUsernameChanged) {
+      // If other error, skip update to avoid spam
+      if (fetchError) {
+        console.error('Error fetching bot session:', fetchError);
+        return;
+      }
+
+      // Record exists, check if anything actually changed
+      if (currentSession) {
+        const chatIdMatches = (currentSession.chat_id === chatId) || (currentSession.chat_id === null && chatId === null);
+        const activeMatches = currentSession.active === isActive;
+        const usernameMatches = currentSession.bot_username === botUsername;
+
+        if (chatIdMatches && activeMatches && usernameMatches) {
           return; // No update needed - everything is the same
         }
       }
 
-      // Something changed or first time, proceed with update
+      // Something changed, proceed with update
       await this.updateBotSession(userId, botUsername, isActive, chatId);
     } catch (error) {
       // Only log error, don't retry to avoid duplicate logs

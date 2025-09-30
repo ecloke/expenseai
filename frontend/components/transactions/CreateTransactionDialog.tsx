@@ -164,7 +164,7 @@ export function CreateTransactionDialog({
         category: selectedCategory.name, // Send category NAME, not ID
         category_id: formData.category_id, // Also send ID for backend reference
         total_amount: parseFloat(formData.total_amount),
-        project_id: formData.project_id || null, // Include project selection
+        project_id: formData.project_id === 'general' ? null : formData.project_id, // Include project selection
         ...(transactionType === 'expense'
           ? { store_name: formData.store_name.trim() }
           : {
@@ -195,7 +195,7 @@ export function CreateTransactionDialog({
           description: '',
           category_id: '',
           total_amount: '',
-          project_id: ''
+          project_id: 'general'
         });
         
         onTransactionCreated();
@@ -323,7 +323,7 @@ export function CreateTransactionDialog({
                 <SelectValue placeholder="Select project (optional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">📁 General Expenses</SelectItem>
+                <SelectItem value="general">📁 General Expenses</SelectItem>
                 {projects.map((project) => (
                   <SelectItem key={project.id} value={project.id}>
                     📁 {project.name}
