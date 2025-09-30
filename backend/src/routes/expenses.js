@@ -224,7 +224,8 @@ router.post('/', async (req, res) => {
         description: description || store_name,
         category,
         category_id,
-        total_amount: amount
+        total_amount: amount,
+        project_id
       });
     } else {
       // Create expense transaction (existing functionality)

@@ -53,7 +53,8 @@ export default function Transactions() {
     receipt_date: '',
     store_name: '',
     category: '',
-    total_amount: 0
+    total_amount: 0,
+    project_id: 'general'
   })
   const router = useRouter()
   
@@ -292,7 +293,8 @@ export default function Transactions() {
       receipt_date: expense.receipt_date,
       store_name: expense.store_name,
       category: expense.category,
-      total_amount: parseFloat(expense.total_amount.toString())
+      total_amount: parseFloat(expense.total_amount.toString()),
+      project_id: expense.project_id || 'general'
     })
 
     // Load categories for the transaction type
@@ -337,7 +339,8 @@ export default function Transactions() {
           receipt_date: editForm.receipt_date,
           store_name: editForm.store_name,
           category: editForm.category,
-          total_amount: editForm.total_amount
+          total_amount: editForm.total_amount,
+          project_id: editForm.project_id === 'general' ? null : editForm.project_id
         })
         .eq('id', editingExpense.id)
         .eq('user_id', user.id)
@@ -800,6 +803,24 @@ export default function Transactions() {
                       label: category.name
                     }))}
                     placeholder={`Select ${editTransactionType} category`}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-project" className="text-right text-gray-300">
+                    Project
+                  </Label>
+                  <SimpleSelect
+                    value={editForm.project_id}
+                    onValueChange={(value) => setEditForm({ ...editForm, project_id: value })}
+                    options={[
+                      { value: 'general', label: '📁 General Expenses' },
+                      ...projects.map(project => ({
+                        value: project.id,
+                        label: `📁 ${project.name}`
+                      }))
+                    ]}
+                    placeholder="Select project (optional)"
                     className="col-span-3"
                   />
                 </div>
