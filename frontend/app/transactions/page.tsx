@@ -148,7 +148,7 @@ export default function Transactions() {
 
       if (categoryFilter !== 'all') {
         transactions = transactions.filter((tx: any) =>
-          tx.category === categoryFilter || tx.category_name === categoryFilter
+          tx.category === categoryFilter  // Both category and category_name are now normalized to the same value
         )
       }
 

@@ -93,13 +93,19 @@ router.get('/', async (req, res) => {
       });
     }
 
-    // Add transaction type information for backward compatibility
-    const enhancedTransactions = (transactions || []).map(transaction => ({
-      ...transaction,
-      transaction_type: transaction.type || 'expense', // Default to expense for old records
-      category_name: transaction.categories?.name || transaction.category,
-      category_type: transaction.categories?.type || 'expense'
-    }));
+    // Add transaction type information for backward compatibility and normalize categories
+    const enhancedTransactions = (transactions || []).map(transaction => {
+      // Normalize category name - prioritize categories table, fallback to expenses.category
+      const normalizedCategory = transaction.categories?.name || transaction.category;
+
+      return {
+        ...transaction,
+        transaction_type: transaction.type || 'expense', // Default to expense for old records
+        category_name: normalizedCategory,  // Always use the same normalized source
+        category: normalizedCategory,       // Make both fields consistent
+        category_type: transaction.categories?.type || 'expense'
+      };
+    });
 
     res.json({
       success: true,

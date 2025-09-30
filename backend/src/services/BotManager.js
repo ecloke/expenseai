@@ -1584,26 +1584,29 @@ I only understand specific commands to save AI processing costs.
    */
   async updateBotSessionIfNeeded(userId, botUsername, isActive, chatId = null) {
     try {
-      // First check current chat_id to see if update is needed
-      if (chatId !== null) {
-        const { data: currentSession } = await this.supabase
-          .from('bot_sessions')
-          .select('chat_id')
-          .eq('user_id', userId)
-          .single();
-        
-        // Only update if chat_id is different or doesn't exist
-        if (currentSession && currentSession.chat_id === chatId) {
-          return; // No update needed
+      // First check current session to see if update is needed
+      const { data: currentSession } = await this.supabase
+        .from('bot_sessions')
+        .select('chat_id, active, bot_username')
+        .eq('user_id', userId)
+        .single();
+
+      // Only update if something actually changed
+      if (currentSession) {
+        const chatIdChanged = chatId !== null && currentSession.chat_id !== chatId;
+        const activeChanged = currentSession.active !== isActive;
+        const botUsernameChanged = currentSession.bot_username !== botUsername;
+
+        if (!chatIdChanged && !activeChanged && !botUsernameChanged) {
+          return; // No update needed - everything is the same
         }
       }
-      
-      // Chat ID changed or first time, proceed with update
+
+      // Something changed or first time, proceed with update
       await this.updateBotSession(userId, botUsername, isActive, chatId);
     } catch (error) {
+      // Only log error, don't retry to avoid duplicate logs
       console.error('Error in updateBotSessionIfNeeded:', error);
-      // Fallback to regular update
-      await this.updateBotSession(userId, botUsername, isActive, chatId);
     }
   }
 

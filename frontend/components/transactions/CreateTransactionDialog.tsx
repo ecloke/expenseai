@@ -16,6 +16,12 @@ interface Category {
   type: 'income' | 'expense';
 }
 
+interface Project {
+  id: string;
+  name: string;
+  currency: string;
+}
+
 interface CreateTransactionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -32,6 +38,7 @@ interface TransactionData {
   description: string;
   category_id: string;
   total_amount: string;
+  project_id: string;
 }
 
 export function CreateTransactionDialog({ 
@@ -42,6 +49,7 @@ export function CreateTransactionDialog({
 }: CreateTransactionDialogProps) {
   const [transactionType, setTransactionType] = useState<TransactionType>('expense');
   const [categories, setCategories] = useState<Category[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -51,13 +59,15 @@ export function CreateTransactionDialog({
     store_name: '',
     description: '',
     category_id: '',
-    total_amount: ''
+    total_amount: '',
+    project_id: ''
   });
 
-  // Load categories when dialog opens or transaction type changes
+  // Load categories and projects when dialog opens or transaction type changes
   useEffect(() => {
     if (open) {
       loadCategories(transactionType);
+      loadProjects();
     }
   }, [open, transactionType]);
 
@@ -76,7 +86,7 @@ export function CreateTransactionDialog({
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories?user_id=${userId}&type=${type}`);
       if (!response.ok) throw new Error('Failed to load categories');
-      
+
       const result = await response.json();
       if (result.success) {
         setCategories(result.data);
@@ -86,6 +96,23 @@ export function CreateTransactionDialog({
     } catch (err) {
       console.error('Error loading categories:', err);
       setError(`Failed to load ${type} categories. Please try again.`);
+    }
+  };
+
+  const loadProjects = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/projects?user_id=${userId}`);
+      if (!response.ok) throw new Error('Failed to load projects');
+
+      const result = await response.json();
+      if (result.success) {
+        setProjects(result.data || []);
+      } else {
+        throw new Error(result.message || 'Failed to load projects');
+      }
+    } catch (err) {
+      console.error('Error loading projects:', err);
+      setError('Failed to load projects. Please try again.');
     }
   };
 
@@ -137,11 +164,12 @@ export function CreateTransactionDialog({
         category: selectedCategory.name, // Send category NAME, not ID
         category_id: formData.category_id, // Also send ID for backend reference
         total_amount: parseFloat(formData.total_amount),
-        ...(transactionType === 'expense' 
+        project_id: formData.project_id || null, // Include project selection
+        ...(transactionType === 'expense'
           ? { store_name: formData.store_name.trim() }
-          : { 
+          : {
               store_name: formData.description.trim(), // Use description as store_name for income
-              description: formData.description.trim() 
+              description: formData.description.trim()
             }
         )
       };
@@ -166,7 +194,8 @@ export function CreateTransactionDialog({
           store_name: '',
           description: '',
           category_id: '',
-          total_amount: ''
+          total_amount: '',
+          project_id: ''
         });
         
         onTransactionCreated();
@@ -189,7 +218,8 @@ export function CreateTransactionDialog({
       store_name: '',
       description: '',
       category_id: '',
-      total_amount: ''
+      total_amount: '',
+      project_id: ''
     });
     setError('');
     onOpenChange(false);
@@ -279,6 +309,24 @@ export function CreateTransactionDialog({
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Project Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="project">Project</Label>
+            <Select value={formData.project_id} onValueChange={(value) => handleInputChange('project_id', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select project (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">📁 General Expenses</SelectItem>
+                {projects.map((project) => (
+                  <SelectItem key={project.id} value={project.id}>
+                    📁 {project.name}
                   </SelectItem>
                 ))}
               </SelectContent>
