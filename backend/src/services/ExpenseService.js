@@ -712,6 +712,7 @@ class ExpenseService {
         category: incomeData.category,
         total_amount: parseFloat(incomeData.total_amount),
         type: 'income', // Explicitly set as income
+        project_id: incomeData.project_id || null, // Include project_id for income transactions
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
